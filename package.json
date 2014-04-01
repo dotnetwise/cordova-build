@@ -1,0 +1,19 @@
+{
+  "name": "cordova-build",
+  "version": "0.0.0",
+  "description": "cordova-build",
+  "main": "cordova-build.js",
+  "author": {
+    "name": "dotnetwise",
+    "email": "laurentiu.macovei@dotnetwise.com"
+  },
+  "dependencies": {
+    "socket.io": "~0.9.16",
+    "node-commandline": "~0.2.0",
+    "stringformat": "0.0.5",
+    "fast-class": "~1.1011.122041",
+    "guid": "0.0.12",
+    "array-sugar": "~0.2.4",
+    "cordova": "~3.4.0-0.1.3"
+  }
+}
