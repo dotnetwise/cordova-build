@@ -6,6 +6,9 @@ module.exports = Function.define({
     constructor: function (socket) {
         this.socket = socket;
         socket.on({
+            'register': function (conf) {
+                this.conf = conf || {};
+            },
             'disconnect': this.onDisconnect,
             'request-build': this.requestBuild,
         }, this);
@@ -31,9 +34,11 @@ module.exports = Function.define({
                 });
                 var config = extend({ files: files }, buildConf);
                 var platformBuild = new Build(config, this, platform);
-                platformBuild.id = build.uuid;
+                platformBuild.client = this;
+                platformBuild.id = build.id;
+                this.server.builds[platformBuild.id] = platformBuild;
                 this.server.buildsQueue.push(platformBuild);
-                console.log('Server: build {0} queued on {1}'.format(platformBuild.id, platform));
+                this.server.log(platformBuild.id, this, '[C] build queued on {2}', platform);
             }, this);
         }
     },
@@ -52,7 +57,7 @@ module.exports = Function.define({
             return false;
         return true;
     },
-    sendLog: function (message) {
+    emitLog: function (message) {
         this.socket.emit('log', message);
     },
 });

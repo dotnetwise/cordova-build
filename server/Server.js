@@ -19,48 +19,59 @@ Server.define({
         var server = config ? this : new Server();
         config = config || {};
         this.config = config;
-        var ios = this.socket = io.listen(config.port || 8300);
+        var port = config.port || 8300;
+        var ios = this.socket = io.listen(port);
         ios.set('log level', 2);//show warnings
 
         var agents = ios
             .of('/agent')
-            .on('connection', function (socket) {
-                var agent = new Agent(socket);
-                console.log("Server[A]: agent {0} connected".format(socket.id));
-                agent.onConnect(this);
-                //socket.on({
-                //    'disconnect': function () {
-                //        agent.onDisconnect();
-                //        server.agents.remove(agent);
-                //        agent.platforms.forEach(function (platform) {
-                //            server.platforms[platform].remove(agent);
-                //        });
-                //    },
-                socket.on({
-                    'register': function (conf) {
-                        server.agents.push(socket);
-                        agent.platforms.forEach(function (platform) {
-                            (server.platforms[platform] = server.platforms[platform] || []).push(agent);
-                        });
-                    }
-                });
-            });
+            .on({
+                'connection': function (socket) {
+                    var agent = new Agent(socket);
+                    agent.onConnect(server);
+                    socket.on({
+                        'disconnect': function () {
+                            agent.onDisconnect();
+                            server.agents.remove(agent);
+                            agent.platforms.forEach(function (platform) {
+                                server.platforms[platform].remove(agent);
+                            });
+                        },
+                        'register': function (conf) {
+                            agent.id = conf && conf.id;
+                            this.log(null, agent, "[A] agent connected supporting platforms [{2}]", agent.platforms.join(', '));
+                            server.agents.push(socket);
+                            agent.platforms.forEach(function (platform) {
+                                (server.platforms[platform] = server.platforms[platform] || []).push(agent);
+                            });
+                        },
+                    }, this);
+                },
+            }, this);
 
 
         var clients = ios
             .of('/client')
-            .on('connection', function (socket) {
-                var client = new Client(socket);
-                console.log("Server[C]: client {0} connected".format(socket.id));
-                server.clients.push(client);
-                client.onConnect(server);
-                socket.on('disconnect', function () {
-                    client.onDisconnect();
-                    server.clients.remove(client);
-                });
-                //socket.emit('news', { news: 'item' });
-            });
-
+            .on({
+                'connection': function (socket) {
+                    var client = new Client(socket);
+                    server.clients.push(client);
+                    client.onConnect(server);
+                    socket.on({
+                        'register': function (conf) {
+                            client.id = conf.id;
+                            this.clients[conf.id] = client;
+                            this.log(null, client, "[C] client {0} connected");
+                        },
+                        'disconnect': function () {
+                            client.onDisconnect();
+                            this.clients.remove(client);
+                        },
+                    }, this);
+                    //socket.emit('news', { news: 'item' });
+                },
+            }, this);
+        this.log(null, null, "listening on port {2}", port);
         this.processQueueInterval = setInterval(this.processQueue.bind(this), 1000);
     },
     stop: function () {
@@ -72,7 +83,7 @@ Server.define({
         if (build) {
             var server = this;
             var platform = build.platform;
-                var startBuilding = false;
+            var startBuilding = false;
             var agents = server.platforms[platform];
             agents && agents.forEach(function (agent) {
                 if (!agent.busy) {
@@ -84,12 +95,35 @@ Server.define({
             if (!startBuilding)
                 this.buildsQueue.push(build);
         }
-    }, 
-    log: function(msg, buildId, sender) {
-        var build = this.builds[buildId];
-        if (build && build.client && build.client != sender)
-            build.client.sendLog(msg, buildId);
-    }
+    },
+    log: function (build, forwardTo, message) {
+        var clientOrAgent = forwardTo;
+        var buildId = build && build.id || build;
+        var clientId = clientOrAgent && clientOrAgent.id;
+        var args = Array.prototype.concat.apply([], arguments);
+        Array.prototype.splice.call(args, 0, 3, clientId, buildId);
+        message = ['Server', clientId ? ' @{0}' : '', buildId ? ' about #{1}' : '', ": ", message].join('');
+        message = message.format.apply(message, args);
+        if (this.config.mode != 'all' || !clientOrAgent) {
+            console.log(message);
+        }
+        clientOrAgent && clientOrAgent.emitLog({
+            message: message,
+            buildId: buildId,
+        });
+    },
+    forwardLog: function (build, sender, message, to) {
+        if (!to) {
+            build = this.findBuildById(build);
+            to = build && build.client;
+        }
+        if (to && to != sender)
+            to.emitLog(message);
+    },
+    findBuildById: function(build) {
+        var buildFound = typeof build == "string" || build && build.id ? this.builds[build && build.id || build] : build;
+        return buildFound;
+    },
 });
 
     //var chat = io

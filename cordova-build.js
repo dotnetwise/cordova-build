@@ -9,9 +9,13 @@ if (listen.server) {
     server.listen(config);
 }
 if (listen.client) {
-    config.build = (config.build || 'ios,android,wp8').split(/,|;|\s/g);
-    require('./client/Client.js')(config);
+    config.build = (config.build || 'ios,android,wp8').split(/,|;/g);
+    var ClientWorker = require('./client/ClientWorker.js');
+    var client = new ClientWorker();
+    client.connect(config);
 }
 if (listen.agent) {
-    require('./agent/Agent.js')(config);
+    var AgentWorker = require('./agent/AgentWorker.js');
+    var agent = new AgentWorker();
+    agent.connect(config);
 }

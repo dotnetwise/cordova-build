@@ -1,10 +1,10 @@
 ﻿module.exports = Build
 require('fast-class');
-var Guid = require('guid');
+var shortid = require('shortid');
 function Build(conf, client, platform) {
     this.conf = conf;
 	this.client = client;
-    this.uuid = Guid.raw();
+    this.id = shortid.generate();
     this.platform = platform;
 }
 Build.define({

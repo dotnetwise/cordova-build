@@ -18,8 +18,10 @@ function rebind(obj, names) {
         }
     });
 }
+
     //patch on to support binding with multiple events at once
 rebind(io.Socket.prototype, ["on", "addListener"]);
 rebind(ioc.Socket.prototype, ["on", "addListener"]);
 rebind(ioc.SocketNamespace.prototype, ["on", "addListener"]);
 rebind(ioc.EventEmitter.prototype, ["on", "addListener"]);
+rebind(process.EventEmitter.prototype, ["on", "addListener"]);
