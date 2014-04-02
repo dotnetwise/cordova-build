@@ -15,6 +15,7 @@ ClientWorker.define({
         this.config = config;
         this.socket = ioc.connect(url);
         this.parseGroupFiles(config);
+        this.built = 0;
         this.socket.on({
             'connect': this.onConnect,
             'log': function (message) {
@@ -23,19 +24,29 @@ ClientWorker.define({
             'build-success': function (result) {
                 var build = result.build;
                 this.log(build, "Build done!");
-                this.socket.disconnect();
+                if (++this.built >= this.build.conf.platforms.length)
+                    this.disconnect();
             },
             'build-failed': function (result) {
                 this.log(build, "Build failed!");
-                this.socket.disconnect();
+                if (++this.built >= this.build.conf.platforms.length)
+                    this.disconnect();
             },
         }, this);
+    },
+    disconnect: function () {
+        try {
+            this.socket.disconnect();
+        }
+        catch (e) {
+            process.exit();
+        }
     },
     onConnect: function () {
 
         var client = this;
         var files = this.files;
-        var build = new Build({
+        var build = this.build = new Build({
             files: files,
             platforms: this.config.build || ['android', 'ios', 'wp8'],
         });
@@ -70,7 +81,7 @@ ClientWorker.define({
         var clientId = this.id;
         var args = Array.prototype.concat.apply([], arguments);
         Array.prototype.splice.call(args, 0, 2, clientId, buildId);
-        message = ['Client', clientId ?' @{0}': '', buildId ? ' about #{1}' : '', ": ", message].join('');
+        message = ['Client', clientId ? ' @{0}' : '', buildId ? ' about #{1}' : '', ": ", message].join('');
         message = message.format.apply(message, args);
         console.log(message);
         //a client worker never emits logs to the server

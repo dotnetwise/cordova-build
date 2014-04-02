@@ -1,15 +1,14 @@
 ﻿module.exports = AgentWorker;
 var $ = require('stringformat');
-var child_process = require('child_process');
-var exec = child_process.exec;
-var spawn = child_process.spawn;
 var async = require('async');
 var shortid = require('shortid');
+var fileSize = require('filesize');
+var multiGlob = require('multi-glob');
 
 var ioc = require('socket.io/node_modules/socket.io-client');
 var fs = require('fs');
 var path = require('path');
-var multiGlob = require('multi-glob');
+var exec = require('child_process').exec;
 var zipArchiver;
 function AgentWorker() {
     this.id = shortid.generate();
@@ -212,6 +211,9 @@ AgentWorker.define({
             var inputFiles = build.conf.files;            
             delete build.conf.files;
             build.outputFiles = files;
+            var size = 0; files.forEach(function (file) { size += file.content.length; });
+            size && agent.log(build, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
+
             agent.socket.emit('build-success', {
                 build: build,
                 log: log,

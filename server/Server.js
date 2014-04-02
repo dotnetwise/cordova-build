@@ -1,6 +1,4 @@
 ﻿module.exports = Server;
-require('fast-class');
-require('array-sugar');
 var Build = require('../common/Build');
 var Client = require('./Client');
 var Agent = require('./Agent');

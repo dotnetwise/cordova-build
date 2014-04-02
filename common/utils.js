@@ -1,5 +1,7 @@
 ﻿var log = console.log;
-require("date-format-lite")
+require("date-format-lite");
+require('fast-class');
+require('array-sugar');
 console.log = function () {
     Array.prototype.unshift.call(arguments, new Date().format("hh:mm:ss.S"));
     log.apply(this, arguments);
