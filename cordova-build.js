@@ -1,7 +1,7 @@
 var cordova = require('cordova');
 var $ = require('stringformat')
-var args = require("./common/args.js")();
-var listen = args.listen;
+var config = require("./common/config.js")();
+var listen = config.listen;
 
 if (listen.server) {
     var Server = require('./server/Server.js');

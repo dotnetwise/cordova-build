@@ -5,12 +5,14 @@ var Build = require('../common/Build');
 var Client = require('./Client');
 var Agent = require('./Agent');
 var io = require('socket.io');
+var async = require('async');
 
 function Server() {
     this.agents = [];
     this.buildsQueue = [];
     this.clients = [];
     this.platforms = {};
+    this.builds = {};
 };
 Server.define({
     listen: function (config) {
@@ -18,11 +20,13 @@ Server.define({
         config = config || {};
         this.config = config;
         var ios = this.socket = io.listen(config.port || 8300);
+        ios.set('log level', 2);//show warnings
 
         var agents = ios
             .of('/agent')
             .on('connection', function (socket) {
                 var agent = new Agent(socket);
+                console.log("Server[A]: agent {0} connected".format(socket.id));
                 agent.onConnect(this);
                 //socket.on({
                 //    'disconnect': function () {
@@ -40,21 +44,21 @@ Server.define({
                         });
                     }
                 });
-                //clientSocket.emit('news', { news: 'item' });
             });
 
 
         var clients = ios
             .of('/client')
-            .on('connection', function (clientSocket) {
-                var client = new Client(clientSocket);
+            .on('connection', function (socket) {
+                var client = new Client(socket);
+                console.log("Server[C]: client {0} connected".format(socket.id));
                 server.clients.push(client);
                 client.onConnect(server);
-                clientSocket.on('disconnect', function () {
+                socket.on('disconnect', function () {
                     client.onDisconnect();
                     server.clients.remove(client);
                 });
-                //clientSocket.emit('news', { news: 'item' });
+                //socket.emit('news', { news: 'item' });
             });
 
         this.processQueueInterval = setInterval(this.processQueue.bind(this), 1000);
@@ -72,7 +76,7 @@ Server.define({
             var agents = server.platforms[platform];
             agents && agents.forEach(function (agent) {
                 if (!agent.busy) {
-                    agent.startBuild(build, platform);
+                    agent.startBuild(build);
                     startBuilding = true;
                     return false;
                 }
@@ -80,6 +84,11 @@ Server.define({
             if (!startBuilding)
                 this.buildsQueue.push(build);
         }
+    }, 
+    log: function(msg, buildId, sender) {
+        var build = this.builds[buildId];
+        if (build && build.client && build.client != sender)
+            build.client.sendLog(msg, buildId);
     }
 });
 

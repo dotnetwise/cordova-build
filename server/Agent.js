@@ -1,4 +1,5 @@
 module.exports = Agent;
+var fileSize = require('filesize');
 function Agent(socket) {
     this.socket = socket;
     this.platforms = [];
@@ -20,14 +21,18 @@ Agent.define({
     onDisconnect: function () {
 
     },
-    startBuild: function (build, platform) {
+    startBuild: function (build) {
         this.busy = true;
         var client = build.client;
         delete build.client;
-        this.socket.emit('build', {
-            build: build,
-            platform: platform,
-        });
+        delete build.agent;
+        var size = 0; build.conf.files.forEach(function (file) { size += file.content.length; });
+        console.log("Server[A]: sending build {0} to agent {1} on platform {2}...{3}".format(build.id, this.socket.id, build.platform, fileSize(size)));
+        this.socket.emit('build', build);
         build.client = client;
-    }
+        build.agent = this;
+    },
+    sendLog: function (message) {
+        this.socket.emit('log', message);
+    },
 });

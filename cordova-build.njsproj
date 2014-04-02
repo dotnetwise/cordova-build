@@ -7,7 +7,7 @@
     <RootNamespace>remote-build</RootNamespace>
     <NodeExePath />
     <NodeExeArguments />
-    <ScriptArguments>-mode:all -zip:d:\Work\CSafe\SafetyBank\App.Web\phonegap\OptimizedLocal.zip  -agent-platforms:ios,android,wp8 -build:wp8,android</ScriptArguments>
+    <ScriptArguments>-mode:all -port:3333 -files:t:\a\core.zip;t:\a\www.7z -wp8:t:\a\wp8.zip -ios:t:\a\ios.zip -android:t:\a\android.zip  -build:wp8,android -agent:ios,android,wp8</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -25,7 +25,7 @@
     <OutputPath>.</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
-    <ProjectView>ShowAllFiles</ProjectView>
+    <ProjectView>ProjectFiles</ProjectView>
     <NodejsPort>1337</NodejsPort>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="agent\agent.js" />
-    <Compile Include="common\args.js" />
+    <Compile Include="common\config.js" />
     <Compile Include="common\Build.js" />
     <Compile Include="client\client.js" />
     <Compile Include="common\patchSocketIO.js" />

@@ -1,4 +1,10 @@
-﻿var class2type = [];
+﻿var log = console.log;
+require("date-format-lite")
+console.log = function () {
+    Array.prototype.unshift.call(arguments, new Date().format("hh:mm:ss.S"));
+    log.apply(this, arguments);
+}.bind(console);
+var class2type = [];
 "Boolean Number String Function Array Date RegExp Object Error".split(" ").forEach(function (name) {
     class2type["[object " + name + "]"] = name.toLowerCase();
 });
@@ -76,9 +82,9 @@ Object.every = function (obj, callback, context) {
     return true;
 }
 var TYPE_MAP = {
-    'object'   : 1,
-    'function' : 1 
-}   
+    'object': 1,
+    'function': 1
+}
 Array.prototype.unique = (function () {
     return function () {
         var map = {},
@@ -86,24 +92,24 @@ Array.prototype.unique = (function () {
             unique = [];
         for (var i = 0, len = this.length; i < len; i++) {
             var val = this[i];
-            
+
             if (TYPE_MAP[typeof val] && val) {
                 if (!val.__unique__) {
                     unique.push(val);
                     objects.push(val);
                     val.__unique__ = 1;
                 }
-            } 
+            }
             else if (!map[val]) {
                 unique.push(val);
                 map[val] = 1;
             }
         }
-        
+
         for (i = objects.length; i--;) {
             delete objects[i].__unique__;
         }
-        
+
         return unique;
     };
 })();
