@@ -1,5 +1,4 @@
-﻿var ioc = require('socket.io/node_modules/socket.io-client');
-var io = require('socket.io');
+﻿module.exports = rebind;
 function rebind(obj, names) {
     Array.prototype.forEach.call(names, function (name) {
         var original = obj[name];
@@ -19,9 +18,3 @@ function rebind(obj, names) {
     });
 }
 
-    //patch on to support binding with multiple events at once
-rebind(io.Socket.prototype, ["on", "addListener"]);
-rebind(ioc.Socket.prototype, ["on", "addListener"]);
-rebind(ioc.SocketNamespace.prototype, ["on", "addListener"]);
-rebind(ioc.EventEmitter.prototype, ["on", "addListener"]);
-rebind(process.EventEmitter.prototype, ["on", "addListener"]);

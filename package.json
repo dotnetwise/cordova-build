@@ -20,6 +20,8 @@
     "filesize": "~2.0.3",
     "npmlog": "0.0.6",
     "shortid": "~2.0.0",
-    "multi-glob": "~0.4.0"
+    "multi-glob": "~0.4.0",
+    "express": "~3.5.1",
+    "graceful-fs": "~2.0.3"
   }
 }

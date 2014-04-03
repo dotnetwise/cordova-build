@@ -2,6 +2,12 @@
 require("date-format-lite");
 require('fast-class');
 require('array-sugar');
+var ioc = require('socket.io/node_modules/socket.io-client');
+var patch = require('./patch.js');
+patch(ioc.Socket.prototype, ["on", "addListener"]);
+patch(ioc.SocketNamespace.prototype, ["on", "addListener"]);
+patch(ioc.EventEmitter.prototype, ["on", "addListener"]);
+
 console.log = function () {
     Array.prototype.unshift.call(arguments, new Date().format("hh:mm:ss.S"));
     log.apply(this, arguments);

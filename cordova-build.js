@@ -1,4 +1,3 @@
-var cordova = require('cordova');
 var $ = require('stringformat')
 var config = require("./common/config.js")();
 var listen = config.listen;

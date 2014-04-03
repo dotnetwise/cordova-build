@@ -2,13 +2,22 @@
 var Build = require('../common/Build');
 var Client = require('./Client');
 var Agent = require('./Agent');
+var WWW = require('./WWW');
+
+//patch on to support binding with multiple events at once
+
+var fs = require('fs');
 var io = require('socket.io');
 var async = require('async');
+var http = require('http');
+var express = require('express');
 
+var cache = {};
 function Server() {
     this.agents = [];
     this.buildsQueue = [];
     this.clients = [];
+    this.wwws = [];
     this.platforms = {};
     this.builds = {};
 };
@@ -17,11 +26,31 @@ Server.define({
         var server = config ? this : new Server();
         config = config || {};
         this.config = config;
+        var app = this.app = express();
+        var httpServer = this.server = http.createServer(app);
         var port = config.port || 8300;
-        var ios = this.socket = io.listen(port);
+        var ios = this.socket = io.listen(httpServer);
+        var www = __dirname + '/public';
+        cache['index.html'] = fs.readFileSync(www + '/index.html', {
+            encoding: 'utf-8',
+        });
         ios.set('log level', 2);//show warnings
+        app
+            .use(app.router)
+            .use(express.static(www))
+            .get('/', function (req, res) {
+                res.setHeader('Content-Type', 'text/html');
+                var html = cache['index.html'].replace('<script id="start"></script>', '<script id="start">var serverBrowser = new ServerBrowser({0});</script>'.format(JSON.stringify({
+                    protocol: config.protocol,
+                    host: config.server,
+                    port: config.port,
+                })));
+                res.send(html);
+            });
+        
+        httpServer.listen(port);
 
-        var agents = ios
+        this.agents.socket = ios
             .of('/agent')
             .on({
                 'connection': function (socket) {
@@ -53,7 +82,7 @@ Server.define({
             }, this);
 
 
-        var clients = ios
+        this.clients.socket = ios
             .of('/client')
             .on({
                 'connection': function (socket) {
@@ -69,6 +98,22 @@ Server.define({
                         'disconnect': function () {
                             client.onDisconnect();
                             this.clients.remove(client);
+                        },
+                    }, this);
+                    //socket.emit('news', { news: 'item' });
+                },
+            }, this);
+        this.wwws.socket = ios
+            .of('/www')
+            .on({
+                'connection': function (socket) {
+                    var www = new WWW(socket);
+                    server.wwws.push(www);
+                    www.onConnect(server);
+                    socket.on({
+                        'disconnect': function () {
+                            www.onDisconnect();
+                            this.wwws.remove(www);
                         },
                     }, this);
                     //socket.emit('news', { news: 'item' });
@@ -110,10 +155,13 @@ Server.define({
         if (this.config.mode != 'all' || !clientOrAgent) {
             console.log(message);
         }
-        clientOrAgent && clientOrAgent.emitLog({
+        //broadcast the log to all wwws
+        var msg = {
             message: message,
             buildId: buildId,
-        });
+        };
+        this.wwws.socket.emit('log', msg);
+        clientOrAgent && clientOrAgent.emitLog(msg);
     },
     forwardLog: function (build, sender, message, to) {
         if (!to) {
@@ -123,7 +171,7 @@ Server.define({
         if (to && to != sender)
             to.emitLog(message);
     },
-    findBuildById: function(build) {
+    findBuildById: function (build) {
         var buildFound = typeof build == "string" || build && build.id ? this.builds[build && build.id || build] : build;
         return buildFound;
     },
