@@ -44,7 +44,7 @@ AgentWorker.define({
     onConnect: function () {
         this.socket.emit('register', {
             id: this.id,
-            platforms: ['android', 'wp8'],
+            platforms: this.config.agent || ['android', 'wp8'],
         });
     },
     log: function (build, message) {
