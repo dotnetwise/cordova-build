@@ -34,6 +34,11 @@ Server.define({
                             agent.platforms.forEach(function (platform) {
                                 server.platforms[platform].remove(agent);
                             });
+                            if (agent.busy) {
+                                var build = agent.busy;
+                                this.log(agent.busy, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
+                                this.buildsQueue.push(build);
+                            }
                         },
                         'register': function (conf) {
                             agent.id = conf && conf.id;

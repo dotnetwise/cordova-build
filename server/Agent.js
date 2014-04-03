@@ -37,7 +37,7 @@ Agent.define({
         this.busy = false;
     },
     startBuild: function (build) {
-        this.busy = true;
+        this.busy = build;
         var client = build.client;
         delete build.client;
         delete build.agent;
