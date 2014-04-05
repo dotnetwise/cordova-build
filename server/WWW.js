@@ -22,7 +22,7 @@ WWW.define({
         var server = this.server;
         var response = {
             'status': 1,
-            log: server.log,
+            logs: server.logs,
             builds: server.builds.map(function (build) { return build.conf; }),
             agents: server.agents.map(function (agent) { return agent.conf; }),
             latestBuild: server.latestBuild,

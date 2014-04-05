@@ -26,11 +26,24 @@ AgentWorker.define({
         this.socket = ioc.connect(url);
         this.socket.on({
             'connect': this.onConnect,
+            'disconnect': this.onDisconnect,
             'build': this.onBuild,
             'log': function (message) {
                 console.log(message && message.message || message);
             },
         }, this);
+        process.on('exit', function () {
+            this.socket.socket.connected && this.socket.disconnect();
+            this.socket.socket.connected = false;
+        }.bind(this));
+        process.on("SIGINT", function () {
+            this.socket.emit('disconnect');
+            this.socket.socket.connected && this.socket.disconnect();
+            this.socket.socket.connected = false;
+            //graceful shutdown
+            process.exit();
+        }.bind(this));
+
         this.ensureWorkFolder();
         this.detectZipArchiver();
     },
@@ -39,6 +52,9 @@ AgentWorker.define({
             id: this.id,
             platforms: this.conf.agent || ['android', 'wp8'],
         });
+    },
+    'onDisconnect': function () {
+        console.log("AGENT WORKER DISCONNECTED");
     },
     'onBuild': function (build) {
         if (!build) {

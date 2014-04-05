@@ -24,6 +24,7 @@
         .brand {
             width: 230px;
         }
+
         .build-number a {
             font-family: 'Courier New', Courier, 'Nimbus Mono L', monospace;
             color: #3399FF;
@@ -32,7 +33,6 @@
         .icn {
             margin-right: 5px;
         }
-
         .brand img {
             position: absolute;
             margin-left: -24px;
@@ -86,14 +86,18 @@
             padding: 9px 0;
         }
 
+        .log {
+            font-family: 'Courier New';
+            background-color: beige;
+        }
+
         .log.box-content {
             overflow: auto;
             max-height: 280px;
             padding-top: 0;
-            font-family: 'Courier New';
-            background-color: beige;
         }
-        .log span{
+
+        .log span {
             white-space: pre;
         }
 
@@ -125,7 +129,15 @@
             margin-right: 4px;
             max-width: 16px;
             max-height: 16px;
-            -webkit-filter: grayscale(1);
+            -webkit-filter: none;
+            -webkit-filter: none;
+            -moz-filter: none;
+            -ms-filter: none;
+            -o-filter: none;
+            filter: none;
+        }
+        .grayscale.hover:hover {
+            -webkit-filter: none;
             -webkit-filter: none;
             -moz-filter: none;
             -ms-filter: none;
@@ -153,6 +165,10 @@
         .form-horizontal.status .controls {
             margin-left: 75px;
         }
+
+        li.alert {
+            margin-bottom: 0;
+        }
     </style>
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
     <link href="css/charisma-app.css" rel="stylesheet">
@@ -179,6 +195,12 @@
 
     <!-- The fav icon -->
     <link rel="shortcut icon" href="img/favicon.ico">
+    <script id="tplLog" type="text/html">
+        <span data-bind="attr: { title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY') }, text: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          '"
+            class="time"></span><span data-bind="    text: ($data && $data.message || $data || '').replace(/\n/g, '\n          ')"
+                class="br"></span>
+    </script>
+
 </head>
 
 <body>
@@ -195,15 +217,19 @@
                     <img alt="Cordova build" src="img/logo20.png" />
                     <span>Cordova Build</span></a>
                 <div style="display: block; margin-top: 10px; float: left;">
-                    <ul class="breadcrumb" style="display: inline;">
-                        <li>
-                            <a href="#">Home</a> <span class="divider">/</span>
+                    <ul data-bind="visible: status() != 'connected'" class="breadcrumb" style="display: inline;
+                        padding: 0; margin: 0; border: 0 none;">
+                        <li data-bind="visible: status() == 'disconnected'" class="alert alert-warning">
+                            <strong>Disconnected!</strong> We are attempting to automatically reconnect to the server...
+                            <span data-bind="attr: { datetime: disconnectedSince, title: disconnectedSince() && disconnectedSince().format('DD MMM YYYY hh:mm:ss') }, text: disconnectedSince() && disconnectedSince().elapsed()"
+                                datetime-format="since {0} ago"></span>
                         </li>
-                        <li>
-                            <a href="#">Dashboard</a>
+                        <li data-bind="visible: status() == 'connecting'" class="alert alert-info">
+                            <strong>Connecting...</strong>
                         </li>
                     </ul>
                 </div>
+
 
                 <!-- theme selector starts -->
                 <div class="btn-group pull-right theme-container">
@@ -264,32 +290,41 @@
                         <li class="nav-header hidden-tablet">Main</li>
                         <li><a class="ajax-link" href="/"><i class="icn icon-home"></i><span class="hidden-tablet">Dashboard</span></a>
                         </li>
-                        <!-- <li><a class="ajax-link" href="ui.html"><i class="icon-eye-open"></i><span class="hidden-tablet">
+                        <!-- <li><a class="ajax-link" href="ui.html"><i class="icon-eye-open"></i><span
+        class="hidden-tablet">
                             UI Features</span></a></li>
                         <li><a class="ajax-link" href="form.html"><i class="icon-edit"></i><span class="hidden-tablet">
-                            Forms</span></a></li>
-                        <li><a class="ajax-link" href="chart.html"><i class="icon-list-alt"></i><span class="hidden-tablet">
+        Forms</span></a></li>
+                        <li><a class="ajax-link" href="chart.html"><i class="icon-list-alt"></i><span
+        class="hidden-tablet">
                             Charts</span></a></li>
-                        <li><a class="ajax-link" href="typography.html"><i class="icon-font"></i><span class="hidden-tablet">
+                        <li><a class="ajax-link" href="typography.html"><i class="icon-font"></i><span
+        class="hidden-tablet">
                             Typography</span></a></li>
-                        <li><a class="ajax-link" href="gallery.html"><i class="icon-picture"></i><span class="hidden-tablet">
+                        <li><a class="ajax-link" href="gallery.html"><i class="icon-picture"></i><span
+        class="hidden-tablet">
                             Gallery</span></a></li>
                         <li class="nav-header hidden-tablet">Sample Section</li>
-                        <li><a class="ajax-link" href="table.html"><i class="icon-align-justify"></i><span class="hidden-tablet">
+                        <li><a class="ajax-link" href="table.html"><i class="icon-align-justify"></i><span
+        class="hidden-tablet">
                             Tables</span></a></li>
-                        <li><a class="ajax-link" href="calendar.html"><i class="icon-calendar"></i><span class="hidden-tablet">
+                        <li><a class="ajax-link" href="calendar.html"><i class="icon-calendar"></i><span
+        class="hidden-tablet">
                             Calendar</span></a></li>
                         <li><a class="ajax-link" href="grid.html"><i class="icon-th"></i><span class="hidden-tablet">Grid</span></a>
-                        </li>
-                        <li><a class="ajax-link" href="file-manager.html"><i class="icon-folder-open"></i><span class="hidden-tablet">
+        </li>
+                        <li><a class="ajax-link" href="file-manager.html"><i class="icon-folder-open"></i><span
+        class="hidden-tablet">
                             File Manager</span></a></li>
                         <li><a href="tour.html"><i class="icon-globe"></i><span class="hidden-tablet">Tour</span></a>
-                        </li>
+        </li>
                         <li><a class="ajax-link" href="icon.html"><i class="icon-star"></i><span class="hidden-tablet">
-                            Icons</span></a></li>
-                        <li><a href="error.html"><i class="icon-ban-circle"></i><span class="hidden-tablet">Error Page</span></a>
+        Icons</span></a></li>
+                        <li><a href="error.html"><i class="icon-ban-circle"></i><span class="hidden-tablet">Error
+        Page</span></a>
                         </li>
-                        <li><a href="login.html"><i class="icon-lock"></i><span class="hidden-tablet">Login Page</span></a>
+                        <li><a href="login.html"><i class="icon-lock"></i><span class="hidden-tablet">Login
+        Page</span></a>
                         </li>-->
                     </ul>
                     <!--  <label id="for-is-ajax" class="hidden-tablet" for="is-ajax">
@@ -317,13 +352,14 @@
 
                 <!-- <div class="sortable row-fluid">
                     <a data-rel="tooltip" title="6 new members." class="well span3 top-block" href="#">
-            <span class="icon32 icon-red icon-user"></span>
+        <span class="icon32 icon-red icon-user"></span>
                         <div>Total Members</div>
                         <div>507</div>
                         <span class="notification">6</span>
                     </a>
 
-                    <a data-rel="tooltip" title="4 new pro members." class="well span3 top-block" href="#">
+                    <a data-rel="tooltip" title="4 new pro members." class="well span3 top-block"
+        href="#">
             <span class="icon32 icon-color icon-star-on"></span>
                         <div>Pro Members</div>
                         <div>228</div>
@@ -331,14 +367,14 @@
                     </a>
 
                     <a data-rel="tooltip" title="$34 new sales." class="well span3 top-block" href="#">
-            <span class="icon32 icon-color icon-cart"></span>
+        <span class="icon32 icon-color icon-cart"></span>
                         <div>Sales</div>
                         <div>$13320</div>
                         <span class="notification yellow">$34</span>
                     </a>
 
                     <a data-rel="tooltip" title="12 new messages." class="well span3 top-block" href="#">
-            <span class="icon32 icon-color icon-envelope-closed"></span>
+        <span class="icon32 icon-color icon-envelope-closed"></span>
                         <div>Messages</div>
                         <div>25</div>
                         <span class="notification red">12</span>
@@ -360,18 +396,37 @@
                                 <div>
 
                                     <ul class="nav nav-tabs" id="latestBuildTab">
-                                        <li data-bind="hidden: !latestBuild() ? latestBuild.tab('#noBuild') && false : (latestBuild.tab() == '#noBuild' && latestBuild.tab('#info') || true), css: { active: latestBuild.tab() == '#noBuild' }"
+                                        <li data-bind="hidden: !latestBuild() ? latestBuild.tab('#noBuild')
+        && false : (latestBuild.tab() == '#noBuild' && latestBuild.tab('#info') || true), css: {
+            active:
+            latestBuild.tab() == '#noBuild'
+        }"
                                             class="active">
-                                            <a data-bind="click: function (data) { latestBuild.tab('#noBuild'); }," href="#noBuild">General</a>
+                                            <a data-bind="click: function (data) {
+latestBuild.tab('#noBuild');
+},"
+                                                href="#noBuild">General</a>
                                         </li>
-                                        <li data-bind="visible: latestBuild, css: { active: latestBuild.tab() == '#info' }"
+                                        <li data-bind="visible: latestBuild, css: {
+active: latestBuild.tab()
+        == '#info'
+}"
                                             class="active">
-                                            <a data-bind="click: function (data) { latestBuild.tab('#info'); }" href="#info">General</a>
+                                            <a data-bind="click: function (data) {
+latestBuild.tab('#info');
+}"
+                                                href="#info">General</a>
                                         </li>
                                         <!-- ko foreach: latestBuild() && latestBuild().platforms-->
                                         <li data-bind="css: { active: $parent.latestBuild.tab() == '#' + platform }">
-                                            <a data-bind="    click: function (data) { $parent.latestBuild.tab('#' + platform); }, attr: { href: '#' + platform }">
-                                                <img data-bind="attr: { attr: platform, src: 'img/platforms/' + unwrap(platform) + '.png' }"
+                                            <a data-bind="    click: function (data) {
+$parent.latestBuild.tab('#'
+        + platform);
+    }, attr: { href: '#' + platform }">
+                                                <img data-bind="attr: {
+attr: platform, src: 'img/platforms/'
+        + unwrap(platform) + '.png'
+}"
                                                     class="platform"
                                                     alt="Abdullah" />
                                                 <span data-bind="    text: platformName"></span>
@@ -382,14 +437,19 @@
                                     </ul>
 
                                     <div id="latestBuildTabContent" class="tab-content">
-                                        <div data-bind="hidden: latestBuild" class="tab-pane active" id="noBuild">
+                                        <div data-bind="hidden: latestBuild" class="tab-pane active"
+                                            id="noBuild">
                                             <img class="no-build" src="img/platforms/no-build.png" />No build has been run yet
                                         </div>
                                         <script id="tplLastBuild" type="text/html">
                                             <div class="row-fluid">
                                                 <div class="span2">
                                                     <a href="#" style="display: block;">
-                                                        <div data-bind="style: { 'backgroundImage': 'url(' + qr + ')' }" alt="QR Code" class="qr center" />
+                                                        <div data-bind="style: {
+'backgroundImage':
+        'url(' + qr + ')'
+}"
+                                                            alt="QR Code" class="qr center" />
                                                     </a>
                                                 </div>
                                                 <div class="span2">
@@ -397,20 +457,27 @@
                                                         <div class="control-group build-number">
                                                             <label class="control-label">Number:</label>
                                                             <div class="controls">
-                                                                <b><a data-bind="attr: { href: '#' + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2] && $parents[2].id) }, text: '#' + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2] && $parents[2].id)"
+                                                                <b><a data-bind="attr: {
+href: '#'
+        + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2]
+        && $parents[2].id)
+}, text: '#' + ($data && $data.id || $parent && $parent.id || $parents[1]
+&& $parents[1].id || $parents[2] && $parents[2].id)"
                                                                     href="#">#1230</a></b>
                                                             </div>
                                                         </div>
                                                         <div class="control-group">
                                                             <label class="control-label">Status:</label>
                                                             <div class="controls">
-                                                                <span data-bind="css: 'label-' + unwrap(status), text: unwrap($data && $data.statusText) || unwrap(status)"
+                                                                <span data-bind="css: 'label-' + unwrap(status),
+    text: unwrap($data && $data.statusText) || unwrap(status)"
                                                                     class="label label-success">Success</span>
                                                             </div>
                                                         </div>
                                                         <div class="control-group">
                                                             <label class="control-label">Started:</label>
-                                                            <div data-bind="text: unwrap($data && $data.started) && unwrap($data && $data.started).format && unwrap($data && $data.started).format('hh:mm:ss, DD MMM')"
+                                                            <div data-bind="text: unwrap($data && $data.started) && unwrap($data && $data.started).format
+        && unwrap($data && $data.started).format('hh:mm:ss, DD MMM')"
                                                                 class="controls">
                                                             </div>
                                                         </div>
@@ -424,27 +491,33 @@
                                                 </div>
                                                 <div class="span8 log log-big">
                                                     <h3>
-                                                        <!--<span data-bind="text: '#' + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2] && $parents[2].id)" />-->
+                                                        <!--<span data-bind="text: '#' + ($data &&
+        $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2] && $parents[2].id)"
+        />-->
                                                         <small data-bind="    text: $data && $data.hint"></small>
                                                     </h3>
-                                                    <div data-bind="foreach: $data && $data.logs" class="box-content log">
-                                                        <span data-bind="    text: unwrap($data && $data.date) && unwrap($data && $data.date).format && unwrap($data && $data.date).format('hh:mm:ss.S - ') || '- ' "
-                                                            class="time" /><span
-                                                                data-bind="    text: $data && $data.message || $data" class="br" />
+                                                    <div data-bind="template: { foreach: $data && $data.logs, name: 'tplLog' }"
+                                                        class="box-content log">
                                                     </div>
                                                 </div>
                                             </div>
                                         </script>
-                                        <div data-bind="visible: latestBuild, css: { active: latestBuild.tab() == '#info' }" class="tab-pane"
+                                        <div data-bind="visible: latestBuild, css: { active: latestBuild.tab() == '#info' }"
+                                            class="tab-pane"
                                             id="info">
-                                            <!--ko template: { name: 'tplLastBuild', data: latestBuild }-->
+                                            <!--ko template: { name: 'tplLastBuild', data: latestBuild
+        }-->
                                             <!--/ko-->
                                         </div>
                                         <!--ko with: latestBuild-->
                                         <!--ko foreach: platforms-->
-                                        <div data-bind="attr: { id: platform }, css: { active: $parents[1].latestBuild.tab() == '#' + platform }"
+                                        <div data-bind="attr: { id: platform }, css: {
+active: $parents[1].latestBuild.tab()
+        == '#' + platform
+}"
                                             class="tab-pane">
-                                            <!--ko template: { name: 'tplLastBuild', data: $data} -->
+                                            <!--ko template: { name: 'tplLastBuild', data: $data}
+        -->
                                             <!--/ko-->
                                         </div>
                                         <!--/ko-->
@@ -461,18 +534,21 @@
                             </h3>
                             <p>
                                 You can scan the qr code to install it on an IOS or Android device
-                            </p>
+        </p>
                             <div>
-                                <i class="icon-info-sign" style="margin-right: 5px;"></i>For Windows Phone, you need to download
+                                <i class="icon-info-sign" style="margin-right: 5px;"></i>For Windows
+        Phone, you need to download
                                 the xap and deploy it using 
-                                <ul class="thumbnails" style="display: inline-block; float: right; width: 30px; height: 30px;
+                                <ul class="thumbnails" style="display: inline-block; float: right;
+        width: 30px; height: 30px;
                                     margin: -5px 10px;">
-                                    <li id="image-1" class="thumbnail" style="width: 30px; height: 30px;">
+                                    <li id="image-1" class="thumbnail" style="width: 30px; height:
+        30px;">
                                         <a style="width: 30px; height: 30px; background: url(http://i.msdn.microsoft.com/dynimg/IC654205.png)"
-                                            title="Sample Image 1"
+        title="Sample Image 1"
                                             href="http://i.msdn.microsoft.com/dynimg/IC654205.png">
-                                            <img style="width: 30px; height: 30px;" class="grayscale" src="http://i.msdn.microsoft.com/dynimg/IC654205.png"
-                                                alt="Application Deployment tool"></a>
+        <img style="width: 30px; height: 30px;" class="grayscale" src="http://i.msdn.microsoft.com/dynimg/IC654205.png"
+        alt="Application Deployment tool"></a>
                                     </li>
                                 </ul>
                                 from Windows Phone 8 SDK.
@@ -481,10 +557,10 @@
 
                             <!--<p class="center">
                             <a href="http://usman.it/free-responsive-admin-template" class="btn btn-large
-            btn-primary"><i
+        btn-primary"><i
                                 class="icon-chevron-left icon-white"></i>Back to article</a>
                             <a href="http://usman.it/free-responsive-admin-template" class="btn btn-large"><i
-            class="icon-download-alt">
+        class="icon-download-alt">
                             </i>Download Page</a>
                         </p>-->
                 </div>
@@ -508,7 +584,10 @@
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
-                                        <img data-bind="attr: { alt: $data.platform, src: $data.qr || ('img/platforms/' + ($data.platform || $data) + '.png') }"
+                                        <img data-bind="attr: {
+alt: $data.platform, src: $data.qr
+        || ('img/platforms/' + ($data.platform || $data) + '.png')
+}"
                                             class="dashboard-avatar" src="img/platforms/android.png">
                                         <!--/ko-->
                                         <!--</a>-->
@@ -517,10 +596,12 @@
                                                 <label>Name:</label><span data-bind="text: id"></span>
                                             </dd>
                                             <dd class="since">
-                                                <label>Since:</label><span data-bind="attr: { datetime: $data.since, tooltip: unwrap($data.since) && (unwrap(new Date($data.since)).format('hh:mm:ss, DD MMM') || $data.since) }, text: unwrap($data.since) && (unwrap(new Date($data.since)).elapsed())"></span>
+                                                <label>Since:</label><span datetime-format="{0} ago"
+                                                    data-bind="attr: { datetime: $data.since, title: unwrap($data.since) && new Date(unwrap($data.since)).format('hh:mm:ss, DD MMM YYYY') || $data.since }, text: unwrap($data.since) && new Date(unwrap($data.since)).elapsed()"></span>
                                             </dd>
                                             <dd class="status">
-                                                <label>Status:</label><span data-bind="cls: 'label-' + unwrap($data.status), text: unwrap($data.statusText || $data.status)"
+                                                <label>Status:</label><span data-bind="cls: 'label-'
+        + unwrap($data.status), text: unwrap($data.statusText || $data.status)"
                                                     class="label label-success"></span>
                                             </dd>
                                         </dl>
@@ -536,29 +617,34 @@
                         <div class="box-header well" data-original-title>
                             <h2><i class="icn icon-list-alt"></i>Server Logs</h2>
                             <div class="box-icon">
+                                <a data-bind="click: function (a, e) {
+$('#server-logs-modal').modal('show');
+}"
+                                    href="#" class="btn btn-setting btn-round">
+                                    <i class="icon-eye-open"></i></a>
                                 <a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
                         </div>
                         <div class="box-content">
-                            <div data-bind="visible: !$data || !unwrap($data.logs).length, text: 'Nothing to show yet'"
+                            <div data-bind="
+    visible: !$data || !unwrap($data.logs).length,
+    text: 'Nothing to show yet'"
                                 class="box-content">
                             </div>
-                            <div data-bind="hidden: !$data || !unwrap($data.logs).length, foreach: $data && $data.logs"
+                            <div data-bind="hidden: !$data || !unwrap($data.logs).length, template:
+        { foreach: $data && $data.logs, name: 'tplLog' }"
                                 class="box-content log">
-                                <span data-bind="    text: unwrap($data && $data.date) && unwrap($data && $data.date).format && unwrap($data && $data.date).format('hh:mm:ss.S : ') || '- : ' ">
-                                </span><span data-bind="    text: $data && $data.message || $data" class="br"></span>
                             </div>
 
                         </div>
                     </div>
-
                     <!--<div class="box span4 fixed-box">
                         <div class="box-header well" data-original-title>
                             <h2><i class="icon-list-alt"></i>Realtime Traffic</h2>
                             <div class="box-icon">
                                 <a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
-                                <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
+        <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
                         </div>
                         <div class="box-content">
@@ -570,7 +656,8 @@
                             </p>
                             <p>
                                 Time between updates:
-                                <input id="updateInterval" type="text" value="" style="text-align: right; width: 5em">
+                                <input id="updateInterval" type="text" value="" style="text-align:
+        right; width: 5em">
                                 milliseconds
                             </p>
                         </div>
@@ -593,8 +680,11 @@
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
-                                        <img data-bind="attr: { alt: $data.platform, src: $data.qr || ('img/platforms/' + ($data.platform || $data) + '.png') }"
-                                            class="dashboard-avatar" src="img/platforms/android.png">
+                                        <img data-bind="attr: {
+alt: $data.platform, src: $data.qr
+        || ('img/platforms/' + ($data.platform || $data) + '.png')
+}"
+                                            class="dashboard-avatar grayscale hover" src="img/platforms/android.png">
                                         <!--/ko-->
                                         <!--</a>-->
                                         <dl class="specs">
@@ -602,10 +692,16 @@
                                                 <label>Name:</label><span data-bind="text: id"></span>
                                             </dd>
                                             <dd class="since">
-                                                <label>Since:</label><span data-bind="attr: { datetime: $data.since, tooltip: unwrap($data.since) && (unwrap(new Date($data.since)).format('hh:mm:ss, DD MMM') || $data.since) }, text: unwrap($data.since) && (unwrap(new Date($data.since)).elapsed())"></span>
+                                                <label>Since:</label><span datetime-format="{0} ago"
+                                                    data-bind="attr: {
+    datetime: $data.since,
+    title: unwrap($data.since) &&
+        new Date(unwrap($data.since)).format('hh:mm:ss, DD MMM YYYY') || $data.since
+}, text: unwrap($data.since) && (new Date(unwrap($data.since)).elapsed())"></span>
                                             </dd>
                                             <dd class="status">
-                                                <label>Status:</label><span data-bind="cls: 'label-' + unwrap($data.status), text: unwrap($data.statusText || $data.status)"
+                                                <label>Status:</label><span data-bind="
+    cls: 'label-' + unwrap($data.status), text: unwrap($data.statusText || $data.status)"
                                                     class="label label-success"></span>
                                             </dd>
                                         </dl>
@@ -626,7 +722,7 @@
 
             <hr>
 
-            <div class="modal hide fade" id="myModal">
+            <!--<div class="modal hide fade" id="myModal">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">×</button>
                     <h3>Settings</h3>
@@ -638,95 +734,126 @@
                     <a href="#" class="btn" data-dismiss="modal">Close</a>
                     <a href="#" class="btn btn-primary">Save changes</a>
                 </div>
+            </div>-->
+
+            <div class="modal hide fade" id="server-logs-modal" style="width: 80%; left: 20%;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h3>Server logs</h3>
+                </div>
+                <div class="modal-body">
+                    <div data-bind="visible: status() == 'disconnected'" class="alert alert-warning">
+                        <strong>Disconnected!</strong> We are attempting to automatically reconnect to the server...
+                        <span data-bind="attr: { datetime: disconnectedSince, title: disconnectedSince() && disconnectedSince().format('DD MMM YYYY hh:mm:ss') }, text: disconnectedSince() && disconnectedSince().elapsed()"
+                            datetime-format="since {0} ago"></span>
+                    </div>
+                    <div data-bind="visible: status() != 'disconnected'">
+                        <div data-bind="visible: !$data || !unwrap($data.logs).length,
+    text: 'Nothing to show yet'"
+                            class="box-content log">
+                            Nothing to show yet
+                        </div>
+                    </div>
+                    <div data-bind="
+    hidden: !$data || !unwrap($data.logs).length,
+    template: { foreach: $data && $data.logs, name: 'tplLog' }"
+                        class="log">
+                    </div>
+                </div>
             </div>
-
-            <footer>
-                <p class="pull-left">
-                    &copy; <a href="http://usman.it" target="_blank">Muhammad Usman</a> 2012
-                </p>
-                <p class="pull-right">
-                    Powered by: <a href="http://usman.it/free-responsive-admin-template">Charisma</a>
-                </p>
-            </footer>
-
+            <div class="modal-footer">
+                <a href="#" class="btn" data-dismiss="modal">Close</a>
+                <!--<a href="#" class="btn btn-primary">Save changes</a>-->
+            </div>
         </div>
-        <!--/.fluid-container-->
 
-        <!-- external javascript
+        <footer>
+            <p class="pull-left">
+                <a href="http://www.dotnetwise.com" target="_blank">DotNetWise</a> 2014
+            </p>
+            <p class="pull-right">
+                Design template by: <a target="_blank" href="http://usman.it/free-responsive-admin-template">Charisma</a>
+            </p>
+        </footer>
+
+    </div>
+    <!--/.fluid-container-->
+
+    <!-- external javascript
 	================================================== -->
-        <!-- Placed at the end of the document so the pages load faster -->
+    <!-- Placed at the end of the document so the pages load faster -->
 
-        <!-- jQuery -->
-        <script src="js/jquery-1.7.2.min.js"></script>
-        <!-- jQuery UI -->
-        <script src="js/jquery-ui-1.8.21.custom.min.js"></script>
-        <!-- transition / effect library -->
-        <script src="js/bootstrap-transition.js"></script>
-        <!-- alert enhancer library -->
-        <script src="js/bootstrap-alert.js"></script>
-        <!-- modal / dialog library -->
-        <script src="js/bootstrap-modal.js"></script>
-        <!-- custom dropdown library -->
-        <script src="js/bootstrap-dropdown.js"></script>
-        <!-- scrolspy library -->
-        <script src="js/bootstrap-scrollspy.js"></script>
-        <!-- library for creating tabs -->
-        <script src="js/bootstrap-tab.js"></script>
-        <!-- library for advanced tooltip -->
-        <script src="js/bootstrap-tooltip.js"></script>
-        <!-- popover effect library -->
-        <script src="js/bootstrap-popover.js"></script>
-        <!-- button enhancer library -->
-        <script src="js/bootstrap-button.js"></script>
-        <!-- accordion library (optional, not used in demo) -->
-        <script src="js/bootstrap-collapse.js"></script>
-        <!-- carousel slideshow library (optional, not used in demo) -->
-        <script src="js/bootstrap-carousel.js"></script>
-        <!-- autocomplete library -->
-        <script src="js/bootstrap-typeahead.js"></script>
-        <!-- tour library -->
-        <script src="js/bootstrap-tour.js"></script>
-        <!-- library for cookie management -->
-        <script src="js/jquery.cookie.js"></script>
-        <!-- calander plugin -->
-        <script src='js/fullcalendar.min.js'></script>
-        <!-- data table plugin -->
-        <script src='js/jquery.dataTables.min.js'></script>
+    <!-- jQuery -->
+    <script src="js/jquery-1.7.2.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="js/jquery-ui-1.8.21.custom.min.js"></script>
+    <!-- transition / effect library -->
+    <script src="js/bootstrap-transition.js"></script>
+    <!-- alert enhancer library -->
+    <script src="js/bootstrap-alert.js"></script>
+    <!-- modal / dialog library -->
+    <script src="js/bootstrap-modal.js"></script>
+    <!-- custom dropdown library -->
+    <script src="js/bootstrap-dropdown.js"></script>
+    <!-- scrolspy library -->
+    <script src="js/bootstrap-scrollspy.js"></script>
+    <!-- library for creating tabs -->
+    <script src="js/bootstrap-tab.js"></script>
+    <!-- library for advanced tooltip -->
+    <script src="js/bootstrap-tooltip.js"></script>
+    <!-- popover effect library -->
+    <script src="js/bootstrap-popover.js"></script>
+    <!-- button enhancer library -->
+    <script src="js/bootstrap-button.js"></script>
+    <!-- accordion library (optional, not used in demo) -->
+    <script src="js/bootstrap-collapse.js"></script>
+    <!-- carousel slideshow library (optional, not used in demo) -->
+    <script src="js/bootstrap-carousel.js"></script>
+    <!-- autocomplete library -->
+    <script src="js/bootstrap-typeahead.js"></script>
+    <!-- tour library -->
+    <script src="js/bootstrap-tour.js"></script>
+    <!-- library for cookie management -->
+    <script src="js/jquery.cookie.js"></script>
+    <!-- calander plugin -->
+    <script src='js/fullcalendar.min.js'></script>
+    <!-- data table plugin -->
+    <script src='js/jquery.dataTables.min.js'></script>
 
-        <!-- chart libraries start -->
-        <script src="js/excanvas.js"></script>
-        <script src="js/jquery.flot.min.js"></script>
-        <script src="js/jquery.flot.pie.min.js"></script>
-        <script src="js/jquery.flot.stack.js"></script>
-        <script src="js/jquery.flot.resize.min.js"></script>
-        <!-- chart libraries end -->
+    <!-- chart libraries start -->
+    <script src="js/excanvas.js"></script>
+    <script src="js/jquery.flot.min.js"></script>
+    <script src="js/jquery.flot.pie.min.js"></script>
+    <script src="js/jquery.flot.stack.js"></script>
+    <script src="js/jquery.flot.resize.min.js"></script>
+    <!-- chart libraries end -->
 
-        <!-- select or dropdown enhancer -->
-        <script src="js/jquery.chosen.min.js"></script>
-        <!-- checkbox, radio, and file input styler -->
-        <script src="js/jquery.uniform.min.js"></script>
-        <!-- plugin for gallery image view -->
-        <script src="js/jquery.colorbox.min.js"></script>
-        <!-- rich text editor library -->
-        <script src="js/jquery.cleditor.min.js"></script>
-        <!-- notification plugin -->
-        <script src="js/jquery.noty.js"></script>
-        <!-- file manager library -->
-        <script src="js/jquery.elfinder.min.js"></script>
-        <!-- star rating plugin -->
-        <script src="js/jquery.raty.min.js"></script>
-        <!-- for iOS style toggle switch -->
-        <script src="js/jquery.iphone.toggle.js"></script>
-        <!-- autogrowing textarea plugin -->
-        <script src="js/jquery.autogrow-textarea.js"></script>
-        <!-- multiple file upload plugin -->
-        <script src="js/jquery.uploadify-3.1.min.js"></script>
-        <!-- history.js for cross-browser state change on ajax -->
-        <script src="js/jquery.history.js"></script>
-        <!-- application script for Charisma demo -->
-        <script src="js/charisma.js"></script>
-        <script src="js/qr-js/qr.min.js"></script>
+    <!-- select or dropdown enhancer -->
+    <script src="js/jquery.chosen.min.js"></script>
+    <!-- checkbox, radio, and file input styler -->
+    <script src="js/jquery.uniform.min.js"></script>
+    <!-- plugin for gallery image view -->
+    <script src="js/jquery.colorbox.min.js"></script>
+    <!-- rich text editor library -->
+    <script src="js/jquery.cleditor.min.js"></script>
+    <!-- notification plugin -->
+    <script src="js/jquery.noty.js"></script>
+    <!-- file manager library -->
+    <script src="js/jquery.elfinder.min.js"></script>
+    <!-- star rating plugin -->
+    <script src="js/jquery.raty.min.js"></script>
+    <!-- for iOS style toggle switch -->
+    <script src="js/jquery.iphone.toggle.js"></script>
+    <!-- autogrowing textarea plugin -->
+    <script src="js/jquery.autogrow-textarea.js"></script>
+    <!-- multiple file upload plugin -->
+    <script src="js/jquery.uploadify-3.1.min.js"></script>
+    <!-- history.js for cross-browser state change on ajax -->
+    <script src="js/jquery.history.js"></script>
+    <!-- application script for Charisma demo -->
+    <script src="js/charisma.js"></script>
+    <script src="js/qr-js/qr.min.js"></script>
 
-        <script id="start"></script>
+    <script id="start"></script>
 </body>
 </html>

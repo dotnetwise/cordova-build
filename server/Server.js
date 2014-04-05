@@ -21,6 +21,7 @@ function Server() {
     this.agents = [];
     this.buildsQueue = [];
     this.clients = [];
+    this.logs = [];
     this.wwws = [];
     this.platforms = {};
     this.builds = [];
@@ -159,8 +160,9 @@ Server.define({
         this.processQueueInterval = setInterval(this.processQueue.bind(this), 1000);
     },
     stop: function () {
-        this.socket.server.close();
         clearInterval(this.processQueueInterval);
+        this.socket.server.close();
+        process.exit();
     },
     notifyStatusAllWWWs: function (kind, what, obj) {
         this.wwws.socket.emit('partial-status', arguments.length == 1 ? kind : {
@@ -201,6 +203,7 @@ Server.define({
         }
         //broadcast the log to all wwws
         var msg = {
+            date: new Date(),
             message: message,
         };
         if (buildId)
@@ -209,7 +212,9 @@ Server.define({
         if (build && build.conf)
             build.conf.logs.push(message);
 
+        this.logs.unshift(msg);
         this.wwws.socket.emit('log', msg);
+        this.notifyStatusAllWWWs('log', 'log', msg);
         clientOrAgent && clientOrAgent.emitLog(msg);
     },
     forwardLog: function (build, sender, message, to) {
@@ -223,6 +228,8 @@ Server.define({
         build && build.conf.logs.push(message);
         if (to && to != sender)
             to.emitLog(message);
+        this.logs.unshift(message);
+        this.notifyStatusAllWWWs('log', 'log', message);
     },
     findBuildById: function (build) {
         var buildFound = typeof build == "string" || build && build.id ? this.builds[build && build.id || build] || build && build.id && build : build;

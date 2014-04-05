@@ -12,9 +12,11 @@ if (inBrowser) {
         $('[datetime]').each(function () {
             var $this = $(this);
             var date = new Date($this.attr("datetime"));
-            $this.text(date.elapsed()); 
+            var format = $this.attr('datetime-format');
+            var elapsed = date.elapsed();
+            $this.text(elapsed && (format ? format.format(elapsed) : elapsed)); 
         }); 
-    }, 5000);
+    }, 1000);
 }
 var observable = ko.observable;
 var observableArray = ko.observableArray;
@@ -30,10 +32,11 @@ function ServerBrowser(conf) {
     this.logs = observableArray([]);
     this.agents = observableArray([]);
     this.builds = observableArray([]);
-    this.builds = observableArray([]);
-    this.client = observableArray([]);
+    this.clients = observableArray([]);
     this.latestBuild = observable();
     this.latestBuild.tab = observable('#noBuild');
+    this.status = observable('connecting');
+    this.disconnectedSince = observable();
     this.statuses = {
         'queued': 'img/platforms/queue.gif',
         'working': 'img/platforms/working.gif',
@@ -52,15 +55,28 @@ ServerBrowser.define({
 
         this.socket.on({
             'connect': this.onConnect,
+            'disconnect': this.onDisconnect,
             'status': this.onStatus,
             'log': this.onLog,
             'partial-status': this.onPartialStatus,
         }, this);
     },
     'onConnect': function () {
-        console.log('connected');
+        this.status('connected');
         this.socket.emit('get-status');
     },
+    'onDisconnect': function() {
+      this.disconnectedSince(new Date());
+      this.status('disconnected');
+      this.agents([]);
+      this.builds([]);
+      this.clients([]);
+      //this.logs([]);  -- do not clear logs
+      this.agents.map = {};
+      this.builds.map = {};
+      this.clients.map = {};
+      this.logs.map = {};
+     },
     'onPartialStatus': function (status) {
         console.warn('partial status', status);
         switch (status && status.what) {
@@ -73,10 +89,17 @@ ServerBrowser.define({
             case 'client':
                 update(this.clients);
                 break;
+            case 'log':
+                update(this.logs);
+                break;
         }
         function update(list) {
             list.map = list.map || {};
             switch (status && status.kind) {
+                case 'log':
+                    list.unshift(status.obj);
+                    console.log('log',status.obj);
+                    break;
                 case 'started':
                 case 'connected':
                 case 'failed':
@@ -86,7 +109,7 @@ ServerBrowser.define({
                     var i = list.indexOf(o);
                     i < 0 ? list.push(status.obj) : list[i] = status.obj;
                     list.map[status.obj.id] = o;
-                    console.log("LIST", status, list);
+                    //console.log("LIST", status, list);
                     break;
                 case 'disconnected':
                     var id = status.obj.id;
@@ -94,7 +117,7 @@ ServerBrowser.define({
                         return item.id == id;
                     });
                     delete list.map[status.obj.id];
-                    console.log("LIST", status.obj.id, status, list.map, list);
+                    //console.log("LIST", status.obj.id, status, list.map, list);
                     break;
             }
             return status.obj;
@@ -141,7 +164,7 @@ ServerBrowser.define({
             //        logs: ['some log1', 'some log 2'],
             //    }]
             //});
-
+            this.logs(status.logs);
             this.agents.map = {};
             status.agents && status.agents.forEach(function(agent) {
                 this.agents.map[agent.id] = agent;

@@ -25,22 +25,16 @@ Agent.define({
                     this.platforms.push(platform);
                 }, this);
             },
+            'disconnect': agent.onDisconnect,
             'build-success': agent.onBuildSuccess,
             'build-fail': agent.onBuildFailed,
             'log': function (message) {
                 server.forwardLog(message && message.buildId, agent, message);
             },
         }, this);
-        process.on("SIGINT", function () {
-            this.socket.emit('disconnect');
-            this.socket.disconnect();
-            console.log('xxxxx');
-            //graceful shutdown
-            process.exit();
-        }.bind(this));
     },
     'onDisconnect': function () {
-        console.log(this.id, "AGENT DISCONNECTED");
+        this.server.notifyStatusAllWWWs('disconnected', 'agent', this.conf);
     },
     'onBuildSuccess': function (responseBuild) {
         var build = this.server.findBuildById(responseBuild);

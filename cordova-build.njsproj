@@ -18,7 +18,7 @@
     <ProjectGuid>09e78391-a007-4117-baa2-af37e95fab56</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>cordova-build.js</StartupFile>
+    <StartupFile>index.js</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -41,7 +41,7 @@
     <Compile Include="common\Build.js" />
     <Compile Include="common\patch.js" />
     <Compile Include="common\serverUtils.js" />
-    <Compile Include="cordova-build.js" />
+    <Compile Include="index.js" />
     <Compile Include="server.js" />
     <Compile Include="server\Agent.js" />
     <Compile Include="server\Client.js" />

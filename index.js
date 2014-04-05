@@ -4,13 +4,17 @@ var listen = conf.listen;
 process.on('exit', function () {
  //handle your on exit code
  console.log("Exiting, have a nice day");
+ 
+
 });
 	
 var tty = require("tty");
 
 process.openStdin().on("keypress", function(chunk, key) {
   if(key && key.name === "c" && key.ctrl) {
-    process.exit();
+      console.log("ctrl+c SIGNIT ");
+    process.emit("SIGINT");
+    //process.exit();
   }
 });
 

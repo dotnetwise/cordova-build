@@ -1,8 +1,8 @@
 {
   "name": "cordova-build",
   "version": "0.0.0",
-  "description": "cordova-build",
-  "main": "cordova-build.js",
+  "description": "Cordova build - an alternative to phonegap build that runs on your servers/agents",
+  "main": "index.js",
   "author": {
     "name": "dotnetwise",
     "email": "laurentiu.macovei@dotnetwise.com"
