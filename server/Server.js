@@ -3,14 +3,18 @@ var Build = require('../common/Build');
 var Client = require('./Client');
 var Agent = require('./Agent');
 var WWW = require('./WWW');
+var serverUtils = require('../common/serverUtils');
 
-//patch on to support binding with multiple events at once
+    //patch on to support binding with multiple events at once
 
+var path = require('path');
 var fs = require('fs');
-var io = require('socket.io');
 var async = require('async');
+var mkdirp = require('mkdirp');
+var io = require('socket.io');
 var http = require('http');
 var express = require('express');
+var extend = require('extend');
 
 var cache = {};
 function Server() {
@@ -19,21 +23,42 @@ function Server() {
     this.clients = [];
     this.wwws = [];
     this.platforms = {};
-    this.builds = {};
+    this.builds = [];
 };
 Server.define({
-    listen: function (config) {
-        var server = config ? this : new Server();
-        config = config || {};
-        this.config = config;
+    listen: function (conf) {
+        var server = conf ? this : new Server();
+        conf = conf || {};
+        this.conf = conf;
+        this.location = conf.location || path.resolve('builds');
         var app = this.app = express();
         var httpServer = this.server = http.createServer(app);
-        var port = config.port || 8300;
+        var port = conf.port || 8300;
         var ios = this.socket = io.listen(httpServer);
         var www = __dirname + '/public';
-        cache['index.html'] = fs.readFileSync(www + '/index.html', {
+        var htmlFiles = ['index.html'];
+        var encoding = {
             encoding: 'utf-8',
+        };
+        htmlFiles.forEach(function (file) {
+            var path = www + '/' + file;
+            var lastTime = new Date();
+            read();
+            fs.watch(path, function (event, filename) {
+                if (lastTime < new Date()) {
+                    lastTime = new Date(new Date().getTime() + 500);//500 ms treshold to avoid duplicates on windows
+                    read(true);
+                }
+            });
+            function read(async) {
+                if (async)
+                    fs.readFile(path, encoding, function (err, content) {
+                        cache[file] = err || content;
+                    });
+                else cache[file] = fs.readFileSync(path, encoding);
+            }
         });
+
         ios.set('log level', 2);//show warnings
         app
             .use(app.router)
@@ -41,14 +66,13 @@ Server.define({
             .get('/', function (req, res) {
                 res.setHeader('Content-Type', 'text/html');
                 var html = cache['index.html'].replace('<script id="start"></script>', '<script id="start">var serverBrowser = new ServerBrowser({0});</script>'.format(JSON.stringify({
-                    protocol: config.protocol,
-                    host: config.server,
-                    port: config.port,
+                    protocol: conf.protocol,
+                    host: conf.server,
+                    port: conf.port,
                 })));
                 res.send(html);
             });
-        
-        httpServer.listen(port);
+
 
         this.agents.socket = ios
             .of('/agent')
@@ -58,24 +82,34 @@ Server.define({
                     agent.onConnect(server);
                     socket.on({
                         'disconnect': function () {
-                            agent.onDisconnect();
-                            server.agents.remove(agent);
-                            agent.platforms.forEach(function (platform) {
-                                server.platforms[platform].remove(agent);
-                            });
-                            if (agent.busy) {
-                                var build = agent.busy;
-                                this.log(agent.busy, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
-                                this.buildsQueue.push(build);
+                            try {
+                                agent.onDisconnect();
+                                server.agents.remove(agent);
+                                agent.platforms.forEach(function (platform) {
+                                    server.platforms[platform].remove(agent);
+                                });
+                                if (agent.busy) {
+                                    var build = agent.busy;
+                                    this.log(agent.busy, build.client, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
+                                    build.agent = null;
+                                    this.buildsQueue.push(build);
+                                }
+                            }
+                            finally {
+                                this.notifyStatusAllWWWs('disconnected', 'agent', agent.conf);
                             }
                         },
                         'register': function (conf) {
                             agent.id = conf && conf.id;
                             this.log(null, agent, "[A] agent connected supporting platforms [{2}]", agent.platforms.join(', '));
-                            server.agents.push(socket);
+                            server.agents.push(agent);
                             agent.platforms.forEach(function (platform) {
                                 (server.platforms[platform] = server.platforms[platform] || []).push(agent);
                             });
+                            agent.conf.platforms = agent.platforms;
+                            agent.conf.since = new Date();
+                            agent.conf.status = 'ready';
+                            this.notifyStatusAllWWWs('connected', 'agent', agent.conf);
                         },
                     }, this);
                 },
@@ -119,6 +153,8 @@ Server.define({
                     //socket.emit('news', { news: 'item' });
                 },
             }, this);
+        httpServer.listen(port);
+
         this.log(null, null, "listening on port {2}", port);
         this.processQueueInterval = setInterval(this.processQueue.bind(this), 1000);
     },
@@ -126,19 +162,27 @@ Server.define({
         this.socket.server.close();
         clearInterval(this.processQueueInterval);
     },
+    notifyStatusAllWWWs: function (kind, what, obj) {
+        this.wwws.socket.emit('partial-status', arguments.length == 1 ? kind : {
+            kind: kind,
+            what: what,
+            obj: obj,
+        });
+    },
     processQueue: function () {
         var build = this.buildsQueue.shift();
         if (build) {
             var server = this;
-            var platform = build.platform;
+            var platform = build.conf.platform;
             var startBuilding = false;
             var agents = server.platforms[platform];
-            agents && agents.forEach(function (agent) {
+            agents && agents.every(function (agent) {
                 if (!agent.busy) {
                     agent.startBuild(build);
                     startBuilding = true;
                     return false;
                 }
+                return true;
             });
             if (!startBuilding)
                 this.buildsQueue.push(build);
@@ -152,51 +196,36 @@ Server.define({
         Array.prototype.splice.call(args, 0, 3, clientId, buildId);
         message = ['Server', clientId ? ' @{0}' : '', buildId ? ' about #{1}' : '', ": ", message].join('');
         message = message.format.apply(message, args);
-        if (this.config.mode != 'all' || !clientOrAgent) {
+        if (this.conf.mode != 'all' || !clientOrAgent) {
             console.log(message);
         }
         //broadcast the log to all wwws
         var msg = {
             message: message,
-            buildId: buildId,
         };
+        if (buildId)
+            msg.buildId = buildId;
+        build = this.findBuildById(build);
+        if (build && build.conf)
+            build.conf.logs.push(message);
+
         this.wwws.socket.emit('log', msg);
         clientOrAgent && clientOrAgent.emitLog(msg);
     },
     forwardLog: function (build, sender, message, to) {
+        //timestamp message with server's time
+        message && (message.date = new Date());
+
         if (!to) {
             build = this.findBuildById(build);
             to = build && build.client;
         }
+        build && build.conf.logs.push(message);
         if (to && to != sender)
             to.emitLog(message);
     },
     findBuildById: function (build) {
-        var buildFound = typeof build == "string" || build && build.id ? this.builds[build && build.id || build] : build;
+        var buildFound = typeof build == "string" || build && build.id ? this.builds[build && build.id || build] || build && build.id && build : build;
         return buildFound;
     },
 });
-
-    //var chat = io
-    //   .of('/agent')
-    //   .on('connection', function (agent) {
-    //       agent.platforms = [];
-    //       agent.emit('a message', {
-    //           that: 'only'
-    //         , '/agent': 'will get'
-    //       });
-    //       agent.on('register', function (registerDetails) {
-    //           registerDetails.platforms = (typeof registerDetails.platforms == "string" ? registerDetails.platforms.split(/(;|,| )/) : registerDetails.platforms) || [];
-    //           registerDetails.platforms.forEach(function (platform) {
-    //               agent.platforms.push(platform);
-    //               platforms[platform] = platforms[platform] || [];
-    //               platforms[platform].push(agent);
-    //           });
-    //       }).on('build-done', function (buildDetails) {
-
-    //       });
-    //       chat.emit('a message', {
-    //           everyone: 'in'
-    //         , '/agent': 'will get'
-    //       });
-    //   });

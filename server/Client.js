@@ -1,7 +1,13 @@
 require('fast-class');
 require('array-sugar');
+var path = require('path');
+var fs = require('fs');
+var async = require('async');
+var mkdirp = require('mkdirp');
 var extend = require('extend');
+
 var Build = require('../common/Build.js');
+var serverUtils = require('../common/serverUtils');
 module.exports = Function.define({
     constructor: function (socket) {
         this.socket = socket;
@@ -10,46 +16,72 @@ module.exports = Function.define({
                 this.conf = conf || {};
             },
             'disconnect': this.onDisconnect,
-            'request-build': this.requestBuild,
+            'request-build': this.onRequestBuild,
         }, this);
     },
-    onConnect: function (server) {
+    'onConnect': function (server) {
         this.server = server;
     },
-    onDisconnect: function () {
+    'onDisconnect': function () {
         this.server.clients.remove(this);
     },
-    requestBuild: function (build) {
-        var buildConf = build.conf;
-        if (this.validateBuildRequest(buildConf)) {
-            var platforms = buildConf.platforms;
-            var allFiles = buildConf.files;
-            delete buildConf.platforms;
-            delete buildConf.files;
-            platforms.forEach(function (platform) {
-                var files = [];
-                allFiles.forEach(function (file) {
-                    if (!file.group || file.group == platform)
-                        files.push(file);
-                });
-                var config = extend({ files: files }, buildConf);
-                var platformBuild = new Build(config, this, platform);
-                platformBuild.client = this;
-                platformBuild.id = build.id;
-                this.server.builds[platformBuild.id] = platformBuild;
-                this.server.buildsQueue.push(platformBuild);
-                this.server.log(platformBuild.id, this, '[C] build queued on {2}', platform);
-            }, this);
+    'onRequestBuild': function (build) {
+        var buildConf = build && build.conf;
+        if (this.validateBuildRequest(build)) {
+            var buildObj = new Build(buildConf, this, null, buildConf.platform,
+                build.files, null, build.id, build.masterId);
+            //from now on keep a Build object
+            build = buildObj;
+
+            var platforms = buildConf.platform;
+            var allFiles = build.files;
+            var client = this;
+            var server = this.server;
+            var path = require('path');
+            var locationPath = path.resolve(this.server.location, build.id, 'input');
+
+            server.builds[build.id] = build;//save the master build
+
+            serverUtils.writeFiles(locationPath, allFiles, "the cordova build server [c]", function (err) {
+                if (err) { this.server.log(build, client, err); }
+                else {
+                    if (platforms.length <= 1) {
+                        server.buildsQueue.push(build);
+                        server.log(build, this, '[C] build queued on {2}', platforms[0]);
+                    }
+                    else platforms.forEach(function (platform) {
+                        var files = [];
+                        allFiles.forEach(function (file) {
+                            if (!file.group || file.group == platform)
+                                files.push(file);
+                        });
+                        var conf = extend(true, {}, buildConf);
+                        var platformBuild = new Build(conf, this, null, platform, files, null, null, build.id);
+                        platformBuild.conf.logs = [];//separate logs from its master
+                        console.log("BEFORE", build.id, files);
+                        server.builds.push(platformBuild);
+                        server.builds[platformBuild.id] = platformBuild;
+                        server.buildsQueue.push(platformBuild);
+                        server.log(platformBuild, this, '[C] build queued on {2}', platform);
+                    }, this);
+                }
+            }.bind(this));
         }
     },
-    validateBuildRequest: function (buildConf) {
-        if (!buildConf)
-            this.socket.emit("request-build: The client requested a build didn't specify a config");
-        else if (!buildConf.platforms || !buildConf.platforms.length)
-            this.socket.emit("request-build: The client requested a build didn't specify any plaftorms to build against");
-        else if (!Object.every(this.server.platforms, function (p, platform) {
+    validateBuildRequest: function (build, client) {
+        var buildConf = build && build.conf;
+        var server = this.server;
+        if (!buildConf) {
+            server.log(build, this, "request-build: The client requested a build didn't specify a config");
+            return false;
+        }
+        else if (!buildConf.platform || !buildConf.platform.length) {
+            server.log(build, this, "request-build: The client requested a build didn't specify any plaftorms to build against");
+            return false;
+        }
+        else if (!Object.every(buildConf.platform, function (platform) {
             if (!platform || !this.server.platforms[platform] || !this.server.platforms[platform].length) {
-                this.socket.emit("request-build: The client requested a build on platform '{0}', but there is no agent listening on that platform.".format(platform));
+                server.log(build, this, "request-build: The client requested a build on platform '{2}', but there is no agent listening on that platform.", platform);
                 return false;
         }
             return true;

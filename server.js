@@ -9,9 +9,9 @@ module.exports = Function.define({
         this.clients = [];
         this.platforms = {};
     },
-    listen: function(config) {
-        this.config = config;
-        io.listen(config.port);
+    listen: function(conf) {
+        this.conf = conf;
+        io.listen(conf.port);
           var chat = io
       .of('/agent')
       .on('connection', function (agent) {

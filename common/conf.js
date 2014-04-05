@@ -12,13 +12,14 @@ commandLine.addArgument('protocol', { type: 'string' });
 commandLine.addArgument('server', { type: 'string' });
 commandLine.addArgument('port', { type: 'number' });
 commandLine.addArgument('mode', { type: 'string', required: true, allowedValues: ['server', 'client', 'agent', 'all'] });
-var config = commandLine.parseNode.apply(commandLine, process.argv);
+var conf = commandLine.parseNode.apply(commandLine, process.argv);
 
 var listen = {};
-if (config.mode == 'server' || config.mode == 'all') {
+if (conf.mode == 'server' || conf.mode == 'all') {
+    commandLine.addArgument('location', { type: 'string' });
     listen.server = true;
 }
-if (config.mode == 'client' || config.mode == 'all') {
+if (conf.mode == 'client' || conf.mode == 'all') {
     commandLine.addArgument('files', { type: 'string', required: false });
     commandLine.addArgument('wp8', { type: 'string', required: false });
     commandLine.addArgument('ios', { type: 'string', required: false });
@@ -26,22 +27,22 @@ if (config.mode == 'client' || config.mode == 'all') {
     commandLine.addArgument('build', { type: 'string', required: true  });
     listen.client = true;
 }
-if (config.mode == 'agent' || config.mode == 'all') {
+if (conf.mode == 'agent' || conf.mode == 'all' || conf.agent) {
     commandLine.addArgument('agent', { type: 'string', required: true });
     listen.agent = true;
 }
 
 function parseArgs() {
     //console.log(commandLine.toString()); // Will print the usage syntax.
-    config = commandLine.parseNode.apply(commandLine, process.argv);
-    config.protocol = config.protocol || 'http';
-    config.port = config.port || 8300;
-    config.server = config.server || 'localhost';
-    config.listen = listen;
-    config.wp8 = (config.wp8 || '').split(/;,/g);
-    config.android = (config.android || '').split(/;,/g);
-    config.ios = (config.ios || '').split(/;,/g);
-    config.files = (config.files || '').split(/;,/g);
+    conf = commandLine.parseNode.apply(commandLine, process.argv);
+    conf.protocol = conf.protocol || 'http';
+    conf.port = conf.port || 8300;
+    conf.server = conf.server || 'localhost';
+    conf.listen = listen;
+    conf.wp8 = (conf.wp8 || '').split(/;,/g);
+    conf.android = (conf.android || '').split(/;,/g);
+    conf.ios = (conf.ios || '').split(/;,/g);
+    conf.files = (conf.files || '').split(/;,/g);
 
-    return config;
+    return conf;
 }

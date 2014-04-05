@@ -1,12 +1,33 @@
 ﻿module.exports = Build
 require('fast-class');
+var extend = require('extend');
 var shortid = require('shortid');
-function Build(conf, client, platform) {
-    this.conf = conf;
+function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
+    this.conf = extend(true, {}, conf);
 	this.client = client;
-    this.id = shortid.generate();
-    this.platform = platform;
+    this.agent = agent;
+    if (files)
+        this.files = files;
+    this.id = id || shortid.generate();
+    this.conf.platform = platform;
+    this.conf.logs = conf.logs || [];
+    if (masterId)
+        this.masterId = masterId;
+    if (outputFiles)
+        this.outputFiles = outputFiles;
 }
 Build.define({
-
+    serialize: function(includeOptions) {
+        var result = {
+            conf: this.conf,
+            id: this.id,
+        };
+        if (this.masterId)
+            result.masterId = this.masterId;
+        if (includeOptions) {
+            if (includeOptions.files) result.files = this.files;
+            if (includeOptions.outputFiles) result.outputFiles = this.outputFiles;
+        }
+        return result;
+    }
 });

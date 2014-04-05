@@ -7,7 +7,7 @@
     <RootNamespace>remote-build</RootNamespace>
     <NodeExePath />
     <NodeExeArguments />
-    <ScriptArguments>-mode:server -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -agent:ios,android,wp8</ScriptArguments>
+    <ScriptArguments>-mode:all -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -agent:ios,android,wp8 -save:clientOutput</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -37,9 +37,10 @@
   <ItemGroup>
     <Compile Include="agent\AgentWorker.js" />
     <Compile Include="client\ClientWorker.js" />
-    <Compile Include="common\config.js" />
+    <Compile Include="common\conf.js" />
     <Compile Include="common\Build.js" />
     <Compile Include="common\patch.js" />
+    <Compile Include="common\serverUtils.js" />
     <Compile Include="cordova-build.js" />
     <Compile Include="server.js" />
     <Compile Include="server\Agent.js" />
@@ -51,7 +52,6 @@
     <Content Include="watch.bat" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="server\public\css\style.css" />
     <Content Include="server\public\index.html" />
   </ItemGroup>
   <ItemGroup>

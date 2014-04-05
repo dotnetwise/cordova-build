@@ -16,11 +16,17 @@ WWW.define({
     },
     onDisconnect: function () {
 
-    },
-    'onGetStatus': function(config) {
-        this.socket.emit('status', {
-            builds: this.builds,
-            agents: this.agents,
-        });
+    },  
+    'onGetStatus': function () {
+        //console.log('get-status');
+        var server = this.server;
+        var response = {
+            'status': 1,
+            log: server.log,
+            builds: server.builds.map(function (build) { return build.conf; }),
+            agents: server.agents.map(function (agent) { return agent.conf; }),
+            latestBuild: server.latestBuild,
+        };
+        this.socket.emit('status', response);
     },
 });
