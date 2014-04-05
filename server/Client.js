@@ -40,11 +40,14 @@ module.exports = Function.define({
             var path = require('path');
             var locationPath = path.resolve(this.server.location, build.id, 'input');
 
-            server.builds[build.id] = build;//save the master build
 
             serverUtils.writeFiles(locationPath, allFiles, "the cordova build server [c]", function (err) {
                 if (err) { this.server.log(build, client, err); }
                 else {
+                    server.builds.push(build);
+                    server.builds[build.id] = build;//save the master build
+                    build.platforms = [];
+
                     if (platforms.length <= 1) {
                         server.buildsQueue.push(build);
                         server.log(build, this, '[C] build queued on {2}', platforms[0]);
@@ -57,9 +60,9 @@ module.exports = Function.define({
                         });
                         var conf = extend(true, {}, buildConf);
                         var platformBuild = new Build(conf, this, null, platform, files, null, null, build.id);
+                        build.platforms.push(platformBuild);
                         platformBuild.conf.logs = [];//separate logs from its master
                         console.log("BEFORE", build.id, files);
-                        server.builds.push(platformBuild);
                         server.builds[platformBuild.id] = platformBuild;
                         server.buildsQueue.push(platformBuild);
                         server.log(platformBuild, this, '[C] build queued on {2}', platform);

@@ -38,9 +38,7 @@ Server.define({
         var ios = this.socket = io.listen(httpServer);
         var www = __dirname + '/public';
         var htmlFiles = ['index.html'];
-        var encoding = {
-            encoding: 'utf-8',
-        };
+        var encoding = { encoding: 'utf-8' };
         htmlFiles.forEach(function (file) {
             var path = www + '/' + file;
             var lastTime = new Date();

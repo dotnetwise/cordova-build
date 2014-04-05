@@ -23,8 +23,9 @@ WWW.define({
         var response = {
             'status': 1,
             logs: server.logs,
-            builds: server.builds.map(function (build) { return build.conf; }),
+            builds: server.builds.map(function (build) { return build.serialize({platforms: 1}); }),
             agents: server.agents.map(function (agent) { return agent.conf; }),
+            clients: server.clients.map(function (client) { return client.conf; }),
             latestBuild: server.latestBuild,
         };
         this.socket.emit('status', response);

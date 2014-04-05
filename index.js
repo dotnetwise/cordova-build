@@ -1,3 +1,7 @@
+require('nodetime').profile({
+    accountKey: '4b55187db0af80f8ff871a511ae9699744637a1a', 
+    appName: 'cordova-build'
+  });
 var $ = require('stringformat')
 var conf = require("./common/conf.js")();
 var listen = conf.listen;

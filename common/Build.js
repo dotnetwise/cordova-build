@@ -4,7 +4,7 @@ var extend = require('extend');
 var shortid = require('shortid');
 function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
     this.conf = extend(true, {}, conf);
-	this.client = client;
+    this.client = client;
     this.agent = agent;
     if (files)
         this.files = files;
@@ -17,7 +17,7 @@ function Build(conf, client, agent, platform, files, outputFiles, id, masterId) 
         this.outputFiles = outputFiles;
 }
 Build.define({
-    serialize: function(includeOptions) {
+    serialize: function (includeOptions) {
         var result = {
             conf: this.conf,
             id: this.id,
@@ -27,6 +27,15 @@ Build.define({
         if (includeOptions) {
             if (includeOptions.files) result.files = this.files;
             if (includeOptions.outputFiles) result.outputFiles = this.outputFiles;
+            if (includeOptions.platforms) {
+                //serialize individual build per platform
+                if (this.platforms) {
+                    result.platforms = [];
+                    (this.platforms || []).forEach(function (platformBuild) {
+                        result.platforms.push(platformBuild.serialize());
+                    });
+                }
+            }
         }
         return result;
     }
