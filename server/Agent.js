@@ -58,7 +58,7 @@ Agent.define({
                     if (err) { server.log(build, client, "error saving build output files on the cordova build server\n{3}", err); }
                     else {
                         
-                        build.conf.status = 'success';
+                        build.updateStatus('success');
                         client.socket.emit('build-success', build.serialize({
                             outputFiles: client.conf.save
                         }));
@@ -73,12 +73,12 @@ Agent.define({
     },
     'onBuildFailed': function (build) {
         this.busy = false;
-        build.conf.status = 'failed';
+        build.updateStatus('failed');
         this.server.notifyStatusAllWWWs('failed', 'build', build.serialize());
     },
     startBuild: function (build) {
         this.busy = build;
-        build.conf.status = 'building';
+        build.updateStatus('building');
         this.server.notifyStatusAllWWWs('started', 'build', build.serialize({}));
         var client = build.client;
         var files = build.files;

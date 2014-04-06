@@ -13,7 +13,10 @@
         this.t = $this.attr("title");
         this.title = "";
         var c = (this.t != "") ? "<br/>" + this.t : "";
-        $("body").append("<p id='screenshot'><img src='" + $this.attr("rel") + "' alt='url preview' />" + c + "</p>");
+        var rel = $this.attr("rel");
+        if (!title && !rel)
+            return;
+        $("body").append(["<div id='screenshot'>", rel ? "<img src='" : "", rel, rel ? "' alt='url preview' />": "",  c, "</div>"].join(''));
         $("#screenshot")
             .css("top", (e.pageY - xOffset) + "px")
             .css("left", (e.pageX + yOffset) + "px")

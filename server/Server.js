@@ -93,7 +93,7 @@ Server.define({
                                     var build = agent.busy;
                                     this.log(agent.busy, build.client, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
                                     build.agent = null;
-                                    build.conf.status = 'queued';
+                                    build.updateStatus('queued');
                                     this.buildsQueue.push(build);
                                     this.notifyStatusAllWWWs('updated', 'build', build.serialize());
                                 }
@@ -111,7 +111,7 @@ Server.define({
                             });
                             agent.conf.platforms = agent.platforms;
                             agent.conf.since = new Date();
-                            agent.conf.status = 'ready';
+                            conf.status = 'planned';
                             this.notifyStatusAllWWWs('connected', 'agent', agent.conf);
                         },
                     }, this);

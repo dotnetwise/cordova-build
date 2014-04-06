@@ -257,6 +257,7 @@ function BuildVM(build) {
     this.qr = observable();
     this.update(build);
 }
+var statuses = ['unknown', 'success', 'planned', 'queued', 'building', 'failed']
 BuildVM.define({
     update: function (build) {
         if (build && build.conf) {
@@ -268,6 +269,16 @@ BuildVM.define({
             this.started(conf.started && new Date(conf.started));
             this.completed(conf.completed && new Date(conf.completed));
             this.status(conf.status);
+            if (this.master) {
+                var masterStatus = 0;
+                this.master.platforms.forEach(function(child, i) {
+                    i = statuses.indexOf(child.status());
+                    if (i > masterStatus)
+                        masterStatus = i;
+                });
+                this.master.status(statuses[masterStatus]);
+            }
+            
             if (this._qr != build.id) {
                 this._qr = build.id;
                 this.__qr = this.QR();

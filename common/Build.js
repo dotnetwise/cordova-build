@@ -38,5 +38,8 @@ Build.define({
             }
         }
         return result;
-    }
+    },
+    updateStatus: function(newStatus) {
+        this.conf.status = newStatus;
+    },
 });

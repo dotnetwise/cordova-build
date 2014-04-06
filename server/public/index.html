@@ -616,8 +616,8 @@ click: function(build) { $parents[2].selectedBuild(build); $parents[2].selectedB
     },
 attr: {
     alt: $data.platform,
-    title: unwrap($data.platform)+ ' #' + unwrap(id),
-    rel: qr,
+    title: [unwrap($data.platform), ' #', unwrap(id), ' ', unwrap(status) == 'success' ? '' : unwrap(status)].join(''),
+    rel: (unwrap(qr) || '').indexOf('data:') >= 0 ? qr : null,
     src: ('img/platforms/' + unwrap($data && $data.platform || $data) + '.png'),
     alt: $data.platform
 }"
