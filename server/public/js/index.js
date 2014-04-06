@@ -34,8 +34,8 @@ function ServerBrowser(conf) {
     this.agents = observableArray([]);
     this.builds = observableArray([]);
     this.clients = observableArray([]);
-    this.latestBuild = observable();
-    this.latestBuild.tab = observable('#noBuild');
+    this.selectedBuild = observable();
+    this.selectedBuild.tab = observable('#noBuild');
     this.status = observable('connecting');
     this.disconnectedSince = observable();
     var url = '{0}://{1}{2}/{3}'.format(conf.protocol || "http", conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
@@ -130,8 +130,8 @@ ServerBrowser.define({
                         }
                         build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
                     }.call(1, build);
-                    if (build && !this.latestBuild())
-                        this.latestBuild(build);
+                    if (build && !this.selectedBuild())
+                        this.selectedBuild(build);
                     break;
                 case 'connected':
                 case 'updated':
@@ -157,7 +157,7 @@ ServerBrowser.define({
         console.log("status", status);
         if (status) {
             status.agents = status.agents || [];
-            //this.parseLatestBuild(status.latestBuild || {
+            //this.parseselectedBuild(status.selectedBuild || {
             //    status: 'failed',
             //    id: 1234,
             //    started: new Date(),
@@ -219,21 +219,21 @@ ServerBrowser.define({
             }.bind(1));
             this.agents(status.agents);
             this.builds(builds);
-            if (builds[0] && !this.latestBuild())
-                this.latestBuild(builds[0]);
+            if (builds[0] && !this.selectedBuild())
+                this.selectedBuild(builds[0]);
         }
     },
     'onLog': function (message) {
         console.log(message && message.message || message);
     },
-    parseLatestBuild: function (build) {
+    parseselectedBuild: function (build) {
         if (build) {
             build.qr = this.statuses[build.status] || this.generateQR('/download/' + build.id);
         }
         build.platforms && build.platforms.forEach(function (platform) {
             platform.qr = this.statuses[build.status] || this.generateQR('/download/' + build.id);
         }, this);
-        this.latestBuild(build);
+        this.selectedBuild(build);
     },
     generateQR: function (url, level) {
         var uri = qr.toDataURL({

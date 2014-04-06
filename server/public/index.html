@@ -116,15 +116,15 @@
             white-space: pre;
         }
 
-        #latestBuildTab {
+        #selectedBuildTab {
             margin-bottom: 4px;
         }
 
-        #latestBuildTabContent {
+        #selectedBuildTabContent {
             overflow: hidden;
         }
 
-        #latestBuildTab img.platform {
+        #selectedBuildTab img.platform {
             display: block;
             float: left;
             margin-right: 4px;
@@ -138,7 +138,7 @@
             filter: grayscale(100%);
         }
 
-        #latestBuildTab .active img.platform {
+        #selectedBuildTab .active img.platform {
             display: block;
             float: left;
             margin-right: 4px;
@@ -397,7 +397,7 @@
                 <div class="row-fluid sortable">
                     <div class="box span12" style="margin-top: 0;">
                         <div class="box-header well">
-                            <h2><i class="icn icon-info-sign"></i>Latest Build</h2>
+                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id)) : 'Latest Build'"></span></h2>
 
                             <div class="box-icon">
                                 <a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>
@@ -409,32 +409,32 @@
                             <div style="padding: 0 0 2px 8px;">
                                 <div>
 
-                                    <ul class="nav nav-tabs" id="latestBuildTab">
-                                        <li data-bind="hidden: !latestBuild() ? latestBuild.tab('#noBuild')
-        && false : (latestBuild.tab() == '#noBuild' && latestBuild.tab('#info') || true), css: {
+                                    <ul class="nav nav-tabs" id="selectedBuildTab">
+                                        <li data-bind="hidden: !selectedBuild() ? selectedBuild.tab('#noBuild')
+        && false : (selectedBuild.tab() == '#noBuild' && selectedBuild.tab('#info') || true), css: {
             active:
-            latestBuild.tab() == '#noBuild'
+            selectedBuild.tab() == '#noBuild'
         }"
                                             class="active">
                                             <a data-bind="click: function (data) {
-latestBuild.tab('#noBuild');
+selectedBuild.tab('#noBuild');
 },"
                                                 href="#noBuild">General</a>
                                         </li>
-                                        <li data-bind="visible: latestBuild, css: {
-active: latestBuild.tab()
+                                        <li data-bind="visible: selectedBuild, css: {
+active: selectedBuild.tab()
         == '#info'
 }"
                                             class="active">
                                             <a data-bind="click: function (data) {
-latestBuild.tab('#info');
+selectedBuild.tab('#info');
 }"
                                                 href="#info">General</a>
                                         </li>
-                                        <!-- ko foreach: latestBuild() && latestBuild().platforms-->
-                                        <li data-bind="css: { active: $parent.latestBuild.tab() == '#' + unwrap(platform) }">
+                                        <!-- ko foreach: selectedBuild() && selectedBuild().platforms-->
+                                        <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap(platform) }">
                                             <a data-bind="    click: function (data) {
-$parent.latestBuild.tab('#'
+$parent.selectedBuild.tab('#'
         + unwrap(platform));
     }, attr: { href: '#' + unwrap(platform) }">
                                                 <img data-bind="
@@ -451,8 +451,8 @@ attr: {
                                         <!-- /ko-->
                                     </ul>
 
-                                    <div id="latestBuildTabContent" class="tab-content">
-                                        <div data-bind="hidden: latestBuild" class="tab-pane active"
+                                    <div id="selectedBuildTabContent" class="tab-content">
+                                        <div data-bind="hidden: selectedBuild" class="tab-pane active"
                                             id="noBuild">
                                             <img class="no-build" src="img/platforms/no-build.png" />No build has been run yet
                                         </div>
@@ -492,8 +492,13 @@ href: '#'
                                                         </div>
                                                         <div class="control-group">
                                                             <label class="control-label">Started:</label>
-                                                            <div data-bind="text: unwrap($data && $data.started) && unwrap($data && $data.started).format
-        && unwrap($data && $data.started).format('hh:mm:ss, DD MMM')"
+                                                            <div  data-bind="
+    attr: {
+        datetime: $data && $data.started,
+        title: unwrap($data && $data.started) && unwrap($data && $data.started).format
+            && unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss')
+    }"
+                                                                datetime-format="{0} ago"
                                                                 class="controls">
                                                             </div>
                                                         </div>
@@ -518,17 +523,17 @@ href: '#'
                                                 </div>
                                             </div>
                                         </script>
-                                        <div data-bind="visible: latestBuild, css: { active: latestBuild.tab() == '#info' }"
+                                        <div data-bind="visible: selectedBuild, css: { active: selectedBuild.tab() == '#info' }"
                                             class="tab-pane"
                                             id="info">
-                                            <!--ko template: { name: 'tplLastBuild', data: latestBuild
+                                            <!--ko template: { name: 'tplLastBuild', data: selectedBuild
         }-->
                                             <!--/ko-->
                                         </div>
-                                        <!--ko with: latestBuild-->
+                                        <!--ko with: selectedBuild-->
                                         <!--ko foreach: platforms-->
                                         <div data-bind="attr: { id: platform }, css: {
-active: $parents[1].latestBuild.tab()
+active: $parents[1].selectedBuild.tab()
         == '#' + unwrap(platform)
 }"
                                             class="tab-pane">
@@ -604,7 +609,7 @@ active: $parents[1].latestBuild.tab()
     attr: {
         href: '#' + unwrap(id) + '?' + unwrap($data.platform),
     },
-click: function(build) { $parents[2].latestBuild(build); $parents[2].latestBuild.tab('#' + $data && $data.platform); }">
+click: function(build) { $parents[2].selectedBuild(build); $parents[2].selectedBuild.tab('#' + $data && $data.platform); }">
                                             <img data-bind="
     css: {
         grayscale: status() != 'success'
@@ -626,7 +631,11 @@ attr: {
                                                 </dd>
                                                 <dd class="since">
                                                     <label>Since:</label><span datetime-format="{0} ago"
-                                                                               data-bind="attr: { datetime: $data.since, title: unwrap($data.since) && new Date(unwrap($data.since)).format('hh:mm:ss, DD MMM YYYY') || $data.since }, text: unwrap($data.since) && new Date(unwrap($data.since)).elapsed()"></span>
+                                                                               data-bind="
+    attr: {
+        datetime: $data.since,
+        title: unwrap($data.since) && new Date(unwrap($data.since)).format('DD MMM YYYY hh:mm:ss') || $data.since
+    }, text: unwrap($data.since) && new Date(unwrap($data.since)).elapsed()"></span>
                                                 </dd>
                                                 <dd class="status">
                                                     <label>Status:</label><span data-bind="cls: 'label-'
@@ -724,7 +733,7 @@ alt: $data.platform, src: $data.qr
                                                     data-bind="attr: {
     datetime: $data.since,
     title: unwrap($data.since) &&
-        new Date(unwrap($data.since)).format('hh:mm:ss, DD MMM YYYY') || $data.since
+        new Date(unwrap($data.since)).format('DD MMM YYYY hh:mm:ss') || $data.since
 }, text: unwrap($data.since) && (new Date(unwrap($data.since)).elapsed())"></span>
                                             </dd>
                                             <dd class="status">
