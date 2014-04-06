@@ -35,12 +35,11 @@ function ServerBrowser(conf) {
     this.builds = observableArray([]);
     this.clients = observableArray([]);
     this.selectedBuild = observable();
+    this.selectedBuild = observable();
     this.selectedBuild.tab = observable('#noBuild');
     this.status = observable('connecting');
     this.disconnectedSince = observable();
     var url = '{0}://{1}{2}/{3}'.format(conf.protocol || "http", conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
-    this.generateQR("Ana are mere");
-    console.log(url);
     inBrowser && ko.applyBindings(this, document.body);
     this.connect(url);
 }
@@ -257,6 +256,7 @@ function BuildVM(build) {
     this.platform = observable();
     this.started = observable();
     this.completed = observable();
+    this.duration = observable();
     this.status = observable();
     this.qr = observable();
     this.update(build);
@@ -272,12 +272,14 @@ BuildVM.define({
             this.id = build.id;
             this.started(conf.started && new Date(conf.started));
             this.completed(conf.completed && new Date(conf.completed));
+            this.duration(conf.duration);
             if (conf.status == 'unknown') debugger;
             this.status(conf.status);
             if (this.master) {
                 var masterStatus = statuses.indexOf(this.conf.status);
                 if (masterStatus >= 0) {
-                this.master.platforms().forEach(function (child, i) {
+                var platformBuilds = this.master.platforms();
+                platformBuilds.forEach(function (child, i) {
                     i = statuses.indexOf(child.status());
                     if (i > masterStatus)
                         masterStatus = i;

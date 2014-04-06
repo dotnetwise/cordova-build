@@ -25,6 +25,7 @@ if (conf.mode == 'client' || conf.mode == 'all') {
     commandLine.addArgument('ios', { type: 'string', required: false });
     commandLine.addArgument('android', { type: 'string', required: false });
     commandLine.addArgument('build', { type: 'string', required: true  });
+    commandLine.addArgument('number', { type: 'string', required: false });
     listen.client = true;
 }
 if (conf.mode == 'agent' || conf.mode == 'all' || conf.agent) {

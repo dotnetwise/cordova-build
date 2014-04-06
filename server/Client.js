@@ -29,6 +29,7 @@ module.exports = Function.define({
     },
     'onRegisterBuild': function (build) {
         var buildConf = build && build.conf;
+        buildConf.started = new Date();
         if (this.validateBuildRequest(build)) {
             var buildObj = new Build(buildConf, this, null, buildConf.platform,
                 build.files, null, build.id, null);

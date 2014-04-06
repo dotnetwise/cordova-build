@@ -5,38 +5,54 @@
     Charisma v1.0.0 Copyright 2012 Muhammad Usman Licensed under the Apache License v2.0 http://www.apache.org/licenses/LICENSE-2.0 http://usman.it http://twitter.com/halalit_usman
     -->
     <meta charset="utf-8">
-    <title>Free HTML5 Bootstrap Admin Template</title>
+    <title>Cordova Build</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Charisma, a fully featured, responsive, HTML5, Bootstrap admin template.">
     <meta name="author" content="DotNetWise">
     <!-- The styles -->
-    <link id="bs-css" href="css/bootstrap-spacelab.css" rel="stylesheet">
+    <script id="bs-js">
+        (function (d) {
+            var t, e = d.createElement('link'), pairs = d.cookie.split('; '), decode = decodeURIComponent;
+            for (var i = 0, pair; pair = pairs[i] && pairs[i].split('=') ; i++) {
+                if (decode(pair[0]) === 'current_theme') {
+                    t = decode(pair[1] || ''); // IE saves cookies with empty string as "c; ", e.g. without "=" as opposed to EOMB, thus pair[1] may be undefined
+                    break;
+                }
+            }
+            t = t || 'spacelab';
+            e.id = 'bs-css'; e.rel = 'stylesheet'; e.href = 'css/bootstrap-' + t + '.css';
+            window.current_theme = t;
+            d.head.insertBefore(e, d.getElementById('bs-js'));
+            d.documentElement.className += ' theme-' + t + ' ';
+        })(document);
+    </script>
     <style type="text/css">
         body {
             padding-bottom: 40px;
         }
-        ul.dashboard-list li:first-child {
+
+        body ul.dashboard-list li {
             border-top: 1px solid #EBEBEB;
         }
-        ul.dashboard-list li:first-child {
+
+        body ul.dashboard-list li:first-child {
             border: none;
         }
-        
-#screenshot{
-	position:absolute;
-	border:1px solid #ccc;
-	background:#333;
-	padding:5px;
-	display:none;
-	color:#fff;
-	}
+
+        body #screenshot {
+            position: absolute;
+            border: 1px solid #ccc;
+            background: #333;
+            padding: 5px;
+            display: none;
+            color: #fff;
+        }
 
         .time {
             color: #bbb;
         }
 
-
-        .brand {
+        body .brand {
             width: 230px;
         }
 
@@ -48,6 +64,7 @@
         .icn {
             margin-right: 5px;
         }
+
         .brand img {
             position: absolute;
             margin-left: -24px;
@@ -62,18 +79,26 @@
             margin-left: 0;
         }
 
-        .specs {
-            display: inline;
+        .report {
+            display: inline-block;
             margin: 0;
         }
 
-        .specs label {
+        .report label {
             font-weight: bold;
             display: inline;
             margin-right: 5px;
+            clear: left;
+            float: left;
+            min-width: 40px;
         }
 
-        .specs dt:after, .br:after {
+        .report span {
+            float: left;
+        }
+
+
+        .report dt:after, .br:after {
             content: '\000A';
             white-space: pre;
         }
@@ -151,6 +176,7 @@
             -o-filter: none;
             filter: none;
         }
+
         .grayscale.hover:hover {
             -webkit-filter: none;
             -webkit-filter: none;
@@ -162,27 +188,66 @@
 
         img.dashboard-avatar {
             margin-left: 0;
+            margin-right: 4px;
+        }
+        @media (max-width: 767px) {
+            .report label {
+                width: 70px;
+            }
         }
 
-        .form-horizontal.status {
-            margin-top: 3px;
-        }
+        @media (min-width: 767px) {
+            .row-fluid [class*="span"].no-gutter {
+                margin: 0;
+            }
 
-        .form-horizontal.status .control-group {
-            margin-bottom: 0;
-        }
+            .row-fluid .span1.no-gutter {
+                width: 8.333333333333333%;
+            }
 
-        .form-horizontal.status .control-label {
-            width: 70px;
-            text-align: left;
-        }
+            .row-fluid .span2.no-gutter {
+                width: 16.66666666666667%;
+            }
 
-        .form-horizontal.status .controls {
-            margin-left: 75px;
-        }
+            .row-fluid .span3.no-gutter {
+                width: 25%;
+            }
 
-        li.alert {
-            margin-bottom: 0;
+            .row-fluid .span4.no-gutter {
+                width: 33.33333333333333%;
+            }
+
+            .row-fluid .span5.no-gutter {
+                width: 41.66666666666667%;
+            }
+
+            .row-fluid .span6.no-gutter {
+                width: 50%;
+            }
+
+            .row-fluid .span7.no-gutter {
+                width: 58.33333333333333%;
+            }
+
+            .row-fluid .span8.no-gutter {
+                width: 66.66666666666667%;
+            }
+
+            .row-fluid .span9.no-gutter {
+                width: 75%;
+            }
+
+            .row-fluid .span10.no-gutter {
+                width: 83.33333333333333%;
+            }
+
+            .row-fluid .span11.no-gutter {
+                width: 91.66666666666667%;
+            }
+
+            .row-fluid .span12.no-gutter {
+                width: 100%;
+            }
         }
     </style>
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
@@ -210,7 +275,7 @@
     <!-- The fav icon -->
     <link rel="shortcut icon" href="img/favicon.ico">
     <script id="tplLog" type="text/html">
-        <span data-bind="attr: { title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY') }, text: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          '"
+        <span data-bind="attr: { title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY') }, text: unwrap($data && $data.date) && !isNaN(new Date(unwrap($data && $data.date)).getTime()) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          '"
             class="time"></span><span data-bind="    text: ($data && $data.message || $data || '').replace(/\n/g, '\n          ')"
                 class="br"></span>
     </script>
@@ -230,7 +295,7 @@
                 <a class="brand" href="/">
                     <img alt="Cordova build" src="img/logo20.png" />
                     <span>Cordova Build</span></a>
-                <div style="display: block; margin-top: 10px; float: left;">
+                <div style="display: block; margin-top: 0; float: left;">
                     <ul data-bind="visible: status() != 'connected'" class="breadcrumb" style="display: inline;
                         padding: 0; margin: 0; border: 0 none;">
                         <li data-bind="visible: status() == 'disconnected'" class="alert alert-warning">
@@ -298,55 +363,19 @@
         <div class="row-fluid">
 
             <!-- left menu starts -->
-            <div class="span2 main-menu-span">
+            <!--<div class="span2 main-menu-span">
                 <div class="well nav-collapse sidebar-nav">
                     <ul class="nav nav-tabs nav-stacked main-menu">
                         <li class="nav-header hidden-tablet">Main</li>
                         <li><a class="ajax-link" href="/"><i class="icn icon-home"></i><span class="hidden-tablet">Dashboard</span></a>
                         </li>
-                        <!-- <li><a class="ajax-link" href="ui.html"><i class="icon-eye-open"></i><span
-        class="hidden-tablet">
-                            UI Features</span></a></li>
-                        <li><a class="ajax-link" href="form.html"><i class="icon-edit"></i><span class="hidden-tablet">
-        Forms</span></a></li>
-                        <li><a class="ajax-link" href="chart.html"><i class="icon-list-alt"></i><span
-        class="hidden-tablet">
-                            Charts</span></a></li>
-                        <li><a class="ajax-link" href="typography.html"><i class="icon-font"></i><span
-        class="hidden-tablet">
-                            Typography</span></a></li>
-                        <li><a class="ajax-link" href="gallery.html"><i class="icon-picture"></i><span
-        class="hidden-tablet">
-                            Gallery</span></a></li>
-                        <li class="nav-header hidden-tablet">Sample Section</li>
-                        <li><a class="ajax-link" href="table.html"><i class="icon-align-justify"></i><span
-        class="hidden-tablet">
-                            Tables</span></a></li>
-                        <li><a class="ajax-link" href="calendar.html"><i class="icon-calendar"></i><span
-        class="hidden-tablet">
-                            Calendar</span></a></li>
-                        <li><a class="ajax-link" href="grid.html"><i class="icon-th"></i><span class="hidden-tablet">Grid</span></a>
-        </li>
-                        <li><a class="ajax-link" href="file-manager.html"><i class="icon-folder-open"></i><span
-        class="hidden-tablet">
-                            File Manager</span></a></li>
-                        <li><a href="tour.html"><i class="icon-globe"></i><span class="hidden-tablet">Tour</span></a>
-        </li>
-                        <li><a class="ajax-link" href="icon.html"><i class="icon-star"></i><span class="hidden-tablet">
-        Icons</span></a></li>
-                        <li><a href="error.html"><i class="icon-ban-circle"></i><span class="hidden-tablet">Error
-        Page</span></a>
-                        </li>
-                        <li><a href="login.html"><i class="icon-lock"></i><span class="hidden-tablet">Login
-        Page</span></a>
-                        </li>-->
                     </ul>
-                    <!--  <label id="for-is-ajax" class="hidden-tablet" for="is-ajax">
+                    
+                </div>
+            </div>-->
+            <!--  <label id="for-is-ajax" class="hidden-tablet" for="is-ajax">
                         <input id="is-ajax" type="checkbox">
                         Ajax on menu</label>-->
-                </div>
-                <!--/.well -->
-            </div>
             <!--/span-->
             <!-- left menu ends -->
 
@@ -360,7 +389,7 @@
                 </div>
             </noscript>
 
-            <div id="content" class="span10">
+            <div id="content" class="span12 no-gutter">
                 <!-- content starts -->
 
 
@@ -397,7 +426,7 @@
                 <div class="row-fluid sortable">
                     <div class="box span12" style="margin-top: 0;">
                         <div class="box-header well">
-                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id)) : 'Latest Build'"></span></h2>
+                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id)) : 'Latest Build'">Latest Build</span></h2>
 
                             <div class="box-icon">
                                 <a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>
@@ -417,31 +446,31 @@
         }"
                                             class="active">
                                             <a data-bind="click: function (data) {
-selectedBuild.tab('#noBuild');
+    selectedBuild.tab('#noBuild');
 },"
                                                 href="#noBuild">General</a>
                                         </li>
                                         <li data-bind="visible: selectedBuild, css: {
-active: selectedBuild.tab()
-        == '#info'
+    active: selectedBuild.tab()
+            == '#info'
 }"
                                             class="active">
                                             <a data-bind="click: function (data) {
-selectedBuild.tab('#info');
+    selectedBuild.tab('#info');
 }"
                                                 href="#info">General</a>
                                         </li>
                                         <!-- ko foreach: selectedBuild() && selectedBuild().platforms-->
                                         <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }">
                                             <a data-bind="    click: function (data) {
-$parent.selectedBuild.tab('#'
-        + unwrap($data && $data.platform));
+        $parent.selectedBuild.tab('#'
+                + unwrap($data && $data.platform));
     }, attr: { href: '#' + unwrap($data && $data.platform) }">
                                                 <img data-bind="
-attr: {
-    alt: $data && $data.platform,
-    src: 'img/platforms/' + unwrap($data && $data.platform) + '.png'
-}"
+    attr: {
+        alt: $data && $data.platform,
+        src: 'img/platforms/' + unwrap($data && $data.platform) + '.png'
+    }"
                                                     class="platform"
                                                     alt="Abdullah" />
                                                 <span data-bind="    text: $root.platformNames[unwrap($data.platform)]"></span>
@@ -458,66 +487,58 @@ attr: {
                                         </div>
                                         <script id="tplLastBuild" type="text/html">
                                             <div class="row-fluid">
-                                                <div class="span2">
+                                                <div class="span2 no-gutter">
                                                     <a href="#" style="display: block;">
                                                         <div data-bind="
     style: {
-'backgroundImage':
-        'url(' + unwrap(qr) + ')'
-}"
+        'backgroundImage':
+                'url(' + unwrap(qr) + ')'
+    }"
                                                             class="qr center" />
                                                     </a>
                                                 </div>
-                                                <div class="span2">
-                                                    <div class="form-horizontal status">
-                                                        <div class="control-group build-number">
-                                                            <label class="control-label">Number:</label>
-                                                            <div class="controls">
-                                                                <b><a data-bind="attr: {
-href: '#'
-        + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2]
-        && $parents[2].id)
-}, text: '#' + ($data && $data.id || $parent && $parent.id || $parents[1]
-&& $parents[1].id || $parents[2] && $parents[2].id)"
-   href="#">#1230</a></b>
-                                                            </div>
-                                                        </div>
-                                                        <div class="control-group">
-                                                            <label class="control-label">Status:</label>
-                                                            <div class="controls">
-                                                                <span data-bind="css: 'label-' + unwrap(status),
-    text: unwrap($data && $data.statusText) || unwrap(status)"
-                                                                    class="label label-success">Success</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="control-group">
-                                                            <label class="control-label">Started:</label>
-                                                            <div  data-bind="
+                                                <div class="span2 build-report no-gutter">
+                                            <dl class="build-status report">
+                                                <dd class="name">
+                                                    <b><a data-bind="attr: {
+    href: '#' + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2]
+                                                        && $parents[2].id),
+    title: ($data.conf.number && $data.conf.number && ('Release number: ' + $data.conf.number && $data.conf.number + '\n') || '')
+        + 'Build id: #' + ($data.id || $parent && $parent.id || $parents[1]
+                    && $parents[1].id || $parents[2] && $parents[2].id)
+},
+    text: '#' + ($data.conf.number && $data.conf.number || $data.id || $parent && $parent.id || $parents[1]
+                                                && $parents[1].id || $parents[2] && $parents[2].id)"
+                                                   href="#"></a></b>
+                                                </dd>
+                                                <dd class="status">
+                                                    <label>Status:</label><span data-bind="cls: 'label-'
+        + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
+                                                                                class="label label-success"></span>
+                                                </dd>
+
+                                                <dd class="started">
+
+                                                    <label>Started:</label><span datetime-format="{0} ago"
+                                                                               data-bind="
     attr: {
         datetime: $data && $data.started,
-        title: unwrap($data && $data.started) && unwrap($data && $data.started).format
-            && unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss')
-    }"
-                                                                datetime-format="{0} ago"
-                                                                class="controls">
-                                                            </div>
-                                                        </div>
-                                                        <div class="control-group">
-                                                            <label class="control-label">Duration:</label><div
-                                                                data-bind="text: $data && $data.duration" class="controls">
-                                                                10 min
-                                                            </div>
-                                                        </div>
-                                                    </div>
+        title: (unwrap($data && $data.started) && unwrap($data && $data.started).format
+            && ('Started:       ' + unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss'))) +
+            (unwrap($data && $data.completed) && unwrap($data && $data.completed).format
+            && ('\nCompleted: ' + unwrap($data && $data.completed).format('DD MMM YYYY hh:mm:ss')))
+    }"></span>
+                                                </dd>
+                                                <dd data-bind="visible: $data && $data.duration" class="duration">
+
+                                                    <label>Duration:</label><span 
+                                                        data-bind="text: $data && $data.duration"></span>
+                                                </dd>
+                                            </dl>
+
                                                 </div>
-                                                <div class="span8 log log-big">
-                                                    <h3>
-                                                        <!--<span data-bind="text: '#' + ($data &&
-        $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2] && $parents[2].id)"
-        />-->
-                                                        <small data-bind="    text: $data && $data.hint"></small>
-                                                    </h3>
-                                                    <div data-bind="template: { foreach: $data && $data.logs, name: 'tplLog' }"
+                                                <div class="span8 log log-big no-gutter">
+                                                    <div data-bind="template: { foreach: $data && conf.logs, name: 'tplLog' }"
                                                         class="box-content log">
                                                     </div>
                                                 </div>
@@ -526,15 +547,16 @@ href: '#'
                                         <div data-bind="visible: selectedBuild, css: { active: selectedBuild.tab() == '#info' }"
                                             class="tab-pane"
                                             id="info">
-                                            <!--ko template: { name: 'tplLastBuild', data: selectedBuild
-        }-->
+                                            <!--ko with: selectedBuild-->
+                                                <!--ko template: { name: 'tplLastBuild', data: $data }-->
+                                                <!--/ko-->
                                             <!--/ko-->
                                         </div>
                                         <!--ko with: selectedBuild-->
                                         <!--ko foreach: platforms-->
                                         <div data-bind="attr: { id: $data.platform }, css: {
-active: $parents[1].selectedBuild.tab()
-        == '#' + unwrap(platform)
+    active: $parents[1].selectedBuild.tab()
+            == '#' + unwrap(platform)
 }"
                                             class="tab-pane">
                                             <!--ko template: { name: 'tplLastBuild', data: $data}
@@ -609,15 +631,13 @@ active: $parents[1].selectedBuild.tab()
     attr: {
         href: '#' + unwrap(id) + '?' + unwrap($data.platform),
     },
-click: function(build) { $parents[2].selectedBuild(build); $parents[2].selectedBuild.tab('#' + $data && $data.platform); }">
+    click: function (build) { $parents[2].selectedBuild(build.master || build); $parents[2].selectedBuild.tab('#' + build.platform()); }">
                                             <img data-bind="
-    css: {
-        grayscale: status() != 'success'
-    },
+    css: { grayscale: status() != 'success' },
 attr: {
     alt: $data.platform,
+    rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
     title: [unwrap($data.platform), ' #', unwrap(id), ' ', unwrap(status) == 'success' ? '' : unwrap(status)].join(''),
-    rel: (unwrap(qr) || '').indexOf('data:') >= 0 ? qr : null,
     src: ('img/platforms/' + unwrap($data && $data.platform || $data) + '.png'),
     alt: $data.platform
 }"
@@ -625,9 +645,15 @@ attr: {
                                         </a>
                                             <!--/ko-->
                                             <!--</a>-->
-                                            <dl class="specs">
+                                            <dl class="specs report">
                                                 <dd class="name">
-                                                    <label>Name:</label><span data-bind="text: id"></span>
+                                                    <a data-bind="
+    click: function (build) { $parents[1].selectedBuild(build.master || build); $parents[1].selectedBuild.tab('#info'); },
+    attr: {
+        href: '#' + unwrap(id) + '?' + unwrap($data.platform),
+    },">
+
+                                                    <label>Name:</label><span data-bind="text: id"></span></a>
                                                 </dd>
                                                 <dd class="since">
                                                     <label>Since:</label><span datetime-format="{0} ago"
@@ -655,7 +681,7 @@ attr: {
                             <h2><i class="icn icon-list-alt"></i>Server Logs</h2>
                             <div class="box-icon">
                                 <a data-bind="click: function (a, e) {
-$('#server-logs-modal').modal('show');
+    $('#server-logs-modal').modal('show');
 }"
                                     href="#" class="btn btn-setting btn-round">
                                     <i class="icon-eye-open"></i></a>
@@ -717,14 +743,14 @@ $('#server-logs-modal').modal('show');
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
-                    444                    <img data-bind="attr: {
-alt: $data.platform, src: $data.qr
-        || ('img/platforms/' + ($data.platform || $data) + '.png')
+                                        <img data-bind="attr: {
+    alt: $data.platform, src: $data.qr
+            || ('img/platforms/' + ($data.platform || $data) + '.png')
 }"
                                             class="dashboard-avatar grayscale hover" src="img/platforms/android.png">
                                         <!--/ko-->
                                         <!--</a>-->
-                                        <dl class="specs">
+                                        <dl class="specs report">
                                             <dd class="name">
                                                 <label>Name:</label><span data-bind="text: id"></span>
                                             </dd>
@@ -798,7 +824,7 @@ alt: $data.platform, src: $data.qr
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal hide modal-footer">
                 <a href="#" class="btn" data-dismiss="modal">Close</a>
                 <!--<a href="#" class="btn btn-primary">Save changes</a>-->
             </div>
@@ -819,12 +845,12 @@ alt: $data.platform, src: $data.qr
     <!-- external javascript
 	================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-
     <!-- jQuery -->
     <script src="js/jquery-1.11.0.min.js"></script>
-    <script>var jq = jQuery.noConflict();
-    </script>
+    <script>var jq = jQuery.noConflict();</script>
     <script src="js/jquery-1.7.2.min.js"></script>
+    <!-- library for cookie management -->
+    <script src="js/jquery.cookie.js"></script>
     <!-- jQuery UI -->
     <script src="js/jquery-ui-1.8.21.custom.min.js"></script>
     <!-- transition / effect library -->
@@ -853,8 +879,6 @@ alt: $data.platform, src: $data.qr
     <script src="js/bootstrap-typeahead.js"></script>
     <!-- tour library -->
     <script src="js/bootstrap-tour.js"></script>
-    <!-- library for cookie management -->
-    <script src="js/jquery.cookie.js"></script>
     <!-- calander plugin -->
     <script src='js/fullcalendar.min.js'></script>
     <!-- data table plugin -->

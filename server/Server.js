@@ -93,7 +93,7 @@ Server.define({
                                     var build = agent.busy;
                                     this.log(agent.busy, build.client, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
                                     build.agent = null;
-                                    this.updateBuildStatus('queued');
+                                    this.updateBuildStatus(build, 'queued');
                                     this.buildsQueue.push(build);
                                 }
                             }
@@ -215,7 +215,7 @@ Server.define({
             msg.buildId = buildId;
         build = this.findBuildById(build);
         if (build && build.conf)
-            build.conf.logs.push(message);
+            build.conf.logs.push(msg);
 
         this.logs.unshift(msg);
         this.wwws.socket.emit('log', msg);

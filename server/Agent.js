@@ -57,8 +57,21 @@ Agent.define({
                 serverUtils.writeFiles(locationPath, outputFiles, "the cordova build agent worker output files on {0} [a]".format(build.conf.platform), function (err) {
                     if (err) { server.log(build, client, "error saving build output files on the cordova build server\n{3}", err); }
                     else {
-                        
+                        build.conf.completed = new Date();
+                        var started = build.conf.started;
+                        var masterBuild = build.master;
                         server.updateBuildStatus(build, 'success');
+                        build.conf.duration = (started && started.format && started || new Date(started)).elapsed(build.conf.completed);
+                        if (masterBuild) {
+                            if (masterBuild.platforms.every(function (platform) {
+                                return platform.conf.status == 'success' || platform.conf.status == 'failed';
+                            })) {
+                                masterBuild.conf.completed = new Date();
+                                started = masterBuild.conf.started;
+                                masterBuild.conf.duration = (started && started.format && started || new Date(started)).elapsed(masterBuild.conf.completed);
+                                server.updateBuildStatus(masterBuild, 'success');
+                            }
+                        }
                         client.socket.emit('build-success', build.serialize({
                             outputFiles: client.conf.save
                         }));
@@ -71,8 +84,16 @@ Agent.define({
         });
     },
     'onBuildFailed': function (build) {
-        this.busy = false;
+        if (build && build.master) {
+            if (build.master.platforms.every(function (platform) {
+                return platform.conf.status == 'success' || platform.conf.status == 'failed';
+            })) {
+                build.master.conf.completed = new Date();
+                server.updateBuildStatus(build.master, 'failed');
+            }
+        }
         this.server.updateBuildStatus(build, 'failed');
+        this.busy = null;
     },
     startBuild: function (build) {
         this.busy = build;

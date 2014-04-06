@@ -9,8 +9,8 @@ patch(ioc.Socket.prototype, ["on", "addListener"]);
 patch(ioc.SocketNamespace.prototype, ["on", "addListener"]);
 patch(ioc.EventEmitter.prototype, ["on", "addListener"]);
 
-Date.prototype.elapsed = function () {
-    return new Elapsed(this, new Date()).optimal;
+Date.prototype.elapsed = function (until) {
+    return new Elapsed(this, until).optimal;
 }
 
 console.log = function () {
