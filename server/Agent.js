@@ -57,6 +57,8 @@ Agent.define({
                 serverUtils.writeFiles(locationPath, outputFiles, "the cordova build agent worker output files on {0} [a]".format(build.conf.platform), function (err) {
                     if (err) { server.log(build, client, "error saving build output files on the cordova build server\n{3}", err); }
                     else {
+                        
+                        build.conf.status = 'success';
                         client.socket.emit('build-success', build.serialize({
                             outputFiles: client.conf.save
                         }));
@@ -71,11 +73,12 @@ Agent.define({
     },
     'onBuildFailed': function (build) {
         this.busy = false;
+        build.conf.status = 'failed';
         this.server.notifyStatusAllWWWs('failed', 'build', build.serialize());
     },
     startBuild: function (build) {
         this.busy = build;
-        this.conf.status = 'building';
+        build.conf.status = 'building';
         this.server.notifyStatusAllWWWs('started', 'build', build.serialize({}));
         var client = build.client;
         var files = build.files;
@@ -85,28 +88,31 @@ Agent.define({
         server.log(build, client, 'Reading {2} file{3} from the server...', files.length, files.length == 1 ? "" : "s");
         console.log("FILES", files)
         serverUtils.readFiles(files, '[AGENT.startBuild] the cordova build server\n', function (err) {
-            if (err) {
-                this.server.log(build, client, err);
-                build.agent = null;
-                this.busy = null;
-            }
-            else {
-                var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
-
-                try {
-                    server.log(build, client, "[A] sending build to agent {2} on platform {3}...{4}", this.id, build.conf.platform, fileSize(size));
-                    this.socket.emit('build', build.serialize({
-                        files: 1,
-                    }));
-                }
-                catch (e) {
-                    server.log(build, client, "[A] error while sending build to agent {2} on {3}...{4}", agent.id, build.conf.platform, fileSize(size));
+            try {
+                if (err) {
+                    this.server.log(build, client, err);
                     build.agent = null;
                     this.busy = null;
                 }
-                finally {
-                    serverUtils.freeMemFiles(files);
+                else {
+                    try {
+                        var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
+
+                        server.log(build, client, "[A] sending build to agent {2} on platform {3}...{4}", this.id, build.conf.platform, fileSize(size));
+                        this.socket.emit('build', build.serialize({
+                            files: 1,
+                        }));
+                    }
+                    catch (e) {
+                        server.log(build, client, "[A] error while sending build to agent {2} on {3}...{4}", agent.id, build.conf.platform, fileSize(size));
+                        build.agent = null;
+                        this.busy = null;
+                    }
+
                 }
+            }
+            finally {
+                serverUtils.freeMemFiles(files);
             }
         }.bind(this));
     },

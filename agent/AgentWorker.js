@@ -157,6 +157,7 @@ AgentWorker.define({
         var locationPath = path.resolve(agent.workFolder, 'input', build.id);
         var files = build.files;
         serverUtils.writeFiles(locationPath, files, "the cordova build agent worker on {0} [a]".format(build.conf.platform), function (err) {
+            serverUtils.freeMemFiles(files);
             if (err) { this.log(build, err); }
             else {
                 agent.log(build, 'extracting archives for {2}...', build.conf.platform);
@@ -165,8 +166,6 @@ AgentWorker.define({
                     agent.extractArchive(build, item.file, agent.workFolder, {
                         cwd: agent.workFolder,
                     }, function (err, content) {
-                        //free agent's memory of input files' contents
-                        delete item.content;
                         // Calling cb makes it go to the next item.
                         cb(err);
                     });
@@ -226,6 +225,7 @@ AgentWorker.define({
         });
     },
     buildSuccess: function (build, log, globFiles) {
+
         var agent = this;
         var workFolder = this.workFolder;
         multiGlob.glob(globFiles, {
@@ -237,6 +237,7 @@ AgentWorker.define({
             });
             serverUtils.readFiles(files, '[Agent WORKER] cordova build agent worker output files', function (err) {
                 if (err) {
+                    serverUtils.freeMemFiles(files);
                     agent.buildFailed(build, err);
                 } else {
                     uploadFiles(files);
@@ -244,15 +245,19 @@ AgentWorker.define({
             }.bind(this));
         }.bind(this));
         function uploadFiles(outputFiles) {
-            build.outputFiles = outputFiles;
-            var size = 0; outputFiles.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; })
-            size && agent.log(build, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
+            try {
+                build.outputFiles = outputFiles;
+                var size = 0; outputFiles.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; })
+                size && agent.log(build, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
 
-            agent.socket.emit('build-success', build.serialize({
-                outputFiles: 1
-            }));
-            //free agent's memory of output files contents
-            outputFiles.forEach(function (file) { delete file.content.data; });
+                agent.socket.emit('build-success', build.serialize({
+                    outputFiles: 1
+                }));
+            }
+            finally {
+                //free agent's memory of output files contents
+                serverUtils.freeMemFiles(outputFiles);
+            }
         }
     },
     buildFailed: function (build, err) {

@@ -1,24 +1,12 @@
-require('nodetime').profile({
-    accountKey: '4b55187db0af80f8ff871a511ae9699744637a1a', 
-    appName: 'cordova-build'
-  });
 var $ = require('stringformat')
 var conf = require("./common/conf.js")();
 var listen = conf.listen;
-process.on('exit', function () {
- //handle your on exit code
- console.log("Exiting, have a nice day");
- 
-
-});
 	
-var tty = require("tty");
-
 process.openStdin().on("keypress", function(chunk, key) {
   if(key && key.name === "c" && key.ctrl) {
-      console.log("ctrl+c SIGNIT ");
+    console.log("ctrl+c SIGNIT ");
     process.emit("SIGINT");
-    //process.exit();
+    process.exit();
   }
 });
 
@@ -52,6 +40,11 @@ if (listen.client) {
     client.connect(conf);
 }
 if (listen.agent) {
+    require('nodetime').profile({
+    accountKey: '4b55187db0af80f8ff871a511ae9699744637a1a',
+    appName: 'cordova-build'
+});
+
     var AgentWorker = require('./agent/AgentWorker.js');
     var agent = new AgentWorker();
     agent.connect(conf);

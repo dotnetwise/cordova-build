@@ -6,8 +6,9 @@
     <Name>cordova-build</Name>
     <RootNamespace>remote-build</RootNamespace>
     <NodeExePath />
-    <NodeExeArguments />
-    <ScriptArguments>-mode:all -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -agent:ios,android,wp8 -save:clientOutput</ScriptArguments>
+    <NodeExeArguments>
+    </NodeExeArguments>
+    <ScriptArguments>-mode:all -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:ios,android,wp8 </ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -45,6 +46,7 @@
     <Compile Include="server.js" />
     <Compile Include="server\Agent.js" />
     <Compile Include="server\Client.js" />
+    <Compile Include="server\public\js\qtip.js" />
     <Compile Include="server\Server.js" />
     <Compile Include="common\utils.js" />
     <Compile Include="server\WWW.js" />

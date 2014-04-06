@@ -15,6 +15,21 @@
         body {
             padding-bottom: 40px;
         }
+        ul.dashboard-list li:first-child {
+            border-top: 1px solid #EBEBEB;
+        }
+        ul.dashboard-list li:first-child {
+            border: none;
+        }
+        
+#screenshot{
+	position:absolute;
+	border:1px solid #ccc;
+	background:#333;
+	padding:5px;
+	display:none;
+	color:#fff;
+	}
 
         .time {
             color: #bbb;
@@ -186,7 +201,6 @@
     <link href='css/jquery.iphone.toggle.css' rel='stylesheet'>
     <link href='css/opa-icons.css' rel='stylesheet'>
     <link href='css/uploadify.css' rel='stylesheet'>
-    <script src="js/bundle.js"></script>
 
     <!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -418,18 +432,19 @@ latestBuild.tab('#info');
                                                 href="#info">General</a>
                                         </li>
                                         <!-- ko foreach: latestBuild() && latestBuild().platforms-->
-                                        <li data-bind="css: { active: $parent.latestBuild.tab() == '#' + platform }">
+                                        <li data-bind="css: { active: $parent.latestBuild.tab() == '#' + unwrap(platform) }">
                                             <a data-bind="    click: function (data) {
 $parent.latestBuild.tab('#'
-        + platform);
-    }, attr: { href: '#' + platform }">
-                                                <img data-bind="attr: {
-attr: platform, src: 'img/platforms/'
-        + unwrap(platform) + '.png'
+        + unwrap(platform));
+    }, attr: { href: '#' + unwrap(platform) }">
+                                                <img data-bind="
+attr: {
+    alt: platform, 
+    src: 'img/platforms/' + unwrap(platform) + '.png'
 }"
                                                     class="platform"
                                                     alt="Abdullah" />
-                                                <span data-bind="    text: platformName"></span>
+                                                <span data-bind="    text: $root.platformNames[unwrap($data.platform)]"></span>
 
                                             </a>
                                         </li>
@@ -445,11 +460,12 @@ attr: platform, src: 'img/platforms/'
                                             <div class="row-fluid">
                                                 <div class="span2">
                                                     <a href="#" style="display: block;">
-                                                        <div data-bind="style: {
+                                                        <div data-bind="
+    style: {
 'backgroundImage':
-        'url(' + qr + ')'
+        'url(' + unwrap(qr) + ')'
 }"
-                                                            alt="QR Code" class="qr center" />
+                                                            class="qr center" />
                                                     </a>
                                                 </div>
                                                 <div class="span2">
@@ -463,7 +479,7 @@ href: '#'
         && $parents[2].id)
 }, text: '#' + ($data && $data.id || $parent && $parent.id || $parents[1]
 && $parents[1].id || $parents[2] && $parents[2].id)"
-                                                                    href="#">#1230</a></b>
+   href="#">#1230</a></b>
                                                             </div>
                                                         </div>
                                                         <div class="control-group">
@@ -513,7 +529,7 @@ href: '#'
                                         <!--ko foreach: platforms-->
                                         <div data-bind="attr: { id: platform }, css: {
 active: $parents[1].latestBuild.tab()
-        == '#' + platform
+        == '#' + unwrap(platform)
 }"
                                             class="tab-pane">
                                             <!--ko template: { name: 'tplLastBuild', data: $data}
@@ -584,29 +600,41 @@ active: $parents[1].latestBuild.tab()
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
-                                        <img data-bind="attr: {
-alt: $data.platform, src: $data.qr
-        || ('img/platforms/' + ($data.platform || $data) + '.png')
+                                        <a data-bind="
+    attr: {
+        href: '#' + unwrap(id) + '?' + unwrap($data.platform),
+    },
+click: function(build) { $parents[2].latestBuild(build); $parents[2].latestBuild.tab('#' + $data && $data.platform); }">
+                                            <img data-bind="
+    css: {
+        grayscale: status() != 'success'
+    },
+attr: {
+    alt: $data.platform,
+    title: unwrap($data.platform)+ ' #' + unwrap(id),
+    rel: qr,
+    src: ('img/platforms/' + unwrap($data && $data.platform || $data) + '.png'),
+    alt: $data.platform
 }"
-                                            class="dashboard-avatar" src="img/platforms/android.png">
-                                        <!--/ko-->
-                                        <!--</a>-->
-                                        <dl class="specs">
-                                            <dd class="name">
-                                                <label>Name:</label><span data-bind="text: id"></span>
-                                            </dd>
-                                            <dd class="since">
-                                                <label>Since:</label><span datetime-format="{0} ago"
-                                                    data-bind="attr: { datetime: $data.since, title: unwrap($data.since) && new Date(unwrap($data.since)).format('hh:mm:ss, DD MMM YYYY') || $data.since }, text: unwrap($data.since) && new Date(unwrap($data.since)).elapsed()"></span>
-                                            </dd>
-                                            <dd class="status">
-                                                <label>Status:</label><span data-bind="cls: 'label-'
+                                                 class="dashboard-avatar preview" src="img/platforms/android.png" />
+                                        </a>
+                                            <!--/ko-->
+                                            <!--</a>-->
+                                            <dl class="specs">
+                                                <dd class="name">
+                                                    <label>Name:</label><span data-bind="text: id"></span>
+                                                </dd>
+                                                <dd class="since">
+                                                    <label>Since:</label><span datetime-format="{0} ago"
+                                                                               data-bind="attr: { datetime: $data.since, title: unwrap($data.since) && new Date(unwrap($data.since)).format('hh:mm:ss, DD MMM YYYY') || $data.since }, text: unwrap($data.since) && new Date(unwrap($data.since)).elapsed()"></span>
+                                                </dd>
+                                                <dd class="status">
+                                                    <label>Status:</label><span data-bind="cls: 'label-'
         + unwrap($data.status), text: unwrap($data.statusText || $data.status)"
-                                                    class="label label-success"></span>
-                                            </dd>
-                                        </dl>
-                                    </li>
-                                    us
+                                                                                class="label label-success"></span>
+                                                </dd>
+                                            </dl>
+</li>
                                 </ul>
                             </div>
                         </div>
@@ -680,7 +708,7 @@ $('#server-logs-modal').modal('show');
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
-                                        <img data-bind="attr: {
+                    444                    <img data-bind="attr: {
 alt: $data.platform, src: $data.qr
         || ('img/platforms/' + ($data.platform || $data) + '.png')
 }"
@@ -784,6 +812,9 @@ alt: $data.platform, src: $data.qr
     <!-- Placed at the end of the document so the pages load faster -->
 
     <!-- jQuery -->
+    <script src="js/jquery-1.11.0.min.js"></script>
+    <script>var jq = jQuery.noConflict();
+    </script>
     <script src="js/jquery-1.7.2.min.js"></script>
     <!-- jQuery UI -->
     <script src="js/jquery-ui-1.8.21.custom.min.js"></script>
@@ -854,6 +885,7 @@ alt: $data.platform, src: $data.qr
     <script src="js/charisma.js"></script>
     <script src="js/qr-js/qr.min.js"></script>
 
+    <script src="js/bundle.js"></script>
     <script id="start"></script>
 </body>
 </html>

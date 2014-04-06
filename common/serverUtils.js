@@ -12,10 +12,10 @@ module.exports = {
                 done(err);
             } else {
                 files.length ? async.each(files, function (file, cb) {
-                    console.log("FFFFFF", folder.replace('d:\\Work\\DotNetWise\\Nuggets\\cordova-build\\', ''), 
-                        file.file.replace('d:\\Work\\DotNetWise\\Nuggets\\cordova-build\\', ''),
-                            path.resolve(folder, path.basename(file.file)).replace('d:\\Work\\DotNetWise\\Nuggets\\cordova-build\\', ''),
-                            path.basename(file.file));
+                    //console.log("FFFFFF", folder.replace('d:\\Work\\DotNetWise\\Nuggets\\cordova-build\\', ''), 
+                    //    file.file.replace('d:\\Work\\DotNetWise\\Nuggets\\cordova-build\\', ''),
+                    //        path.resolve(folder, path.basename(file.file)).replace('d:\\Work\\DotNetWise\\Nuggets\\cordova-build\\', ''),
+                    //        path.basename(file.file));
                     var fileName = path.resolve(folder, path.basename(file.file));
                     file.file = fileName;
                     file.content ? fs.writeFile(fileName, new Buffer(file.content.data, 'binary').toString(), {
@@ -44,9 +44,11 @@ module.exports = {
                 encoding: 'binary',
             }, function (err, data) {
                 if (!err) {
+                    var buf = new Buffer(data);
                     file.content = {
-                        data: new Buffer(data).toString('binary'),
+                        data: buf.toString('binary'),
                     };
+                    global.bu = buf;
                 }
                 cb(err);
             });

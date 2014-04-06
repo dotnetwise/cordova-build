@@ -37,13 +37,13 @@ ClientWorker.define({
         try {
             this.buildCompleted = true;
             console.log("Client is disconnecting from the server since the build tasks completed.");
-            this.socket.disconnect();
+            //this.socket.disconnect();
         }
         catch (e) {
         }
         finally {
             if (!this.conf.listen.server && !this.conf.listen.agent)
-                process.exit();//the client worker should disconnect and close the process since the job was done!
+                ;//process.exit();//the client worker should disconnect and close the process since the job was done!
         }
     },
     onConnect: function () {
@@ -52,6 +52,8 @@ ClientWorker.define({
         var files = this.files;
         var platforms = this.conf.build;
         var build = this.build = new Build({
+            status: 'uploading',
+            name: this.conf.name,
             started: new Date(),
         }, client, null, platforms, files);
 
@@ -68,11 +70,17 @@ ClientWorker.define({
             });
 
             function uploadFiles() {
-                //registering the client, sends our client id
-                var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
-                size && client.log(build, 'Uploading files to cordova build server...{0}'.format(fileSize(size)));
-                var serializedBuild = build.serialize({ files: 1 });
-                client.socket.emit('request-build', serializedBuild);
+                try {
+                    //registering the client, sends our client id
+                    var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
+                    size && client.log(build, 'Uploading files to cordova build server...{0}'.format(fileSize(size)));
+                    var serializedBuild = build.serialize({ files: 1 });
+                    client.socket.emit('request-build', serializedBuild);
+                }
+                finally {
+                    //free agent's memory of output files contents
+                    serverUtils.freeMemFiles(files);
+                }
             }
         }
     },

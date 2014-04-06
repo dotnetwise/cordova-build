@@ -1,5 +1,6 @@
 ﻿var ioc = require('socket.io/node_modules/socket.io-client');
 require('../../../common/utils.js');
+require('./qtip.js'); 
 var ko = require('knockout');
 var Elapsed = require('elapsed');
 
@@ -37,11 +38,6 @@ function ServerBrowser(conf) {
     this.latestBuild.tab = observable('#noBuild');
     this.status = observable('connecting');
     this.disconnectedSince = observable();
-    this.statuses = {
-        'queued': 'img/platforms/queue.gif',
-        'working': 'img/platforms/working.gif',
-        'failed': 'img/platforms/fail.png',
-    };
     var url = '{0}://{1}{2}/{3}'.format(conf.protocol || "http", conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
     this.generateQR("Ana are mere");
     console.log(url);
@@ -49,6 +45,17 @@ function ServerBrowser(conf) {
     this.connect(url);
 }
 ServerBrowser.define({
+    statuses: {
+        'queued': 'img/platforms/queue.gif',
+        'working': 'img/platforms/working.gif',
+        'failed': 'img/platforms/fail.png',
+        'unknown': 'img/platforms/unknown.png',
+    },  
+    platformNames: {
+        'ios': 'IOS',
+        'wp8': 'Windows Phone 8',
+        'android': 'Android',
+    },
     connect: function (url) {
         this.socket = ioc.connect(url);
         this.socket.heartbeatTimeout = 1000; // reconnect if not received heartbeat for 20 seconds
@@ -100,10 +107,33 @@ ServerBrowser.define({
                     list.unshift(status.obj);
                     console.log('log',status.obj);
                     break;
+                case 'queued':
                 case 'started':
-                case 'connected':
+                case 'building':
                 case 'failed':
-                case 'completed':
+                case 'success':
+                    var map = list.map;
+                    var build = status.obj;
+                    !function(build) {
+                        var vm = map[build.id]; 
+                        if (vm) {
+                            vm.update(build)
+                        }
+                        else {
+                            vm = new BuildVM(build);
+                            map[build.id] = vm;
+                            this == 1 ? list.push(vm) : this.platforms.push(vm);
+                        }
+                        if (this == 1) {
+                            vm.masterId = this && this.id;
+                            vm.master = this && this.id;
+                        }
+                        build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
+                    }.call(1, build);
+                    if (build && !this.latestBuild())
+                        this.latestBuild(build);
+                    break;
+                case 'connected':
                 case 'updated':
                     var o = list.map[status.obj.id];
                     var i = list.indexOf(o);
@@ -169,7 +199,28 @@ ServerBrowser.define({
             status.agents && status.agents.forEach(function(agent) {
                 this.agents.map[agent.id] = agent;
             }, this);
+            var map = this.builds.map = {};
+            var builds = [];
+            status.builds && status.builds.forEach(function(build) {
+                var vm = map[build.id]; 
+                if (vm) {
+                    vm.update(build)
+                }
+                else {
+                    vm = new BuildVM(build);
+                    map[build.id] = vm;
+                    this == 1 ? builds.push(vm) : this.platforms.push(vm);
+                }
+                if (this == 1) {
+                    vm.masterId = this && this.id;
+                    vm.master = this && this.id;
+                }
+                build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
+            }.bind(1));
             this.agents(status.agents);
+            this.builds(builds);
+            if (builds[0] && !this.latestBuild())
+                this.latestBuild(builds[0]);
         }
     },
     'onLog': function (message) {
@@ -188,9 +239,45 @@ ServerBrowser.define({
         var uri = qr.toDataURL({
             value: url,
             level: level || 'H',
-            size: 8,
+            size: 10,
         });
         console.warn(uri);
         return uri;
     }
 });
+function BuildVM(build) {
+    this.conf = build && build.conf;
+    this.name = observable();
+    this.id = build && build.id;
+    this.platforms = observableArray();
+    this.platform = observable();
+    this.started = observable();
+    this.completed = observable();
+    this.status = observable();
+    this.qr = observable();
+    this.update(build);
+}
+BuildVM.define({
+    update: function (build) {
+        if (build && build.conf) {
+            var conf = build.conf;
+            this.conf = conf;
+            this.name(conf.name);
+            this.platform(conf.platform);
+            this.id = build.id;
+            this.started(conf.started && new Date(conf.started));
+            this.completed(conf.completed && new Date(conf.completed));
+            this.status(conf.status);
+            if (this._qr != build.id) {
+                this._qr = build.id;
+                this.__qr = this.QR();
+            }
+            var qr = conf.status == 'success' ? this.__qr : ServerBrowser.prototype.statuses[conf.status || 'unkown'];
+            this.qr(qr);
+        }
+    },
+    QR: function () {
+        return ServerBrowser.prototype.generateQR("http://localhost/download/" + this.id);
+    }
+});
+

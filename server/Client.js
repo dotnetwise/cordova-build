@@ -48,8 +48,9 @@ module.exports = Function.define({
                     server.builds[build.id] = build;//save the master build
                     build.platforms = [];
 
+                    build.conf.status = 'queued';
+                    server.buildsQueue.push(build);
                     if (platforms.length <= 1) {
-                        server.buildsQueue.push(build);
                         server.log(build, this, '[C] build queued on {2}', platforms[0]);
                     }
                     else platforms.forEach(function (platform) {
@@ -64,6 +65,7 @@ module.exports = Function.define({
                         platformBuild.conf.logs = [];//separate logs from its master
                         console.log("BEFORE", build.id, files);
                         server.builds[platformBuild.id] = platformBuild;
+                        platformBuild.conf.status = 'queued';   
                         server.buildsQueue.push(platformBuild);
                         server.log(platformBuild, this, '[C] build queued on {2}', platform);
                     }, this);

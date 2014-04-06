@@ -44,10 +44,12 @@ Server.define({
             var lastTime = new Date();
             read();
             fs.watch(path, function (event, filename) {
+                setTimeout(function() {
                 if (lastTime < new Date()) {
                     lastTime = new Date(new Date().getTime() + 500);//500 ms treshold to avoid duplicates on windows
                     read(true);
                 }
+             }, 100);
             });
             function read(async) {
                 if (async)
@@ -91,7 +93,9 @@ Server.define({
                                     var build = agent.busy;
                                     this.log(agent.busy, build.client, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
                                     build.agent = null;
+                                    build.conf.status = 'queued';
                                     this.buildsQueue.push(build);
+                                    this.notifyStatusAllWWWs('updated', 'build', build.serialize());
                                 }
                             }
                             finally {
