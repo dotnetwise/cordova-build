@@ -70,6 +70,10 @@
             margin-left: -24px;
         }
 
+        .started {
+            color: #555;
+        }
+
         .fixed-box > .box-content {
             max-height: 300px;
             overflow: auto;
@@ -82,6 +86,10 @@
         .report {
             display: inline-block;
             margin: 0;
+        }
+
+        .report dd {
+            margin-left: 0;
         }
 
         .report label {
@@ -190,9 +198,48 @@
             margin-left: 0;
             margin-right: 4px;
         }
+
+        .has-overlay {
+            position: relative;
+        }
+
+        .overlay {
+            opacity: 0;
+            background-color: black;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 9999;
+            -moz-transition: all ease-in-out 0.5s;
+            -o-transition: all ease-in-out 0.5s;
+            -webkit-transition: all ease-in-out 0.5s;
+            transition: all ease-in-out 0.5s;
+            pointer-events: none;
+        }
+
+        .overlay.disconnected {
+            opacity: 0.1;
+        }
+
+        .overlay.connected {
+            opacity: 0;
+        }
+
         @media (max-width: 767px) {
             .report label {
                 width: 70px;
+            }
+        }
+
+        @media (min-width: 1560px) {
+            .row-fluid .build-info.span2.no-gutter {
+                width: 8.333333333333333%;
+            }
+
+            .row-fluid .build-log.span8.no-gutter {
+                width: 75%;
             }
         }
 
@@ -298,7 +345,7 @@
                 <div style="display: block; margin-top: 0; float: left;">
                     <ul data-bind="visible: status() != 'connected'" class="breadcrumb" style="display: inline;
                         padding: 0; margin: 0; border: 0 none;">
-                        <li data-bind="visible: status() == 'disconnected'" class="alert alert-warning">
+                        <li data-bind="visible: status() == 'disconnected'" class="alert alert-warning" style="margin: 0">
                             <strong>Disconnected!</strong> We are attempting to automatically reconnect to the server...
                             <span data-bind="attr: { datetime: disconnectedSince, title: disconnectedSince() && disconnectedSince().format('DD MMM YYYY hh:mm:ss') }, text: disconnectedSince() && disconnectedSince().elapsed()"
                                 datetime-format="since {0} ago"></span>
@@ -359,7 +406,7 @@
         </div>
     </div>
     <!-- topbar ends -->
-    <div class="container-fluid">
+    <div class="container-fluid" style="position: relative">
         <div class="row-fluid">
 
             <!-- left menu starts -->
@@ -424,12 +471,14 @@
                     </a>
                 </div>-->
                 <div class="row-fluid sortable">
-                    <div class="box span12" style="margin-top: 0;">
+                    <div class="box span12 has-overlay" style="margin-top: 0;">
+                        <div data-bind="css: { disconnected: status() != 'connected' }" class="overlay"></div>
                         <div class="box-header well">
-                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id)) : 'Latest Build'">Latest Build</span></h2>
+                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id)) : 'Latest Build'">
+                                Latest Build</span></h2>
 
                             <div class="box-icon">
-                                <a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>
+                                <!--<a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>-->
                                 <a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
@@ -483,11 +532,13 @@
                                     <div id="selectedBuildTabContent" class="tab-content">
                                         <div data-bind="hidden: selectedBuild" class="tab-pane active"
                                             id="noBuild">
-                                            <img class="no-build" src="img/platforms/no-build.png" />No build has been run yet
-                                        </div>
+                                            <img class="no-build" src="img/platforms/no-build.png" />
+                                            <span data-bind="visible: $root.status() == 'connecting'">Connecting and loading data</span>
+                                            <span data-bind="visible: $root.status() == 'connected'">No build has been run yet</span>
+                                            </div>
                                         <script id="tplLastBuild" type="text/html">
                                             <div class="row-fluid">
-                                                <div class="span2 no-gutter">
+                                                <div class="span2 no-gutter build-qr">
                                                     <a href="#" style="display: block;">
                                                         <div data-bind="
     style: {
@@ -497,10 +548,10 @@
                                                             class="qr center" />
                                                     </a>
                                                 </div>
-                                                <div class="span2 build-report no-gutter">
-                                            <dl class="build-status report">
-                                                <dd class="name">
-                                                    <b><a data-bind="attr: {
+                                                <div class="span2 build-report no-gutter build-info">
+                                                    <dl class="build-status report">
+                                                        <dd class="name">
+                                                            <b><a data-bind="attr: {
     href: '#' + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2]
                                                         && $parents[2].id),
     title: ($data.conf.number && $data.conf.number && ('Release number: ' + $data.conf.number && $data.conf.number + '\n') || '')
@@ -509,18 +560,19 @@
 },
     text: '#' + ($data.conf.number && $data.conf.number || $data.id || $parent && $parent.id || $parents[1]
                                                 && $parents[1].id || $parents[2] && $parents[2].id)"
-                                                   href="#"></a></b>
-                                                </dd>
-                                                <dd class="status">
-                                                    <label>Status:</label><span data-bind="cls: 'label-'
+                                                                href="#"></a></b>
+                                                        </dd>
+                                                        <dd class="status">
+                                                            <label>Status:</label><span data-bind="cls: 'label-'
         + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
-                                                                                class="label label-success"></span>
-                                                </dd>
+                                                                class="label label-success"></span>
+                                                        </dd>
 
-                                                <dd class="started">
+                                                        <dd class="started">
 
-                                                    <label>Started:</label><span datetime-format="{0} ago"
-                                                                               data-bind="
+                                                            <label>Started:</label><span datetime-format="{0} ago"
+                                                                data-bind="
+    text: '{0} ago'.format(unwrap($data && $data.started) && unwrap($data && $data.started).elapsed()),
     attr: {
         datetime: $data && $data.started,
         title: (unwrap($data && $data.started) && unwrap($data && $data.started).format
@@ -528,16 +580,16 @@
             (unwrap($data && $data.completed) && unwrap($data && $data.completed).format
             && ('\nCompleted: ' + unwrap($data && $data.completed).format('DD MMM YYYY hh:mm:ss')))
     }"></span>
-                                                </dd>
-                                                <dd data-bind="visible: $data && $data.duration" class="duration">
+                                                        </dd>
+                                                        <dd data-bind="visible: $data && $data.duration" class="duration">
 
-                                                    <label>Duration:</label><span 
-                                                        data-bind="text: $data && $data.duration"></span>
-                                                </dd>
-                                            </dl>
+                                                            <label>Duration:</label><span
+                                                                data-bind="text: $data && $data.duration"></span>
+                                                        </dd>
+                                                    </dl>
 
                                                 </div>
-                                                <div class="span8 log log-big no-gutter">
+                                                <div class="span8 log log-big no-gutter build-log">
                                                     <div data-bind="template: { foreach: $data && conf.logs, name: 'tplLog' }"
                                                         class="box-content log">
                                                     </div>
@@ -548,8 +600,8 @@
                                             class="tab-pane"
                                             id="info">
                                             <!--ko with: selectedBuild-->
-                                                <!--ko template: { name: 'tplLastBuild', data: $data }-->
-                                                <!--/ko-->
+                                            <!--ko template: { name: 'tplLastBuild', data: $data }-->
+                                            <!--/ko-->
                                             <!--/ko-->
                                         </div>
                                         <!--ko with: selectedBuild-->
@@ -610,7 +662,8 @@
 
                 <div class="row-fluid sortable">
 
-                    <div class="box span4 fixed-box">
+                    <div class="box span4 fixed-box has-overlay">
+                        <div data-bind="css: { disconnected: status() != 'connected' }" class="overlay"></div>
                         <div class="box-header well" data-original-title>
                             <h2><i class="icn icon-user"></i>Past Builds</h2>
                             <div class="box-icon">
@@ -634,49 +687,54 @@
     click: function (build) { $parents[2].selectedBuild(build.master || build); $parents[2].selectedBuild.tab('#' + build.platform()); }">
                                             <img data-bind="
     css: { grayscale: status() != 'success' },
-attr: {
-    alt: $data.platform,
-    rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
-    title: [unwrap($data.platform), ' #', unwrap(id), ' ', unwrap(status) == 'success' ? '' : unwrap(status)].join(''),
-    src: ('img/platforms/' + unwrap($data && $data.platform || $data) + '.png'),
-    alt: $data.platform
-}"
-                                                 class="dashboard-avatar preview" src="img/platforms/android.png" />
+    attr: {
+        alt: $data.platform,
+        rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
+        title: [unwrap($data.platform), ' #', unwrap(id), ' ', unwrap(status) == 'success' ? '' : unwrap(status)].join(''),
+        src: ('img/platforms/' + unwrap($data && $data.platform || $data) + '.png'),
+        alt: $data.platform
+    }"
+                                                class="dashboard-avatar preview" src="img/platforms/android.png" />
                                         </a>
-                                            <!--/ko-->
-                                            <!--</a>-->
-                                            <dl class="specs report">
-                                                <dd class="name">
-                                                    <a data-bind="
+                                        <!--/ko-->
+                                        <!--</a>-->
+                                        <dl class="specs report">
+                                            <dd class="name">
+                                                <a data-bind="
     click: function (build) { $parents[1].selectedBuild(build.master || build); $parents[1].selectedBuild.tab('#info'); },
     attr: {
         href: '#' + unwrap(id) + '?' + unwrap($data.platform),
     },">
 
-                                                    <label>Name:</label><span data-bind="text: id"></span></a>
-                                                </dd>
-                                                <dd class="since">
-                                                    <label>Since:</label><span datetime-format="{0} ago"
-                                                                               data-bind="
+                                                    <span data-bind="text: id"></span></a>
+                                            </dd>
+                                            <dd class="since">
+                                                <label>Since:</label><span datetime-format="{0} ago"
+                                                    data-bind="
+    text: '{0} ago'.format(unwrap($data && $data.started) && unwrap($data && $data.started).elapsed()),
     attr: {
-        datetime: $data.since,
-        title: unwrap($data.since) && new Date(unwrap($data.since)).format('DD MMM YYYY hh:mm:ss') || $data.since
-    }, text: unwrap($data.since) && new Date(unwrap($data.since)).elapsed()"></span>
-                                                </dd>
-                                                <dd class="status">
-                                                    <label>Status:</label><span data-bind="cls: 'label-'
+        datetime: $data && $data.started,
+        title: (unwrap($data && $data.started) && unwrap($data && $data.started).format
+            && ('Started:       ' + unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss'))) +
+            (unwrap($data && $data.completed) && unwrap($data && $data.completed).format
+            && ('\nCompleted: ' + unwrap($data && $data.completed).format('DD MMM YYYY hh:mm:ss')))
+    }"></span>
+                                            </dd>
+                                            <dd class="status">
+                                                <label>Status:</label><span data-bind="cls: 'label-'
         + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
-                                                                                class="label label-success"></span>
-                                                </dd>
-                                            </dl>
-</li>
+                                                    class="label label-success"></span>
+                                            </dd>
+                                        </dl>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                     <!--/span-->
 
-                    <div class="box span4 fixed-box">
+                    <div class="box span4 fixed-box has-overlay">
+                        <div data-bind="css: { disconnected: status() != 'connected' }" class="overlay"></div>
                         <div class="box-header well" data-original-title>
                             <h2><i class="icn icon-list-alt"></i>Server Logs</h2>
                             <div class="box-icon">
@@ -726,7 +784,8 @@ attr: {
                         </div>
                     </div>-->
                     <!--/span-->
-                    <div class="box span4 fixed-box">
+                    <div class="box span4 fixed-box has-overlay">
+                        <div data-bind="css: { disconnected: status() != 'connected' }" class="overlay"></div>
                         <div class="box-header well" data-original-title>
                             <h2><i class="icn icon-road"></i>Connected Agents</h2>
                             <div class="box-icon">
@@ -823,21 +882,20 @@ attr: {
                         class="log">
                     </div>
                 </div>
-            </div>
-            <div class="modal hide modal-footer">
-                <a href="#" class="btn" data-dismiss="modal">Close</a>
-                <!--<a href="#" class="btn btn-primary">Save changes</a>-->
+                <div class="modal-footer">
+                    <a href="#" class="btn" data-dismiss="modal">Close</a>
+                    <!--<a href="#" class="btn btn-primary">Save changes</a>-->
+                </div>
             </div>
         </div>
-
-        <footer>
-            <p class="pull-left">
-                <a href="http://www.dotnetwise.com" target="_blank">DotNetWise</a> 2014
-            </p>
-            <p class="pull-right">
-                Design template by: <a target="_blank" href="http://usman.it/free-responsive-admin-template">Charisma</a>
-            </p>
-        </footer>
+    <footer>
+        <p class="pull-left">
+            <a href="http://www.dotnetwise.com" target="_blank">DotNetWise</a> 2014
+        </p>
+        <p class="pull-right">
+            Design template by: <a target="_blank" href="http://usman.it/free-responsive-admin-template">Charisma</a>
+        </p>
+    </footer>
 
     </div>
     <!--/.fluid-container-->
