@@ -43,7 +43,7 @@ ClientWorker.define({
         }
         finally {
             if (!this.conf.listen.server && !this.conf.listen.agent)
-                ;//process.exit();//the client worker should disconnect and close the process since the job was done!
+                process.exit();//the client worker should disconnect and close the process since the job was done!
         }
     },
     onConnect: function () {
@@ -56,16 +56,20 @@ ClientWorker.define({
             name: this.conf.name,
             started: new Date(),
         }, client, null, platforms, files);
+        build.id = client.id;
 
         client.socket.emit('register', {
             id: client.id,
             save: !!this.conf.save,
         });
         if (!this.buildCompleted) {
+            client.socket.emit('register-build', build.serialize());
             this.log(build, 'Reading {2} file{3}...', files.length, files.length == 1 ? "" : "s");
             serverUtils.readFiles(files, '[CLIENT WORKER] the cordova build client', function (err) {
-                if (err)
+                if (err) {
+                    client.socket.emit('fail-build', build.serialize());
                     throw 'Error reading the input files\n{0}'.format(err);
+                }
                 uploadFiles();
             });
 
@@ -75,7 +79,7 @@ ClientWorker.define({
                     var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
                     size && client.log(build, 'Uploading files to cordova build server...{0}'.format(fileSize(size)));
                     var serializedBuild = build.serialize({ files: 1 });
-                    client.socket.emit('request-build', serializedBuild);
+                    client.socket.emit('upload-build', serializedBuild);
                 }
                 finally {
                     //free agent's memory of output files contents

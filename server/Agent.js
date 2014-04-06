@@ -58,12 +58,11 @@ Agent.define({
                     if (err) { server.log(build, client, "error saving build output files on the cordova build server\n{3}", err); }
                     else {
                         
-                        build.updateStatus('success');
+                        server.updateBuildStatus(build, 'success');
                         client.socket.emit('build-success', build.serialize({
                             outputFiles: client.conf.save
                         }));
 
-                        server.notifyStatusAllWWWs('completed', 'build', build.serialize());
                         agent.busy = null;//free agent to take in another work
                     }
                     serverUtils.freeMemFiles(build.outputFiles);
@@ -73,20 +72,18 @@ Agent.define({
     },
     'onBuildFailed': function (build) {
         this.busy = false;
-        build.updateStatus('failed');
-        this.server.notifyStatusAllWWWs('failed', 'build', build.serialize());
+        this.server.updateBuildStatus(build, 'failed');
     },
     startBuild: function (build) {
         this.busy = build;
-        build.updateStatus('building');
-        this.server.notifyStatusAllWWWs('started', 'build', build.serialize({}));
+        this.server.updateBuildStatus(build, 'building');
         var client = build.client;
         var files = build.files;
         var server = this.server;
         build.agent = this;
 
         server.log(build, client, 'Reading {2} file{3} from the server...', files.length, files.length == 1 ? "" : "s");
-        console.log("FILES", files)
+        //console.log("FILES", files)
         serverUtils.readFiles(files, '[AGENT.startBuild] the cordova build server\n', function (err) {
             try {
                 if (err) {

@@ -11,11 +11,12 @@
     $(document).on("mouseenter", ".preview", function (e) {
         var $this = $(this);
         this.t = $this.attr("title");
+        if (!this.t && !rel)
+            return;
+
         this.title = "";
         var c = (this.t != "") ? "<br/>" + this.t : "";
         var rel = $this.attr("rel");
-        if (!title && !rel)
-            return;
         $("body").append(["<div id='screenshot'>", rel ? "<img src='" : "", rel, rel ? "' alt='url preview' />": "",  c, "</div>"].join(''));
         $("#screenshot")
             .css("top", (e.pageY - xOffset) + "px")

@@ -16,7 +16,9 @@ module.exports = Function.define({
                 this.conf = conf || {};
             },
             'disconnect': this.onDisconnect,
-            'request-build': this.onRequestBuild,
+            'register-build': this.onRegisterBuild,
+            'upload-build': this.onUploadBuild,
+            'fail-build': this.onFailBuild,
         }, this);
     },
     'onConnect': function (server) {
@@ -25,53 +27,84 @@ module.exports = Function.define({
     'onDisconnect': function () {
         this.server.clients.remove(this);
     },
-    'onRequestBuild': function (build) {
+    'onRegisterBuild': function (build) {
         var buildConf = build && build.conf;
         if (this.validateBuildRequest(build)) {
             var buildObj = new Build(buildConf, this, null, buildConf.platform,
-                build.files, null, build.id, build.masterId);
+                build.files, null, build.id, null);
+            //from now on keep a Build object
+            build = buildObj;
+            this.server.builds.push(build);
+            this.server.builds[build.id] = build;
+            var platforms = buildConf.platform;
+            build.platforms = [];
+            platforms.forEach(function (platform) {
+                var conf = extend(true, {}, buildConf);
+                var platformBuild = new Build(conf, this, null, platform, null, null, null, build);
+                build.platforms.push(platformBuild);
+                platformBuild.conf.logs = [];//separate logs from its master
+                this.server.builds[platformBuild.id] = platformBuild;
+            }, this);
+            this.server.updateBuildStatus(build, build.conf.status);
+        }
+    },
+    'onUploadBuild': function (build) {
+        var buildConf = build && build.conf;
+        var server = this.server;
+        if (this.validateBuildRequest(build)) {
+            var buildObj = server.builds[build.id];
+            if (!buildObj) {
+                server.log(build, this, "update-build: The client said is uploading a build didn't specify a config");
+                return;
+            }
+            //TODO: decide whether to use client's log. for now assuming no
+            //buildObj.logs = build.logs;
+            buildObj.files = build.files;
             //from now on keep a Build object
             build = buildObj;
 
-            var platforms = buildConf.platform;
             var allFiles = build.files;
             var client = this;
-            var server = this.server;
             var path = require('path');
-            var locationPath = path.resolve(this.server.location, build.id, 'input');
+            var locationPath = path.resolve(server.location, build.id, 'input');
 
 
             serverUtils.writeFiles(locationPath, allFiles, "the cordova build server [c]", function (err) {
-                if (err) { this.server.log(build, client, err); }
+                if (err) { 
+                    server.log(build, client, err); 
+                    server.updateBuildStatus(build, 'failed');
+                }
                 else {
-                    server.builds.push(build);
-                    server.builds[build.id] = build;//save the master build
-                    build.platforms = [];
 
-                    build.updateStatus('queued');
-                    server.buildsQueue.push(build);
-                    if (platforms.length <= 1) {
-                        server.log(build, this, '[C] build queued on {2}', platforms[0]);
+                    server.updateBuildStatus(build, 'queued');
+                    if (build.platforms.length <= 1) {
+                        server.log(build, this, '[C] build queued on {2}', build.platform || build.conf.platform[0]);
                     }
-                    else platforms.forEach(function (platform) {
+                    else build.platforms.forEach(function (platformBuild) {
                         var files = [];
                         allFiles.forEach(function (file) {
-                            if (!file.group || file.group == platform)
+                            if (!file.group || file.group == platformBuild.platform)
                                 files.push(file);
                         });
-                        var conf = extend(true, {}, buildConf);
-                        var platformBuild = new Build(conf, this, null, platform, files, null, null, build.id);
-                        build.platforms.push(platformBuild);
-                        platformBuild.conf.logs = [];//separate logs from its master
-                        console.log("BEFORE", build.id, files);
-                        server.builds[platformBuild.id] = platformBuild;
+                        platformBuild.files = files;
                         platformBuild.updateStatus('queued');   
+                        
                         server.buildsQueue.push(platformBuild);
-                        server.log(platformBuild, this, '[C] build queued on {2}', platform);
+                        server.log(platformBuild, this, '[C] build queued on {2}', platformBuild.conf.platform);
                     }, this);
                 }
             }.bind(this));
         }
+    },
+    'onFailBuild': function (build) {
+            var buildObj = this.server.builds[build && build.id];
+            if (buildObj) {
+                buildObj.platforms && buildObj.platforms.forEach(function(platformBuild){
+                    platformBuild.conf.status = 'failed';
+                });
+                buildObj.conf.status = 'failed';
+                this.server.updateBuildStatus(buildObj, 'failed');
+            }
     },
     validateBuildRequest: function (build, client) {
         var buildConf = build && build.conf;

@@ -93,9 +93,8 @@ Server.define({
                                     var build = agent.busy;
                                     this.log(agent.busy, build.client, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
                                     build.agent = null;
-                                    build.updateStatus('queued');
+                                    this.updateBuildStatus('queued');
                                     this.buildsQueue.push(build);
-                                    this.notifyStatusAllWWWs('updated', 'build', build.serialize());
                                 }
                             }
                             finally {
@@ -172,6 +171,10 @@ Server.define({
             what: what,
             obj: obj,
         });
+    },
+    updateBuildStatus: function(build, status) {
+        build.updateStatus(status);
+        this.notifyStatusAllWWWs(status, 'build', build.serialize({platforms:1}));
     },
     processQueue: function () {
         var build = this.buildsQueue.shift();

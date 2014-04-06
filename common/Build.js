@@ -2,6 +2,8 @@
 require('fast-class');
 var extend = require('extend');
 var shortid = require('shortid');
+var statuses = ['unknown', 'success', 'planned', 'queued', 'building', 'failed']
+
 function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
     this.conf = extend(true, {}, conf);
     this.client = client;
@@ -11,8 +13,11 @@ function Build(conf, client, agent, platform, files, outputFiles, id, masterId) 
     this.id = id || shortid.generate();
     this.conf.platform = platform;
     this.conf.logs = conf.logs || [];
-    if (masterId)
-        this.masterId = masterId;
+    if (masterId) {
+        if (masterId.id)
+            this.master = masterId;
+        this.masterId = masterId && masterId.id || masterId;
+    }
     if (outputFiles)
         this.outputFiles = outputFiles;
 }
@@ -41,5 +46,15 @@ Build.define({
     },
     updateStatus: function(newStatus) {
         this.conf.status = newStatus;
+        if (this.master) 
+        {
+            var masterStatus = 0;
+            this.master.platforms.forEach(function(child, i) {
+                i = statuses.indexOf(child && child.conf && child.conf.status);
+                if (i > masterStatus)
+                    masterStatus = i;
+            });
+            this.master.conf.status = statuses[masterStatus];
+        }
     },
 });

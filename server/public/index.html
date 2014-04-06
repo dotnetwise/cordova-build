@@ -432,15 +432,15 @@ selectedBuild.tab('#info');
                                                 href="#info">General</a>
                                         </li>
                                         <!-- ko foreach: selectedBuild() && selectedBuild().platforms-->
-                                        <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap(platform) }">
+                                        <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }">
                                             <a data-bind="    click: function (data) {
 $parent.selectedBuild.tab('#'
-        + unwrap(platform));
-    }, attr: { href: '#' + unwrap(platform) }">
+        + unwrap($data && $data.platform));
+    }, attr: { href: '#' + unwrap($data && $data.platform) }">
                                                 <img data-bind="
 attr: {
-    alt: platform, 
-    src: 'img/platforms/' + unwrap(platform) + '.png'
+    alt: $data && $data.platform,
+    src: 'img/platforms/' + unwrap($data && $data.platform) + '.png'
 }"
                                                     class="platform"
                                                     alt="Abdullah" />
@@ -532,7 +532,7 @@ href: '#'
                                         </div>
                                         <!--ko with: selectedBuild-->
                                         <!--ko foreach: platforms-->
-                                        <div data-bind="attr: { id: platform }, css: {
+                                        <div data-bind="attr: { id: $data.platform }, css: {
 active: $parents[1].selectedBuild.tab()
         == '#' + unwrap(platform)
 }"
@@ -639,7 +639,7 @@ attr: {
                                                 </dd>
                                                 <dd class="status">
                                                     <label>Status:</label><span data-bind="cls: 'label-'
-        + unwrap($data.status), text: unwrap($data.statusText || $data.status)"
+        + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
                                                                                 class="label label-success"></span>
                                                 </dd>
                                             </dl>

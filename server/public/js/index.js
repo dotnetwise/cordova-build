@@ -1,6 +1,6 @@
 ﻿var ioc = require('socket.io/node_modules/socket.io-client');
 require('../../../common/utils.js');
-require('./qtip.js'); 
+require('./qtip.js');
 var ko = require('knockout');
 var Elapsed = require('elapsed');
 
@@ -15,8 +15,8 @@ if (inBrowser) {
             var date = new Date($this.attr("datetime"));
             var format = $this.attr('datetime-format');
             var elapsed = date.elapsed();
-            $this.text(elapsed && (format ? format.format(elapsed) : elapsed)); 
-        }); 
+            $this.text(elapsed && (format ? format.format(elapsed) : elapsed));
+        });
     }, 1000);
 }
 var observable = ko.observable;
@@ -46,11 +46,12 @@ function ServerBrowser(conf) {
 }
 ServerBrowser.define({
     statuses: {
+        'uploading': 'img/platforms/working.gif',
         'queued': 'img/platforms/queue.gif',
         'working': 'img/platforms/working.gif',
         'failed': 'img/platforms/fail.png',
         'unknown': 'img/platforms/unknown.png',
-    },  
+    },
     platformNames: {
         'ios': 'IOS',
         'wp8': 'Windows Phone 8',
@@ -72,32 +73,32 @@ ServerBrowser.define({
         this.status('connected');
         this.socket.emit('get-status');
     },
-    'onDisconnect': function() {
-      this.disconnectedSince(new Date());
-      this.status('disconnected');
-      this.agents([]);
-      this.builds([]);
-      this.clients([]);
-      //this.logs([]);  -- do not clear logs
-      this.agents.map = {};
-      this.builds.map = {};
-      this.clients.map = {};
-      this.logs.map = {};
-     },
+    'onDisconnect': function () {
+        this.disconnectedSince(new Date());
+        this.status('disconnected');
+        this.agents([]);
+        this.builds([]);
+        this.clients([]);
+        //this.logs([]);  -- do not clear logs
+        this.agents.map = {};
+        this.builds.map = {};
+        this.clients.map = {};
+        this.logs.map = {};
+    },
     'onPartialStatus': function (status) {
         console.warn('partial status', status);
         switch (status && status.what) {
             case 'agent':
-                update(this.agents);
+                update.call(this, this.agents);
                 break;
             case 'build':
-                update(this.builds);
+                update.call(this, this.builds);
                 break;
             case 'client':
-                update(this.clients);
+                update.call(this, this.clients);
                 break;
             case 'log':
-                update(this.logs);
+                update.call(this, this.logs);
                 break;
         }
         function update(list) {
@@ -105,45 +106,48 @@ ServerBrowser.define({
             switch (status && status.kind) {
                 case 'log':
                     list.unshift(status.obj);
-                    console.log('log',status.obj);
+                    console.log('log', status.obj);
                     break;
                 case 'queued':
-                case 'started':
                 case 'building':
                 case 'failed':
                 case 'success':
+                default:
                     var map = list.map;
                     var build = status.obj;
-                    !function(build) {
-                        var vm = map[build.id]; 
+                    selectedBuild = this.selectedBuild;
+                    build = function (build) {
+                        var vm = map[build.id];
                         if (vm) {
                             vm.update(build)
                         }
                         else {
                             vm = new BuildVM(build);
                             map[build.id] = vm;
-                            this == 1 ? list.push(vm) : this.platforms.push(vm);
+                            this == 1 ? list.unshift(vm) : this.platforms.push(vm);
                         }
-                        if (this == 1) {
+                        if (this != 1) {
                             vm.masterId = this && this.id;
-                            vm.master = this && this.id;
+                            vm.master = this;
                         }
                         build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
+                        return vm;
                     }.call(1, build);
-                    if (build && !this.selectedBuild())
-                        this.selectedBuild(build);
+                    if (build && !selectedBuild()) {
+                        selectedBuild(build);
+                    }
                     break;
                 case 'connected':
                 case 'updated':
                     var o = list.map[status.obj.id];
                     var i = list.indexOf(o);
-                    i < 0 ? list.push(status.obj) : list[i] = status.obj;
+                    i < 0 ? list.unshift(status.obj) : list[i] = status.obj;
                     list.map[status.obj.id] = o;
                     //console.log("LIST", status, list);
                     break;
                 case 'disconnected':
                     var id = status.obj.id;
-                    list.remove(function(item) { 
+                    list.remove(function (item) {
                         return item.id == id;
                     });
                     delete list.map[status.obj.id];
@@ -196,24 +200,24 @@ ServerBrowser.define({
             //});
             this.logs(status.logs);
             this.agents.map = {};
-            status.agents && status.agents.forEach(function(agent) {
+            status.agents && status.agents.forEach(function (agent) {
                 this.agents.map[agent.id] = agent;
             }, this);
             var map = this.builds.map = {};
             var builds = [];
-            status.builds && status.builds.forEach(function(build) {
-                var vm = map[build.id]; 
+            status.builds && status.builds.forEach(function (build) {
+                var vm = map[build.id];
                 if (vm) {
                     vm.update(build)
                 }
                 else {
                     vm = new BuildVM(build);
                     map[build.id] = vm;
-                    this == 1 ? builds.push(vm) : this.platforms.push(vm);
+                    this == 1 ? builds.unshift(vm) : this.platforms.push(vm);
                 }
-                if (this == 1) {
+                if (this != 1) {
                     vm.masterId = this && this.id;
-                    vm.master = this && this.id;
+                    vm.master = this;
                 }
                 build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
             }.bind(1));
@@ -257,7 +261,7 @@ function BuildVM(build) {
     this.qr = observable();
     this.update(build);
 }
-var statuses = ['unknown', 'success', 'planned', 'queued', 'building', 'failed']
+var statuses = ['unknown', 'success', 'uploading', 'planned', 'queued', 'building', 'failed']
 BuildVM.define({
     update: function (build) {
         if (build && build.conf) {
@@ -268,17 +272,21 @@ BuildVM.define({
             this.id = build.id;
             this.started(conf.started && new Date(conf.started));
             this.completed(conf.completed && new Date(conf.completed));
+            if (conf.status == 'unknown') debugger;
             this.status(conf.status);
             if (this.master) {
-                var masterStatus = 0;
-                this.master.platforms.forEach(function(child, i) {
+                var masterStatus = statuses.indexOf(this.conf.status);
+                if (masterStatus >= 0) {
+                this.master.platforms().forEach(function (child, i) {
                     i = statuses.indexOf(child.status());
                     if (i > masterStatus)
                         masterStatus = i;
                 });
-                this.master.status(statuses[masterStatus]);
+                if (masterStatus == 0) debugger;
+                    this.master.status(statuses[masterStatus]);
+                }
             }
-            
+
             if (this._qr != build.id) {
                 this._qr = build.id;
                 this.__qr = this.QR();
