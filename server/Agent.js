@@ -30,7 +30,7 @@ Agent.define({
             'uploading': this.onUploading,
             'building': this.onBuilding,
             'build-success': this.onBuildSuccess,
-            'build-fail': this.onBuildFailed,
+            'build-failed': this.onBuildFailed,
             'log': function (msg) {
                 var build = this.server.builds[msg && msg.buildId];
                 this.server.forwardLog(build, this, msg);
@@ -40,12 +40,12 @@ Agent.define({
     'onDisconnect': function () {
         this.server.notifyStatusAllWWWs('disconnected', 'agent', this.conf);
     },
-    'onBuilding': function(buildId) {
+    'onBuilding': function (buildId) {
         this.server.updateBuildStatus(buildId, 'building');
-     },
-    'onUploading': function(buildId) {
+    },
+    'onUploading': function (buildId) {
         this.server.updateBuildStatus(buildId, 'uploading');
-     },
+    },
     'onBuildSuccess': function (responseBuild) {
         var build = this.server.findBuildById(responseBuild);
         var client = build.client;
@@ -61,11 +61,16 @@ Agent.define({
             file.file = [build.number, build.number && '.' || '', path.basename(file.file, ext), '.', id, ext].join('');
         });
         mkdirp(locationPath, function (err) {
-            if (err)
+            if (err) {
                 this.log(build, client, Msg.error, 'error creating folder {2} on the cordova build server\n{3}', locationPath, err);
+                this.server.updateBuildStatus(build, "failed");
+            }
             else {
                 serverUtils.writeFiles(locationPath, outputFiles, 'the cordova build agent worker output files on {0} [a]'.format(build.conf.platform), function (err) {
-                    if (err) { this.log(build, client, Msg.error, 'error saving build output files on the cordova build server\n{3}', err); }
+                    if (err) { 
+                        this.log(build, client, Msg.error, 'error saving build output files on the cordova build server\n{3}', err); 
+                        this.server.updateBuildStatus(build, "failed");
+                    }
                     else {
                         build.conf.completed = new Date();
                         var started = build.conf.started;
@@ -94,22 +99,28 @@ Agent.define({
         }, this);
     },
     'onBuildFailed': function (build) {
-        if (build && build.master) {
-            if (build.master.platforms.every(function (platform) {
-                return platform.conf.status == 'success' || platform.conf.status == 'failed';
-            })) {
-                build.master.conf.completed = new Date();
-                server.updateBuildStatus(build.master, 'failed');
+        build = this.server.builds[build && build.id || build];
+        if (build) {
+            if (build && build.master) {
+                if (build.master.platforms.every(function (platform) {
+                    return platform.conf.status == 'success' || platform.conf.status == 'failed';
+                })) {
+                    build.master.conf.completed = new Date();
+                    server.updateBuildStatus(build.master, 'failed');
+                }
             }
+            this.server.updateBuildStatus(build, 'failed');
+            this.busy = null;
         }
-        this.server.updateBuildStatus(build, 'failed');
-        this.busy = null;
+        else {
+            this.log(build, null, Msg.error, "The build {0} was requested to be failing but we couldn't identify such build");
+        }
     },
     log: function (build, client, priority, message, args) {
         Array.prototype.splice.call(arguments, 1, 1, this, 'A');
         var msg = new Msg();
         msg.update.apply(msg, arguments);
-        
+
         this.server.log(msg, client);
     },
     startBuild: function (build) {

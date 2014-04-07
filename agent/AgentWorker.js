@@ -32,7 +32,7 @@ AgentWorker.define({
             'log': function (msg) {
                 var message = new Msg(msg);
                 console.log(message.toString());
-             },
+            },
         }, this);
         process.on('exit', function () {
             this.socket.socket.connected && this.socket.disconnect();
@@ -89,7 +89,7 @@ AgentWorker.define({
         Array.prototype.splice.call(arguments, 1, 0, this, 'AW');
         var msg = new Msg();
         msg.update.apply(msg, arguments);
-        
+
         if (this.conf.mode != 'all' || !this.socket.socket.connected)
             console.log(msg.toString());
         this.socket.emit('log', msg);
@@ -123,27 +123,34 @@ AgentWorker.define({
         switch (zipArchiver) {
             case '7z':
                 exec('7z x {0} -o{1} -y'.format(file, target), args, function (err, stdout, stdErr) {
-                    if (err)
+                    if (err) {
                         agent.log(build, Msg.error, 'Error executing 7z\n{2}\n{3}', err, stdErr);
+                        this.buildFailed(build);
+                    }
                     else done();
                 });
                 break;
             case 'keka7z':
                 exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), args, function (err) {
-                    if (err)
+                    if (err) {
                         agent.log(build, Msg.error, 'error executing keka7z\n{2}', err);
+                        this.buildFailed(build);
+                    }
                     else done();
                 });
                 break;
             case 'unzip':
                 exec('unzip -uo {0} -d {1} >nul'.format(file, target), args, function (err) {
-                    if (err)
+                    if (err) {
                         agent.log(build, Msg.error, 'error executing unzip\n{2}', err);
+                        this.buildFailed(build);
+                    }
                     else done();
                 });
                 break;
             default:
                 agent.log(build, Msg.error, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z, unzip');
+                this.buildFailed(build);
                 break;
         }
     },
@@ -153,7 +160,10 @@ AgentWorker.define({
         var files = build.files;
         serverUtils.writeFiles(locationPath, files, 'the cordova build agent worker on {0} [a]'.format(build.conf.platform), function (err) {
             serverUtils.freeMemFiles(files);
-            if (err) { agent.log(build, Msg.error, 'error while saving files on agent worker:\n{2}', err); }
+            if (err) {
+                agent.log(build, Msg.error, 'error while saving files on agent worker:\n{2}', err);
+                this.buildFailed(build);
+            }
             else {
                 agent.log(build, Msg.info, 'extracting archives for {2}...', build.conf.platform);
 
@@ -165,8 +175,10 @@ AgentWorker.define({
                         cb(err);
                     });
                 }, function (err) {// Final callback after each item has been iterated over.
-                    if (err)
+                    if (err) {
                         agent.log(build, Msg.error, 'error extracting archive files\n{2}', err);
+                        this.buildFailed(build);
+                    }
                     else {
                         agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
@@ -184,15 +196,18 @@ AgentWorker.define({
                         function cordovaExecuted(err, stdout, stderr) {
                             err && agent.log(build, Msg.error, 'error:\n{2}', err);
                             //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
-                            stderr && agent.log(build, Msg.error, 'stderror:\n{2}\n', stderr);
-                            var e = err || stderr;
+                            stderr && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+                            var e = stderr || err;
                             e && agent.buildFailed(build, e);
 
                             done.call(agent, e, stdout);
                         }
 
                         run && run.on('close', function (code) {
-                            code && agent.log(build, Msg.error, 'child process exited with code ' + code);
+                            if (code) {
+                                agent.log(build, Msg.error, 'child process exited with code ' + code);
+                                this.buildFailed(build);
+                            }
                         });
                     }
                 });
@@ -221,19 +236,24 @@ AgentWorker.define({
         multiGlob.glob(globFiles, {
             cwd: workFolder,
         }, function (err, files) {
-            err && this.log(build, Msg.error, 'error globbing {2}', globFiles);
-            files = files.map(function (file) {
-                return { file: path.resolve(workFolder, file) };
-            });
-            this.socket.emit('uploading', build.id);//change build status to uploading..
-            serverUtils.readFiles(files, '[Agent WORKER] cordova build agent worker output files', function (err) {
-                if (err) {
-                    serverUtils.freeMemFiles(files);
-                    agent.buildFailed(build, err);
-                } else {
-                    uploadFiles(files);
-                }
-            }.bind(this));
+            if (err) {
+                this.log(build, Msg.error, 'error globbing {2}', globFiles);
+                this.buildFailed(build);
+            }
+            else {
+                files = files.map(function (file) {
+                    return { file: path.resolve(workFolder, file) };
+                });
+                this.socket.emit('uploading', build.id);//change build status to uploading..
+                serverUtils.readFiles(files, '[Agent WORKER] cordova build agent worker output files', function (err) {
+                    if (err) {
+                        serverUtils.freeMemFiles(files);
+                        agent.buildFailed(build, err);
+                    } else {
+                        uploadFiles(files);
+                    }
+                }.bind(this));
+            }
         }.bind(this));
         function uploadFiles(outputFiles) {
             try {

@@ -5,11 +5,13 @@ var Client = require('./Client');
 var Agent = require('./Agent');
 var WWW = require('./WWW');
 var serverUtils = require('../common/serverUtils');
+var BrowserDetect = require('../common/BrowserDetect');
 
     //patch on to support binding with multiple events at once
 
 var path = require('path');
 var fs = require('fs');
+var multiGlob = require('multi-glob');
 var async = require('async');
 var mkdirp = require('mkdirp');
 var io = require('socket.io');
@@ -45,12 +47,12 @@ Server.define({
             var lastTime = new Date();
             read();
             fs.watch(path, function (event, filename) {
-                setTimeout(function() {
-                if (lastTime < new Date()) {
-                    lastTime = new Date(new Date().getTime() + 500);//500 ms treshold to avoid duplicates on windows
-                    read(true);
-                }
-             }, 100);
+                setTimeout(function () {
+                    if (lastTime < new Date()) {
+                        lastTime = new Date(new Date().getTime() + 500);//500 ms treshold to avoid duplicates on windows
+                        read(true);
+                    }
+                }, 100);
             });
             function read(async) {
                 if (async)
@@ -73,7 +75,10 @@ Server.define({
                     port: conf.port,
                 })));
                 res.send(html);
-            });
+            })
+            .get('/download/:id/:platform', function (req, res) {
+                return this.downloadRelease(req, res);
+            }.bind(this));
 
 
         this.agents.socket = ios
@@ -175,7 +180,7 @@ Server.define({
             obj: obj,
         });
     },
-    updateBuildStatus: function(build, status) {
+    updateBuildStatus: function (build, status) {
         var buildParam = build;
         if (build && !build.updateStatus) {
             //self detect build if an id was passed
@@ -183,7 +188,7 @@ Server.define({
         }
         if (build && build.updateStatus) {
             build.updateStatus(status);
-            this.notifyStatusAllWWWs(status, 'build', build.serialize({platforms:1}));
+            this.notifyStatusAllWWWs(status, 'build', build.serialize({ platforms: 1 }));
         }
         else {
             this.log(buildParam, null, 'S', Msg.error, "A request to change a build's status to {2} was made but that build cannot be found. We have tried to identify it by {3}", status, buildParam);
@@ -239,4 +244,70 @@ Server.define({
         var buildFound = typeof build == 'string' || build && build.id ? this.builds[build && build.id || build] || build && build.id && build : build;
         return buildFound;
     },
+    detectPlatform: function (req) {
+        var platform = req.params.platform || 'autodetect';
+        switch (platform) {
+            case 'android':
+            case 'ios':
+            case 'wp8':
+                break;
+            case 'autodetect':
+            default:
+                var browser = new BrowserDetect(req.headers['user-agent']);
+                if (browser.android())
+                    platform = 'android';
+                if (browser.iOS())
+                    platform = 'ios';
+                if (browser.windows())
+                    platform = 'wp8';
+                //for now assuming we need the xap in any other case
+                platform = 'wp8';
+                break;
+        }
+        return platform;
+    },
+    downloadRelease: function (req, res) {
+        var buildId = req.params.id;
+        var build = this.builds[buildId]
+        if (!build || !build.conf) {
+            res.send(500, 'There is no built with id {0} to be found!'.format(buildId));
+            return;
+        }
+        var platform = this.detectPlatform(req);
+        var mime_type = { android: 'application/vnd.android.package-archive', wp8: 'application/x-silverlight-app', ios: 'application/octet-stream' }[platform];
+        if (platform == build.conf.platform) {
+            if (build.master) {
+                var master = build.master;
+                var platformBuild = master.platforms.findOne(function (build) {
+                    return build && build.conf && build.conf.platform == platform;
+                });
+                if (!platformBuild) {
+                    res.send(500, "The specified build {0} was not requested on {1}!".format(buildId, platform));
+                    return;
+                }
+                build = platformBuild;
+            }
+            else {
+                res.send(500, "The specified build {0} was not requested on {1}!".format(buildId, platform));
+                return;
+            }
+        }
+        if (build.conf.status != 'success') {
+            res.send(500, 'The build {0} has not completed successfully yet. Currently it is on status: {1}!'.format(buildId, build.conf.status));
+            return;
+        }
+
+        if (!build.outputFiles.length) {
+            res.send(500, 'There are no output files for the build {0}!'.format(buildId));
+            return;
+        }
+
+        var file = build.outputFiles[0].file;
+        var filename = path.basename(file)
+        res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+        res.setHeader('Content-type', mime_type);
+
+        var filestream = fs.createReadStream(file);
+        filestream.pipe(res);
+    }
 });

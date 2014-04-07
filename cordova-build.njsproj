@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:server -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
+    <ScriptArguments>-mode:all -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="agent\AgentWorker.js" />
     <Compile Include="client\ClientWorker.js" />
+    <Compile Include="common\BrowserDetect.js" />
     <Compile Include="common\conf.js" />
     <Compile Include="common\Build.js" />
     <Compile Include="common\patch.js" />

@@ -42,10 +42,8 @@ function ServerBrowser(conf) {
     this.disconnectedSince = observable();
     var url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
     var as = $.cookie('as') !== 'false';
-        console.log('as', as);
     this.as = observable(as);
     this.as.subscribe(function(as) {
-        console.log('as', as);
         $.cookie('as', as,{expires:365});
     }.bind(this));
 
@@ -116,9 +114,8 @@ ServerBrowser.define({
                     var msg = new Msg(build);
                     list.unshift(msg);
                     build = this.builds.map[build && build.buildId];
-                    console.log("log", status.obj, build, this)
+                    //console.log("log", status.obj, build, this)
                     build && build.logs.unshift(msg);
-                    //console.log('log', status.obj);
                     break;
                 case 'queued':
                 case 'building':
@@ -178,7 +175,7 @@ ServerBrowser.define({
         }
     },
     'onStatus': function (status) {
-        console.log('status', status);
+        //console.log('status', status);
             
         if (status) {
             status.agents = status.agents || [];
@@ -228,7 +225,7 @@ ServerBrowser.define({
             level: level || 'H',
             size: 10,
         });
-        console.warn(uri);
+        //console.warn(uri);
         return uri;
     },
     refresh: function() {
@@ -247,6 +244,7 @@ function BuildVM(build) {
     this.duration = observable();
     this.status = observable();
     this.qr = observable();
+    this.link = observable();
     this.update(build);
 }
 var statuses = ['unknown', 'planned', 'success', 'queued', 'building', 'uploading', 'failed']
@@ -284,14 +282,16 @@ BuildVM.define({
 
             if (this._qr != build.id) {
                 this._qr = build.id;
-                this.__qr = this.QR();
+                this.link(this.__qr = this.QR());
             }
             var qr = conf.status == 'success' ? this.__qr : ServerBrowser.prototype.statuses[conf.status || 'unkown'];
             this.qr(qr);
         }
     },
     QR: function () {
-        return ServerBrowser.prototype.generateQR('http://localhost/download/' + this.id);
+        var l = location;
+        var platform = this.conf && typeof this.conf.platform == 'string' && this.conf.platform;
+        return ServerBrowser.prototype.generateQR([l.protocol, '//', l.host, '/download/', this.id, platform ? '/' : '', platform ? platform : ''].join(''));
     }
 });
 

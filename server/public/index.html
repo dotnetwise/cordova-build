@@ -17,7 +17,8 @@
             window.current_theme = t;
             d.head.insertBefore(e, d.getElementById('bs-js'));
             d.documentElement.className += ' theme-' + t + ' ';
-        })(document); </script > <style type="text/css" > body {
+        })(document); </script> 
+        <style type="text/css" > body {
         padding-bottom: 40px;
     }
 
@@ -575,7 +576,8 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                                 href="#info">General</a>
                                         </li>
                                         <!-- ko foreach: selectedBuild() && selectedBuild().platforms-->
-                                        <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }" class="tab-icon">
+                                        <li data-bind="
+    css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }" class="tab-icon">
                                             <a data-bind="    click: function (data) {
         $parent.selectedBuild.tab('#'
                 + unwrap($data && $data.platform));
@@ -611,7 +613,11 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                         <script id="tplLastBuild" type="text/html">
                                             <div class="row-fluid">
                                                 <div class="span2 no-gutter build-qr">
-                                                    <a href="#" style="display: block;">
+                                                    <a data-bind="
+    attr: {
+        href: unwrap($data && $data.status) == 'success' ? ['/download/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : '', typeof unwrap($data.platform) == 'string' ? unwrap($data.platform) : ''].join('') : null,
+    },
+    " style="display: block;">
                                                         <div data-bind="
     style: {
         'backgroundImage':
@@ -754,7 +760,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                         <!--ko foreach: platforms-->
                                         <a data-bind="
     attr: {
-        href: '#' + unwrap(id) + '?' + unwrap($data.platform),
+        href: ['#view/', unwrap(id), $data.platform ? '/' : '', $data.platform ?  unwrap($data.platform) : ''].join(''),
     },
     click: function (build) { $parents[2].selectedBuild(build.master || build); $parents[2].selectedBuild.tab('#' + build.platform()); }">
                                             <img data-bind="
