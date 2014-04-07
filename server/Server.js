@@ -229,7 +229,7 @@ Server.define({
             build = this.findBuildById(build);
             to = build && build.client;
         }
-        build && build.conf.logs.push(msg);
+        build && build.conf.logs.unshift(msg);
         if (to && to != sender)
             to.emitLog(msg);
         this.logs.unshift(msg);

@@ -538,13 +538,13 @@ text: ($data && $data.toString(true) || '').replace(/\n/g, '\n          ')"
                                 Latest Build</span></h2>
 
                             <div class="box-icon">
-                                <a data-bind="
-click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refresh"></i></a>
-                                <label id="for-auto-select-latest-build" class="hidden-tablet" for="auto-select-latest-build">
+                                
+                                <label id="for-auto-select-latest-build" class="hidden-tablet" for="auto-select-latest-build" title="Auto select a build when it arrives for the first time">
                         <input data-bind="checked: $root.as" id="auto-select-latest-build" type="checkbox">
                         Auto select</label>
                                 <!--<a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>-->
-                                <a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+                                <a data-bind="
+click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refresh"></i></a><a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
                         </div>
@@ -568,7 +568,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
     active: selectedBuild.tab()
             == '#info'
 }"
-                                            class="active">
+                                            class="active" style="display: none">
                                             <a data-bind="click: function (data) {
     selectedBuild.tab('#info');
 }"
@@ -662,7 +662,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
 
                                                 </div>
                                                 <div class="span8 log log-big no-gutter build-log">
-                                                    <div data-bind="template: { foreach: $data && conf.logs, name: 'tplLog' }"
+                                                    <div data-bind="template: { foreach: $data && $data.logs, name: 'tplLog' }"
                                                         class="box-content log">
                                                     </div>
                                                 </div>

@@ -93,7 +93,7 @@ ServerBrowser.define({
         this.logs.map = {};
     },
     'onPartialStatus': function (status) {
-        console.warn('partial status', status);
+        //console.warn('partial status', status);
         switch (status && status.what) {
             case 'agent':
                 update.call(this, this.agents);
@@ -112,8 +112,13 @@ ServerBrowser.define({
             list.map = list.map || {};
             switch (status && status.kind) {
                 case 'log':
-                    list.unshift(new Msg(status.obj));
-                    console.log('log', status.obj);
+                    var build = status.obj;
+                    var msg = new Msg(build);
+                    list.unshift(msg);
+                    build = this.builds.map[build && build.buildId];
+                    console.log("log", status.obj, build, this)
+                    build && build.logs.unshift(msg);
+                    //console.log('log', status.obj);
                     break;
                 case 'queued':
                 case 'building':
@@ -126,9 +131,6 @@ ServerBrowser.define({
                     var selectBuild = null;
                     selectedBuild = this.selectedBuild;
                     build = function (build) {
-                        build.conf && (build.conf.logs = (build.conf.logs || []).map(function(log) {
-                            return new Msg(log);
-                        }));
                         var vm = map[build.id];
                         if (vm) {
                             vm.update(build)
@@ -190,9 +192,6 @@ ServerBrowser.define({
             var map = this.builds.map = {};
             var builds = [];
             status.builds && status.builds.forEach(function (build) {
-                 build.conf && (build.conf.logs = (build.conf.logs || []).map(function(log) {
-                    return new Msg(log);
-                }));
                 var vm = map[build.id];
                 if (vm) {
                     vm.update(build)
@@ -243,6 +242,7 @@ function BuildVM(build) {
     this.platforms = observableArray();
     this.platform = observable();
     this.started = observable();
+    this.logs = observableArray();
     this.completed = observable();
     this.duration = observable();
     this.status = observable();
@@ -258,6 +258,10 @@ BuildVM.define({
             this.name(conf.name);
             this.platform(conf.platform);
             this.id = build.id;
+            this.conf && (this.conf.logs = (this.conf.logs || []).map(function(log) {
+                return new Msg(log);
+            }));
+            this.logs(this.conf.logs);
             this.started(conf.started && new Date(conf.started));
             this.completed(conf.completed && new Date(conf.completed));
             this.duration(conf.duration);
