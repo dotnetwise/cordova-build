@@ -11,14 +11,16 @@ var Elapsed = require('elapsed');
 
 
 var Build = require('../common/Build.js');
+var Msg = require('../common/Msg.js');
 var serverUtils = require('../common/serverUtils');
+var sig = 'CW';
 
 function ClientWorker() {
     this.id = shortid.generate();
 }
 ClientWorker.define({
     connect: function (conf) {
-        var url = '{0}://{1}{2}/{3}'.format(conf.protocol || "http", conf.server, conf.port == 80 ? '' : ':' + conf.port, 'client');
+        var url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'client');
         this.conf = conf;
         this.location = path.resolve(conf.save || 'output');
         this.socket = ioc.connect(url);
@@ -26,8 +28,9 @@ ClientWorker.define({
         this.built = 0;
         this.socket.on({
             'connect': this.onConnect,
-            'log': function (message) {
-                console.log(message && message.message || message);
+            'log': function (msg) {
+                var message = new Msg(msg);
+                console.log(message.toString());
             },
             'build-success': this.onBuildSuccess,
             'build-failed': this.onBuildFailed,
@@ -36,8 +39,8 @@ ClientWorker.define({
     disconnect: function () {
         try {
             this.buildCompleted = true;
-            console.log("Client is disconnecting from the server since the build tasks completed.");
-            //this.socket.disconnect();
+            console.log('Client is disconnecting from the server since the build tasks completed.');
+            this.socket.socket.disconnect();
         }
         catch (e) {
         }
@@ -64,20 +67,21 @@ ClientWorker.define({
         });
         if (!this.buildCompleted) {
             client.socket.emit('register-build', build.serialize());
-            this.log(build, 'Reading {2} file{3}...', files.length, files.length == 1 ? "" : "s");
-            serverUtils.readFiles(files, '[CLIENT WORKER] the cordova build client', function (err) {
+            this.log(build, Msg.info, 'Reading {2} file{3}...', files.length, files.length == 1 ? '' : 's');
+            serverUtils.readFiles(files, 'the servers-side sister of the cordova build client', function (err) {
                 if (err) {
+                    this.log(build, Msg.error, 'Error reading the input files\n{0}'.format(err));
                     client.socket.emit('fail-build', build.serialize());
                     throw 'Error reading the input files\n{0}'.format(err);
                 }
                 uploadFiles();
-            });
+            }.bind(this));
 
             function uploadFiles() {
                 try {
                     //registering the client, sends our client id
                     var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
-                    size && client.log(build, 'Uploading files to cordova build server...{0}'.format(fileSize(size)));
+                    size && client.log(build, Msg.info, 'Uploading files to cordova build server...{2}', fileSize(size));
                     var serializedBuild = build.serialize({ files: 1 });
                     client.socket.emit('upload-build', serializedBuild);
                 }
@@ -100,11 +104,11 @@ ClientWorker.define({
             var files = build.outputFiles;
             files.forEach(function (file) {
                 var ext = path.extname(file.file);
-                file.file = [build.number, build.number && '.' || '', path.basename(file.file, ext), ".", id, ext].join('');
+                file.file = [build.number, build.number && '.' || '', path.basename(file.file, ext), '.', id, ext].join('');
             });
-            serverUtils.writeFiles(locationPath, files, "the cordova build client {0} [c]".format(build.conf.platform), function (err) {
+            serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
-                    client.server.log(build, client, "error saving build output files on the cordova build server\n{3}", err);
+                    client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);
                     client.onBuildFailed(result);
                 }
                 else done();
@@ -113,29 +117,20 @@ ClientWorker.define({
         else done;
         function done() {
             serverUtils.freeMemFiles(build.outputFiles);
-            client.log(build, "Build done! It took {2}.", new Date(build.conf.started).elapsed());
+            client.log(build, Msg.info, 'Build done! It took {2}.', new Date(build.conf.started).elapsed());
             if (++client.built >= client.conf.build.length)
                 client.disconnect();
         }
     },
-    log: function (build, message) {
-        var buildId = build && build.id || build;
-        var clientId = this.id;
-        var args = Array.prototype.concat.apply([], arguments);
-        Array.prototype.splice.call(args, 0, 2, clientId, buildId);
-        message = ['Client', clientId ? ' @{0}' : '', buildId ? ' about #{1}' : '', ": ", message].join('');
-        message = message.format.apply(message, args);
-        console.log(message);
-        //a client worker never emits logs to the server
-        //this.emitLog({
-        //    message: message,
-        //    buildId: buildId,
-        //});
+    log: function (build, priority, message, args) {
+        Array.prototype.splice.call(arguments, 1, 0, this, 'CW');
+        var msg = new Msg();
+        msg.update.apply(msg, arguments);
+        
+        if (this.conf.mode != 'all' || !this.socket.socket.connected)
+            console.log(msg.toString());
+        this.socket.emit('log', msg);
     },
-    emitLog: function (message) {
-        this.socket.emit('log', message);
-    },
-
     parseGroupFiles: function (conf) {
         var groups = ['files', 'wp8', 'ios', 'android'];
         var files = [];

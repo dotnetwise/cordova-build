@@ -12,6 +12,7 @@ var exec = require('child_process').exec;
 
 
 var Build = require('../common/Build.js');
+var Msg = require('../common/Msg.js');
 var serverUtils = require('../common/serverUtils');
 
 var zipArchiver;
@@ -20,7 +21,7 @@ function AgentWorker() {
 }
 AgentWorker.define({
     connect: function (conf) {
-        var url = '{0}://{1}{2}/{3}'.format(conf.protocol || "http", conf.server, conf.port == 80 ? '' : ':' + conf.port, 'agent');
+        var url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'agent');
         this.conf = conf;
         this.workFolder = conf.workFolder || 'work';
         this.socket = ioc.connect(url);
@@ -28,15 +29,16 @@ AgentWorker.define({
             'connect': this.onConnect,
             'disconnect': this.onDisconnect,
             'build': this.onBuild,
-            'log': function (message) {
-                console.log(message && message.message || message);
-            },
+            'log': function (msg) {
+                var message = new Msg(msg);
+                console.log(message.toString());
+             },
         }, this);
         process.on('exit', function () {
             this.socket.socket.connected && this.socket.disconnect();
             this.socket.socket.connected = false;
         }.bind(this));
-        process.on("SIGINT", function () {
+        process.on('SIGINT', function () {
             this.socket.emit('disconnect');
             this.socket.socket.connected && this.socket.disconnect();
             this.socket.socket.connected = false;
@@ -54,16 +56,17 @@ AgentWorker.define({
         });
     },
     'onDisconnect': function () {
-        console.log("AGENT WORKER DISCONNECTED");
+        console.log('AGENT WORKER DISCONNECTED');
     },
     'onBuild': function (build) {
         if (!build) {
-            this.buildFailed(build, "No build configuration was specified!")
+            this.buildFailed(build, 'No build configuration was specified!')
         }
         else if (!build.conf.platform) {
-            this.buildFailed(build, "No platform was specified for the requested build!");
+            this.buildFailed(build, 'No platform was specified for the requested build!');
         }
         else {
+            this.socket.emit('building', build.id);
             var buildObj = new Build(build.conf, null, this, build.conf.platform, build.files, null, build.id, build.masterId);
             build = buildObj;
             switch (build.conf.platform) {
@@ -82,29 +85,21 @@ AgentWorker.define({
             }
         }
     },
-    log: function (build, message) {
-        var buildId = build && build.id || build;
-        var clientId = this.id;
-        var args = Array.prototype.concat.apply([], arguments);
-        Array.prototype.splice.call(args, 0, 2, clientId, buildId);
-        message = ['Agent', clientId ? ' @{0}' : '', buildId ? ' about #{1}' : '', ": ", message].join('');
-        message = message.format.apply(message, args);
-        if (this.conf.mode != "all" || !this.socket.socket.connected)
-            console.log(message);
-        this.emitLog({
-            message: message,
-            buildId: buildId,
-        });
-    },
-    emitLog: function (message) {
-        this.socket.emit('log', message);
+    log: function (build, priority, message, args) {
+        Array.prototype.splice.call(arguments, 1, 0, this, 'AW');
+        var msg = new Msg();
+        msg.update.apply(msg, arguments);
+        
+        if (this.conf.mode != 'all' || !this.socket.socket.connected)
+            console.log(msg.toString());
+        this.socket.emit('log', msg);
     },
     ensureWorkFolder: function () {
         var workFolder = this.workFolder = path.resolve(this.workFolder);
         var agent = this;
         fs.exists(workFolder, function (exists) {
             !exists && fs.mkdir(workFolder, function (err) {
-                if (err) agent.log(null, 'Cannot create folder: {2}', workFolder);
+                if (err) agent.log(null, Msg.error, 'Cannot create folder: {2}', workFolder);
             });
         });
         process.env.PWD = workFolder;
@@ -129,26 +124,26 @@ AgentWorker.define({
             case '7z':
                 exec('7z x {0} -o{1} -y'.format(file, target), args, function (err, stdout, stdErr) {
                     if (err)
-                        agent.log(build, "Error executing 7z\n{2}\n{3}", err, stdErr);
+                        agent.log(build, Msg.error, 'Error executing 7z\n{2}\n{3}', err, stdErr);
                     else done();
                 });
                 break;
             case 'keka7z':
                 exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), args, function (err) {
                     if (err)
-                        agent.log(build, "error executing keka7z\n{2}", err);
+                        agent.log(build, Msg.error, 'error executing keka7z\n{2}', err);
                     else done();
                 });
                 break;
             case 'unzip':
                 exec('unzip -uo {0} -d {1} >nul'.format(file, target), args, function (err) {
                     if (err)
-                        agent.log(build, "error executing unzip\n{2}", err);
+                        agent.log(build, Msg.error, 'error executing unzip\n{2}', err);
                     else done();
                 });
                 break;
             default:
-                agent.log(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, keka7z, unzip');
+                agent.log(build, Msg.error, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z, unzip');
                 break;
         }
     },
@@ -156,11 +151,11 @@ AgentWorker.define({
         var agent = this;
         var locationPath = path.resolve(agent.workFolder, 'input', build.id);
         var files = build.files;
-        serverUtils.writeFiles(locationPath, files, "the cordova build agent worker on {0} [a]".format(build.conf.platform), function (err) {
+        serverUtils.writeFiles(locationPath, files, 'the cordova build agent worker on {0} [a]'.format(build.conf.platform), function (err) {
             serverUtils.freeMemFiles(files);
-            if (err) { this.log(build, err); }
+            if (err) { agent.log(build, Msg.error, 'error while saving files on agent worker:\n{2}', err); }
             else {
-                agent.log(build, 'extracting archives for {2}...', build.conf.platform);
+                agent.log(build, Msg.info, 'extracting archives for {2}...', build.conf.platform);
 
                 async.each(files, function (item, cb) {
                     agent.extractArchive(build, item.file, agent.workFolder, {
@@ -171,39 +166,34 @@ AgentWorker.define({
                     });
                 }, function (err) {// Final callback after each item has been iterated over.
                     if (err)
-                        agent.log(build, 'error extracting archive files\n{2}', err);
+                        agent.log(build, Msg.error, 'error extracting archive files\n{2}', err);
                     else {
-                        agent.log(build, 'building cordova on {2}...', build.conf.platform);
+                        agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
                         var cmd = 'cordova build {0} --{1}'.format(build.conf.platform, build.mode || 'release');
-                        var run = null && exec(cmd, {
+                        var run = exec(cmd, {
                             cwd: agent.workFolder,
                         }, cordovaExecuted);
-                        cordovaExecuted(null, "BUILD FAKE DONE", null);
+                        run.stdout.on('data', function (data) {
+                            if (data)//get rid of new lines at the end
+                                data = data.replace(/\r?\n?$/m, '');
+                            agent.log(build, Msg.build_output, data);
+                        });
+
+                        //cordovaExecuted(null, 'BUILD FAKE DONE', null);
                         function cordovaExecuted(err, stdout, stderr) {
-                            err && agent.log(build, "error:\n{2}", err);
-                            stdout && agent.log(build, "\n{2}", stdout);
-                            stderr && agent.log(build, 'stderror:\n{2}\n', stderr);
+                            err && agent.log(build, Msg.error, 'error:\n{2}', err);
+                            //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
+                            stderr && agent.log(build, Msg.error, 'stderror:\n{2}\n', stderr);
                             var e = err || stderr;
                             e && agent.buildFailed(build, e);
 
                             done.call(agent, e, stdout);
                         }
-                        //run.stdout.on('data', function (stdout) {
-                        //    agent.log(build, "\n{2}", stdout);
-                        //});
-                        //run.stderr.on('data', function (stderr) {
-                        //    agent.log(build, 'stderror:\n{2}\n', stderr);
-                        //});
-
-                        //run.on('error', function (err) {
-                        //    agent.log(build, 'error\n{2}\n', err);
-                        //});
 
                         run && run.on('close', function (code) {
-                            code && agent.log(build, 'child process exited with code ' + code);
+                            code && agent.log(build, Msg.error, 'child process exited with code ' + code);
                         });
-
                     }
                 });
             }
@@ -231,10 +221,11 @@ AgentWorker.define({
         multiGlob.glob(globFiles, {
             cwd: workFolder,
         }, function (err, files) {
-            err && this.log(build, "error globbing {2}", globFiles);
+            err && this.log(build, Msg.error, 'error globbing {2}', globFiles);
             files = files.map(function (file) {
                 return { file: path.resolve(workFolder, file) };
             });
+            this.socket.emit('uploading', build.id);//change build status to uploading..
             serverUtils.readFiles(files, '[Agent WORKER] cordova build agent worker output files', function (err) {
                 if (err) {
                     serverUtils.freeMemFiles(files);
@@ -248,7 +239,7 @@ AgentWorker.define({
             try {
                 build.outputFiles = outputFiles;
                 var size = 0; outputFiles.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; })
-                size && agent.log(build, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
+                size && agent.log(build, Msg.info, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
 
                 agent.socket.emit('build-success', build.serialize({
                     outputFiles: 1

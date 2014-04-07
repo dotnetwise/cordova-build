@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:all -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:ios,android,wp8 </ScriptArguments>
+    <ScriptArguments>-mode:server -port:3333 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -46,6 +46,7 @@
     <Compile Include="server.js" />
     <Compile Include="server\Agent.js" />
     <Compile Include="server\Client.js" />
+    <Compile Include="common\Msg.js" />
     <Compile Include="server\public\js\qtip.js" />
     <Compile Include="server\Server.js" />
     <Compile Include="common\utils.js" />

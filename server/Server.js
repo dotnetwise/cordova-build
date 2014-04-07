@@ -1,5 +1,6 @@
 ﻿module.exports = Server;
 var Build = require('../common/Build');
+var Msg = require('../common/Msg.js');
 var Client = require('./Client');
 var Agent = require('./Agent');
 var WWW = require('./WWW');
@@ -84,6 +85,7 @@ Server.define({
                     socket.on({
                         'disconnect': function () {
                             try {
+                                this.log(new Msg(null, agent, 'S', Msg.debug, 'The agent with id {0} has disconnected. Bye!'), agent);
                                 agent.onDisconnect();
                                 server.agents.remove(agent);
                                 agent.platforms.forEach(function (platform) {
@@ -91,7 +93,7 @@ Server.define({
                                 });
                                 if (agent.busy) {
                                     var build = agent.busy;
-                                    this.log(agent.busy, build.client, "the agent {3} has been disconnected. The build on {2} will be added back to queue", build.platform, agent.id);
+                                    this.log(new Msg(build, agent, 'S', Msg.warning, 'the agent {3} has been disconnected. The build on {2} will be added back to queue', build.platform, agent.id), build.client);
                                     build.agent = null;
                                     this.updateBuildStatus(build, 'queued');
                                     this.buildsQueue.push(build);
@@ -103,7 +105,7 @@ Server.define({
                         },
                         'register': function (conf) {
                             agent.id = conf && conf.id;
-                            this.log(null, agent, "[A] agent connected supporting platforms [{2}]", agent.platforms.join(', '));
+                            this.log(new Msg(null, agent, 'S', Msg.debug, 'An agent with id {0} has just connected supporting the platforms [{2}]', agent.platforms.join(', ')), null);
                             server.agents.push(agent);
                             agent.platforms.forEach(function (platform) {
                                 (server.platforms[platform] = server.platforms[platform] || []).push(agent);
@@ -129,9 +131,10 @@ Server.define({
                         'register': function (conf) {
                             client.id = conf.id;
                             this.clients[conf.id] = client;
-                            this.log(null, client, "[C] client {0} connected");
+                            this.log(new Msg(null, client, 'S', Msg.debug, 'A client with id {0} has just connected. Welcome!'), client);
                         },
                         'disconnect': function () {
+                            this.log(new Msg(null, client, 'S', Msg.debug, 'The client with id {0} has disconnected. Bye!'), client);
                             client.onDisconnect();
                             this.clients.remove(client);
                         },
@@ -157,7 +160,7 @@ Server.define({
             }, this);
         httpServer.listen(port);
 
-        this.log(null, null, "listening on port {2}", port);
+        this.log(new Msg(null, null, 'S', Msg.info, 'listening on port {2}', port), null);
         this.processQueueInterval = setInterval(this.processQueue.bind(this), 1000);
     },
     stop: function () {
@@ -166,15 +169,25 @@ Server.define({
         process.exit();
     },
     notifyStatusAllWWWs: function (kind, what, obj) {
-        this.wwws.socket.emit('partial-status', arguments.length == 1 ? kind : {
+        this.wwws.socket.emit('news', arguments.length == 1 ? kind : {
             kind: kind,
             what: what,
             obj: obj,
         });
     },
     updateBuildStatus: function(build, status) {
-        build.updateStatus(status);
-        this.notifyStatusAllWWWs(status, 'build', build.serialize({platforms:1}));
+        var buildParam = build;
+        if (build && !build.updateStatus) {
+            //self detect build if an id was passed
+            build = this.builds[build];
+        }
+        if (build && build.updateStatus) {
+            build.updateStatus(status);
+            this.notifyStatusAllWWWs(status, 'build', build.serialize({platforms:1}));
+        }
+        else {
+            this.log(buildParam, null, 'S', Msg.error, "A request to change a build's status to {2} was made but that build cannot be found. We have tried to identify it by {3}", status, buildParam);
+        }
     },
     processQueue: function () {
         var build = this.buildsQueue.shift();
@@ -195,49 +208,35 @@ Server.define({
                 this.buildsQueue.push(build);
         }
     },
-    log: function (build, forwardTo, message) {
-        var clientOrAgent = forwardTo;
-        var buildId = build && build.id || build;
-        var clientId = clientOrAgent && clientOrAgent.id;
-        var args = Array.prototype.concat.apply([], arguments);
-        Array.prototype.splice.call(args, 0, 3, clientId, buildId);
-        message = ['Server', clientId ? ' @{0}' : '', buildId ? ' about #{1}' : '', ": ", message].join('');
-        message = message.format.apply(message, args);
-        if (this.conf.mode != 'all' || !clientOrAgent) {
-            console.log(message);
+    log: function (msg, forwardToClientOrAgent) {
+        if (this.conf.mode != 'all' || !forwardToClientOrAgent) {
+            console.log(msg.toString());
         }
         //broadcast the log to all wwws
-        var msg = {
-            date: new Date(),
-            message: message,
-        };
-        if (buildId)
-            msg.buildId = buildId;
-        build = this.findBuildById(build);
+        var build = this.findBuildById(msg.buildId);
         if (build && build.conf)
-            build.conf.logs.push(msg);
+            build.conf.logs.unshift(msg);
 
         this.logs.unshift(msg);
-        this.wwws.socket.emit('log', msg);
         this.notifyStatusAllWWWs('log', 'log', msg);
-        clientOrAgent && clientOrAgent.emitLog(msg);
+        forwardToClientOrAgent && forwardToClientOrAgent.emitLog(msg);
     },
-    forwardLog: function (build, sender, message, to) {
-        //timestamp message with server's time
-        message && (message.date = new Date());
+    forwardLog: function (build, sender, msg, to) {
+        //timestamp msg with server's time
+        msg && (msg.date = new Date());
 
         if (!to) {
             build = this.findBuildById(build);
             to = build && build.client;
         }
-        build && build.conf.logs.push(message);
+        build && build.conf.logs.push(msg);
         if (to && to != sender)
-            to.emitLog(message);
-        this.logs.unshift(message);
-        this.notifyStatusAllWWWs('log', 'log', message);
+            to.emitLog(msg);
+        this.logs.unshift(msg);
+        this.notifyStatusAllWWWs('log', 'log', msg);
     },
     findBuildById: function (build) {
-        var buildFound = typeof build == "string" || build && build.id ? this.builds[build && build.id || build] || build && build.id && build : build;
+        var buildFound = typeof build == 'string' || build && build.id ? this.builds[build && build.id || build] || build && build.id && build : build;
         return buildFound;
     },
 });

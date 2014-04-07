@@ -1,18 +1,19 @@
 ﻿var ioc = require('socket.io/node_modules/socket.io-client');
 require('../../../common/utils.js');
+var Msg = require('../../../common/Msg.js');
 require('./qtip.js');
 var ko = require('knockout');
 var Elapsed = require('elapsed');
 
 module.exports = ServerBrowser;
-var inBrowser = typeof window !== "undefined";
+var inBrowser = typeof window !== 'undefined';
 if (inBrowser) {
     window.ServerBrowser = ServerBrowser;
     window.ko = ko;
     setInterval(function () {
         $('[datetime]').each(function () {
             var $this = $(this);
-            var date = new Date($this.attr("datetime"));
+            var date = new Date($this.attr('datetime'));
             var format = $this.attr('datetime-format');
             var elapsed = date.elapsed();
             $this.text(elapsed && (format ? format.format(elapsed) : elapsed));
@@ -39,12 +40,21 @@ function ServerBrowser(conf) {
     this.selectedBuild.tab = observable('#noBuild');
     this.status = observable('connecting');
     this.disconnectedSince = observable();
-    var url = '{0}://{1}{2}/{3}'.format(conf.protocol || "http", conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
+    var url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
+    var as = $.cookie('as') !== 'false';
+        console.log('as', as);
+    this.as = observable(as);
+    this.as.subscribe(function(as) {
+        console.log('as', as);
+        $.cookie('as', as,{expires:365});
+    }.bind(this));
+
     inBrowser && ko.applyBindings(this, document.body);
     this.connect(url);
 }
 ServerBrowser.define({
     statuses: {
+        'building': 'img/platforms/building.gif',
         'uploading': 'img/platforms/working.gif',
         'queued': 'img/platforms/queue.gif',
         'working': 'img/platforms/working.gif',
@@ -64,13 +74,11 @@ ServerBrowser.define({
             'connect': this.onConnect,
             'disconnect': this.onDisconnect,
             'status': this.onStatus,
-            'log': this.onLog,
-            'partial-status': this.onPartialStatus,
+            'news': this.onPartialStatus,
         }, this);
     },
     'onConnect': function () {
         this.status('connected');
-        this.socket.emit('get-status');
     },
     'onDisconnect': function () {
         this.disconnectedSince(new Date());
@@ -104,7 +112,7 @@ ServerBrowser.define({
             list.map = list.map || {};
             switch (status && status.kind) {
                 case 'log':
-                    list.unshift(status.obj);
+                    list.unshift(new Msg(status.obj));
                     console.log('log', status.obj);
                     break;
                 case 'queued':
@@ -114,8 +122,13 @@ ServerBrowser.define({
                 default:
                     var map = list.map;
                     var build = status.obj;
+                    var autoSelectBuild = this.as();
+                    var selectBuild = null;
                     selectedBuild = this.selectedBuild;
                     build = function (build) {
+                        build.conf && (build.conf.logs = (build.conf.logs || []).map(function(log) {
+                            return new Msg(log);
+                        }));
                         var vm = map[build.id];
                         if (vm) {
                             vm.update(build)
@@ -123,13 +136,19 @@ ServerBrowser.define({
                         else {
                             vm = new BuildVM(build);
                             map[build.id] = vm;
-                            this == 1 ? list.unshift(vm) : this.platforms.push(vm);
+                            if (this == 1) {
+                                if (autoSelectBuild)
+                                    selectBuild = vm;
+                                list.unshift(vm);
+                             } else  this.platforms.push(vm);
                         }
                         if (this != 1) {
                             vm.masterId = this && this.id;
                             vm.master = this;
                         }
                         build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
+                        if (selectBuild)
+                            selectedBuild(selectBuild);
                         return vm;
                     }.call(1, build);
                     if (build && !selectedBuild()) {
@@ -142,7 +161,7 @@ ServerBrowser.define({
                     var i = list.indexOf(o);
                     i < 0 ? list.unshift(status.obj) : list[i] = status.obj;
                     list.map[status.obj.id] = o;
-                    //console.log("LIST", status, list);
+                    //console.log('LIST', status, list);
                     break;
                 case 'disconnected':
                     var id = status.obj.id;
@@ -150,54 +169,20 @@ ServerBrowser.define({
                         return item.id == id;
                     });
                     delete list.map[status.obj.id];
-                    //console.log("LIST", status.obj.id, status, list.map, list);
+                    //console.log('LIST', status.obj.id, status, list.map, list);
                     break;
             }
             return status.obj;
         }
     },
     'onStatus': function (status) {
-        console.log("status", status);
+        console.log('status', status);
+            
         if (status) {
             status.agents = status.agents || [];
-            //this.parseselectedBuild(status.selectedBuild || {
-            //    status: 'failed',
-            //    id: 1234,
-            //    started: new Date(),
-            //    duration: '3 minutes',
-            //    completed: new Date(),
-            //    logs: [{ date: new Date(), message: 'some log1' }, { message: 'some log 2' }],
-            //    platforms: [{
-            //        platform: 'wp8',
-            //        platformName: 'Windows Phone 8',
-            //        hint: 'WP8 hint',
-            //        file: 'wp8',
-            //        status: 'success',
-            //        started: new Date(),
-            //        duration: '3 minutes',
-            //        completed: new Date(),
-            //        logs: [{ date: new Date(), message: 'some log1' }, { date: new Date(), message: 'some log 2' }],
-            //    }, {
-            //        platform: 'android',
-            //        platformName: 'Android',
-            //        file: 'apk',
-            //        status: 'success',
-            //        started: new Date(),
-            //        duration: '3 minutes',
-            //        completed: new Date(),
-            //        logs: ['some log1', 'some log 2'],
-            //    }, {
-            //        platform: 'ios',
-            //        platformName: 'IOS',
-            //        file: 'ipa',
-            //        status: 'success',
-            //        started: new Date(),
-            //        duration: '3 minutes',
-            //        completed: new Date(),
-            //        logs: ['some log1', 'some log 2'],
-            //    }]
-            //});
-            this.logs(status.logs);
+            this.logs((status.logs ||[]).map(function(log) {
+                return new Msg(log);
+            }));
             this.agents.map = {};
             status.agents && status.agents.forEach(function (agent) {
                 this.agents.map[agent.id] = agent;
@@ -205,6 +190,9 @@ ServerBrowser.define({
             var map = this.builds.map = {};
             var builds = [];
             status.builds && status.builds.forEach(function (build) {
+                 build.conf && (build.conf.logs = (build.conf.logs || []).map(function(log) {
+                    return new Msg(log);
+                }));
                 var vm = map[build.id];
                 if (vm) {
                     vm.update(build)
@@ -226,9 +214,6 @@ ServerBrowser.define({
                 this.selectedBuild(builds[0]);
         }
     },
-    'onLog': function (message) {
-        console.log(message && message.message || message);
-    },
     parseselectedBuild: function (build) {
         if (build) {
             build.qr = this.statuses[build.status] || this.generateQR('/download/' + build.id);
@@ -246,7 +231,10 @@ ServerBrowser.define({
         });
         console.warn(uri);
         return uri;
-    }
+    },
+    refresh: function() {
+        this.socket.emit('refresh');
+    },
 });
 function BuildVM(build) {
     this.conf = build && build.conf;
@@ -261,7 +249,7 @@ function BuildVM(build) {
     this.qr = observable();
     this.update(build);
 }
-var statuses = ['unknown', 'success', 'uploading', 'planned', 'queued', 'building', 'failed']
+var statuses = ['unknown', 'planned', 'success', 'queued', 'building', 'uploading', 'failed']
 BuildVM.define({
     update: function (build) {
         if (build && build.conf) {
@@ -273,20 +261,21 @@ BuildVM.define({
             this.started(conf.started && new Date(conf.started));
             this.completed(conf.completed && new Date(conf.completed));
             this.duration(conf.duration);
-            if (conf.status == 'unknown') debugger;
             this.status(conf.status);
             if (this.master) {
-                var masterStatus = statuses.indexOf(this.conf.status);
-                if (masterStatus >= 0) {
+                var masterStatus = 0;
                 var platformBuilds = this.master.platforms();
                 platformBuilds.forEach(function (child, i) {
                     i = statuses.indexOf(child.status());
                     if (i > masterStatus)
                         masterStatus = i;
                 });
-                if (masterStatus == 0) debugger;
-                    this.master.status(statuses[masterStatus]);
-                }
+
+                masterStatus = statuses[masterStatus] || 'unkown';
+                this.master.conf.status = masterStatus;
+                this.master.status(masterStatus);
+                var qr = masterStatus == 'success' ? this.master.__qr : ServerBrowser.prototype.statuses[masterStatus];
+                this.master.qr(qr);
             }
 
             if (this._qr != build.id) {
@@ -298,7 +287,7 @@ BuildVM.define({
         }
     },
     QR: function () {
-        return ServerBrowser.prototype.generateQR("http://localhost/download/" + this.id);
+        return ServerBrowser.prototype.generateQR('http://localhost/download/' + this.id);
     }
 });
 

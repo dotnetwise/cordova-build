@@ -33,19 +33,19 @@ if (listen.server) {
     var server = conf.serverInstance = new Server();
     server.listen(conf);
 }
+if (listen.agent) {
+//    require('nodetime').profile({
+//    accountKey: '4b55187db0af80f8ff871a511ae9699744637a1a',
+//    appName: 'cordova-build'
+//});
+    var AgentWorker = require('./agent/AgentWorker.js');
+    var agent = new AgentWorker();
+    agent.connect(conf);
+}
+
 if (listen.client) {
     conf.build = (conf.build || 'ios,android,wp8').split(/,|;/g);
     var ClientWorker = require('./client/ClientWorker.js');
     var client = new ClientWorker();
     client.connect(conf);
-}
-if (listen.agent) {
-    require('nodetime').profile({
-    accountKey: '4b55187db0af80f8ff871a511ae9699744637a1a',
-    appName: 'cordova-build'
-});
-
-    var AgentWorker = require('./agent/AgentWorker.js');
-    var agent = new AgentWorker();
-    agent.connect(conf);
 }

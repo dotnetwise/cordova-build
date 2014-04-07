@@ -14,7 +14,7 @@ Date.prototype.elapsed = function (until) {
 }
 
 console.log = function () {
-    Array.prototype.unshift.call(arguments, new Date().format("hh:mm:ss.S"));
+    Array.prototype.unshift.call(arguments, new Date().format("mm:ss.SS"));
     log.apply(this, arguments);
 }.bind(console);
 var class2type = [];

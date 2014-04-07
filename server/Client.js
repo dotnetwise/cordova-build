@@ -7,6 +7,7 @@ var mkdirp = require('mkdirp');
 var extend = require('extend');
 
 var Build = require('../common/Build.js');
+var Msg = require('../common/Msg.js');
 var serverUtils = require('../common/serverUtils');
 module.exports = Function.define({
     constructor: function (socket) {
@@ -19,6 +20,12 @@ module.exports = Function.define({
             'register-build': this.onRegisterBuild,
             'upload-build': this.onUploadBuild,
             'fail-build': this.onFailBuild,
+            'log': function (msg) {
+                var build = this.server.builds[msg && msg.buildId];
+                this.server.forwardLog(build, this, msg, {
+                    emitLog: function() { /* do nothing. We don't forward client messages back to client*/}                    
+                });
+            },
         }, this);
     },
     'onConnect': function (server) {
@@ -46,6 +53,7 @@ module.exports = Function.define({
                 platformBuild.conf.logs = [];//separate logs from its master
                 this.server.builds[platformBuild.id] = platformBuild;
             }, this);
+            this.log(build, Msg.info, "The build '{0}' has been registered on: {2}", platforms.join(','));
             this.server.updateBuildStatus(build, build.conf.status);
         }
     },
@@ -55,7 +63,7 @@ module.exports = Function.define({
         if (this.validateBuildRequest(build)) {
             var buildObj = server.builds[build.id];
             if (!buildObj) {
-                server.log(build, this, "update-build: The client said is uploading a build didn't specify a config");
+                this.log(build, Msg.error, "update-build: The client said is uploading a build didn't specify a config");
                 return;
             }
             //TODO: decide whether to use client's log. for now assuming no
@@ -70,16 +78,16 @@ module.exports = Function.define({
             var locationPath = path.resolve(server.location, build.id, 'input');
 
 
-            serverUtils.writeFiles(locationPath, allFiles, "the cordova build server [c]", function (err) {
+            serverUtils.writeFiles(locationPath, allFiles, 'the cordova build server', function (err) {
                 if (err) { 
-                    server.log(build, client, err); 
+                    this.log(build, Msg.error, 'The uploaded files could not be saved on the server: \n{2}', err); 
                     server.updateBuildStatus(build, 'failed');
                 }
                 else {
 
                     server.updateBuildStatus(build, 'queued');
                     if (build.platforms.length <= 1) {
-                        server.log(build, this, '[C] build queued on {2}', build.platform || build.conf.platform[0]);
+                        this.log(build, Msg.debug, 'build queued on {2}', build.platform || build.conf.platform[0]);
                     }
                     else build.platforms.forEach(function (platformBuild) {
                         var files = [];
@@ -88,47 +96,54 @@ module.exports = Function.define({
                                 files.push(file);
                         });
                         platformBuild.files = files;
-                        platformBuild.updateStatus('queued');   
+                        server.updateBuildStatus(platformBuild, 'queued');
                         
                         server.buildsQueue.push(platformBuild);
-                        server.log(platformBuild, this, '[C] build queued on {2}', platformBuild.conf.platform);
+                        this.log(platformBuild, Msg.info, 'build queued on {2}', platformBuild.conf.platform);
                     }, this);
                 }
             }.bind(this));
         }
     },
     'onFailBuild': function (build) {
-            var buildObj = this.server.builds[build && build.id];
-            if (buildObj) {
-                buildObj.platforms && buildObj.platforms.forEach(function(platformBuild){
-                    platformBuild.conf.status = 'failed';
-                });
-                buildObj.conf.status = 'failed';
-                this.server.updateBuildStatus(buildObj, 'failed');
-            }
+        var buildObj = this.server.builds[build && build.id];
+        if (buildObj) {
+            buildObj.platforms && buildObj.platforms.forEach(function(platformBuild){
+                platformBuild.conf.status = 'failed';
+            });
+            buildObj.conf.status = 'failed';
+            this.server.updateBuildStatus(buildObj, 'failed');
+        }
+    },
+    log: function (build, priority, message, args) {
+        Array.prototype.splice.call(arguments, 1, 0, this, 'C');
+        var msg = new Msg();
+        msg.update.apply(msg, arguments);
+        
+        this.server.log(msg, this);//forward to this == to the client worker
     },
     validateBuildRequest: function (build, client) {
         var buildConf = build && build.conf;
         var server = this.server;
         if (!buildConf) {
-            server.log(build, this, "request-build: The client requested a build didn't specify a config");
+            this.log(build, Msg.error, "request-build: The client requested a build didn't specify a config");
+            this.server.updateBuildStatus(build, 'failed');
             return false;
         }
         else if (!buildConf.platform || !buildConf.platform.length) {
-            server.log(build, this, "request-build: The client requested a build didn't specify any plaftorms to build against");
+            this.log(build, Msg.error, "request-build: The client requested a build didn't specify any plaftorms to build against");
+            this.server.updateBuildStatus(build, 'failed');
             return false;
         }
-        else if (!Object.every(buildConf.platform, function (platform) {
-            if (!platform || !this.server.platforms[platform] || !this.server.platforms[platform].length) {
-                server.log(build, this, "request-build: The client requested a build on platform '{2}', but there is no agent listening on that platform.", platform);
-                return false;
-        }
+        Object.every(buildConf.platform, function (platform) {
+            if (!platform || !server.platforms[platform] || !server.platforms[platform].length) {
+                this.log(build, Msg.warning, "request-build: The client requested a build on platform '{2}', but there is no agent connected yet on that platform.", platform);
+            }
             return true;
-        }, this))
-            return false;
+        }.bind(this));
         return true;
     },
-    emitLog: function (message) {
-        this.socket.emit('log', message);
+    emitLog: function (msg) {
+        this.socket.emit('log', msg);
     },
 });

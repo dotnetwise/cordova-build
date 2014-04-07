@@ -1,17 +1,10 @@
-﻿<!DOCTYPE html >
-<html lang="en">
-<head>
+﻿    <!DOCTYPE html > <html lang="en" > <head >
     <!--
     Charisma v1.0.0 Copyright 2012 Muhammad Usman Licensed under the Apache License v2.0 http://www.apache.org/licenses/LICENSE-2.0 http://usman.it http://twitter.com/halalit_usman
     -->
-    <meta charset="utf-8">
-    <title>Cordova Build</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Charisma, a fully featured, responsive, HTML5, Bootstrap admin template.">
-    <meta name="author" content="DotNetWise">
+    <meta charset="utf-8" > <title > Cordova Build</title > <meta name="viewport" content="width=device-width, initial-scale=1.0" > <meta name="description" content="Charisma, a fully featured, responsive, HTML5, Bootstrap admin template." > <meta name="author" content="DotNetWise" >
     <!-- The styles -->
-    <script id="bs-js">
-        (function (d) {
+    <script id="bs-js" > (function (d) {
             var t, e = d.createElement('link'), pairs = d.cookie.split('; '), decode = decodeURIComponent;
             for (var i = 0, pair; pair = pairs[i] && pairs[i].split('=') ; i++) {
                 if (decode(pair[0]) === 'current_theme') {
@@ -24,12 +17,9 @@
             window.current_theme = t;
             d.head.insertBefore(e, d.getElementById('bs-js'));
             d.documentElement.className += ' theme-' + t + ' ';
-        })(document);
-    </script>
-    <style type="text/css">
-        body {
-            padding-bottom: 40px;
-        }
+        })(document); </script > <style type="text/css" > body {
+        padding-bottom: 40px;
+    }
 
         body ul.dashboard-list li {
             border-top: 1px solid #EBEBEB;
@@ -47,7 +37,48 @@
             display: none;
             color: #fff;
         }
-
+        .spin {
+            -webkit-animation-name: spin;
+            -webkit-animation-duration: 4000ms;
+            -webkit-animation-iteration-count: infinite;
+            -webkit-animation-timing-function: linear;
+            -moz-animation-name: spin;
+            -moz-animation-duration: 4000ms;
+            -moz-animation-iteration-count: infinite;
+            -moz-animation-timing-function: linear;
+            -ms-animation-name: spin;
+            -ms-animation-duration: 4000ms;
+            -ms-animation-iteration-count: infinite;
+            -ms-animation-timing-function: linear;
+            -o-animation-name: spin;
+            animation-name: spin;
+            -o-animation-duration: 4000ms;
+            animation-duration: 4000ms;
+            -o-animation-iteration-count: infinite;
+            animation-iteration-count: infinite;
+            -o-animation-timing-function: linear;
+            animation-timing-function: linear;
+        }
+@-ms-keyframes spin {
+    from { -ms-transform: rotate(0deg); }
+    to { -ms-transform: rotate(360deg); }
+}
+@-moz-keyframes spin {
+    from { -moz-transform: rotate(0deg); }
+    to { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}
         .time {
             color: #bbb;
         }
@@ -55,7 +86,12 @@
         body .brand {
             width: 230px;
         }
-
+        #for-auto-select-latest-build {
+            float: left;
+            margin-bottom: 0;
+            margin-top: 5px;
+            margin-right: 2px;
+        }
         .build-number a {
             font-family: 'Courier New', Courier, 'Nimbus Mono L', monospace;
             color: #3399FF;
@@ -113,9 +149,9 @@
 
         .qr {
             background: transparent no-repeat top left;
-            -moz-background-size: 100% 100%;
-            -o-background-size: 100% 100%;
-            background-size: 100% 100%;
+            -moz-background-size: 100% auto;
+            -o-background-size: 100% auto;
+            background-size: 100% auto;
             position: relative;
             width: 100%; /* desired width */
         }
@@ -185,7 +221,7 @@
             filter: none;
         }
 
-        .grayscale.hover:hover {
+        .grayscale.hover:hover, #selectedBuildTab img.platform.status {
             -webkit-filter: none;
             -webkit-filter: none;
             -moz-filter: none;
@@ -199,6 +235,24 @@
             margin-right: 4px;
         }
 
+        .log .p {
+            color: purple;/*unknown priority*/
+        }
+        .log .p5 {
+            color: #aaa;/*debug*/
+        }
+        .log .p4 {
+            color: #2b86ca;/*build output*/
+        }
+        .log .p3 {
+            color: #000;/*info*/
+        }
+        .log .p2 {
+            color: #a4822c;/*warning*/
+        }
+        .log .p1 {
+            color: #e61414;/*error*/
+        }
         .has-overlay {
             position: relative;
         }
@@ -322,8 +376,14 @@
     <!-- The fav icon -->
     <link rel="shortcut icon" href="img/favicon.ico">
     <script id="tplLog" type="text/html">
-        <span data-bind="attr: { title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY') }, text: unwrap($data && $data.date) && !isNaN(new Date(unwrap($data && $data.date)).getTime()) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          '"
-            class="time"></span><span data-bind="    text: ($data && $data.message || $data || '').replace(/\n/g, '\n          ')"
+        <span data-bind="
+text: unwrap($data && $data.date) && !isNaN(new Date(unwrap($data && $data.date)).getTime()) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          ',
+attr: {
+    title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY'),
+}"
+            class="time"></span><span data-bind="
+css: 'p'+priority,
+text: ($data && $data.toString(true) || '').replace(/\n/g, '\n          ')"
                 class="br"></span>
     </script>
 
@@ -478,6 +538,11 @@
                                 Latest Build</span></h2>
 
                             <div class="box-icon">
+                                <a data-bind="
+click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refresh"></i></a>
+                                <label id="for-auto-select-latest-build" class="hidden-tablet" for="auto-select-latest-build">
+                        <input data-bind="checked: $root.as" id="auto-select-latest-build" type="checkbox">
+                        Auto select</label>
                                 <!--<a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>-->
                                 <a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
@@ -510,18 +575,25 @@
                                                 href="#info">General</a>
                                         </li>
                                         <!-- ko foreach: selectedBuild() && selectedBuild().platforms-->
-                                        <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }">
+                                        <li data-bind="css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }" class="tab-icon">
                                             <a data-bind="    click: function (data) {
         $parent.selectedBuild.tab('#'
                 + unwrap($data && $data.platform));
     }, attr: { href: '#' + unwrap($data && $data.platform) }">
                                                 <img data-bind="
     attr: {
-        alt: $data && $data.platform,
-        src: 'img/platforms/' + unwrap($data && $data.platform) + '.png'
-    }"
-                                                    class="platform"
-                                                    alt="Abdullah" />
+        src: 'img/platforms/' + unwrap($data && $data.platform) + '.png',
+        title: $data && $data.platform,
+    }" class="platform"></img>
+                                                                                            <img data-bind="
+    visible: unwrap($data && $data.status) == 'success' || unwrap($data && $data.status) == 'failed',
+    attr: {
+        src: unwrap($data && $data.status) == 'success' ? 'img/platforms/ok.png' : 'img/platforms/failX.png',
+        title: $data && $data.status,
+    }" class="platform status"></img>
+                                                <i data-bind="visible: unwrap($data && $data.status) == 'queued'" class="icon-time"></i>
+                                                <i data-bind="visible: unwrap($data && $data.status) == 'building'" class="icon-repeat spin"></i>
+                                                <i data-bind="visible: unwrap($data && $data.status) == 'uploading'" class="icon-repeat globe"></i>
                                                 <span data-bind="    text: $root.platformNames[unwrap($data.platform)]"></span>
 
                                             </a>
