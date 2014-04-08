@@ -62,7 +62,7 @@ Server.define({
         var cache = this.cache;
         var server = conf ? this : new Server();
         this.uiApp = express();
-        this.uiHttpServer= http.createServer(this.uiApp);
+        this.uiHttpServer = http.createServer(this.uiApp);
 
         var uiOnly = conf.mode == 'ui';
         conf.port = conf.port || 8300;

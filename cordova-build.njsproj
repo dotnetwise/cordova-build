@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:all -port:8300 -server:localhost -proxy:cb.dnw.ro -port:8300 -proxyport:80 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
+    <ScriptArguments>-mode:all -port:8300 -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:80 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -19,7 +19,7 @@
     <ProjectGuid>09e78391-a007-4117-baa2-af37e95fab56</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>index.js</StartupFile>
+    <StartupFile>bin\cmd.js</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -37,6 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="agent\AgentWorker.js" />
+    <Compile Include="bin\cmd.js" />
     <Compile Include="client\ClientWorker.js" />
     <Compile Include="common\BrowserDetect.js" />
     <Compile Include="common\conf.js" />
@@ -61,6 +62,7 @@
     <Content Include="server\public\index.html" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="bin\" />
     <Folder Include="client\" />
     <Folder Include="agent\" />
     <Folder Include="common\" />
