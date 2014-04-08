@@ -18,340 +18,7 @@
             d.head.insertBefore(e, d.getElementById('bs-js'));
             d.documentElement.className += ' theme-' + t + ' ';
         })(document); </script> 
-        <style type="text/css" > body {
-        padding-bottom: 40px;
-    }
-
-        body ul.dashboard-list li {
-            border-top: 1px solid #EBEBEB;
-        }
-
-        body ul.dashboard-list li:first-child {
-            border: none;
-        }
-
-        body #screenshot {
-            position: absolute;
-            border: 1px solid #ccc;
-            background: #333;
-            padding: 5px;
-            display: none;
-            color: #fff;
-        }
-        .spin {
-            -webkit-animation-name: spin;
-            -webkit-animation-duration: 4000ms;
-            -webkit-animation-iteration-count: infinite;
-            -webkit-animation-timing-function: linear;
-            -moz-animation-name: spin;
-            -moz-animation-duration: 4000ms;
-            -moz-animation-iteration-count: infinite;
-            -moz-animation-timing-function: linear;
-            -ms-animation-name: spin;
-            -ms-animation-duration: 4000ms;
-            -ms-animation-iteration-count: infinite;
-            -ms-animation-timing-function: linear;
-            -o-animation-name: spin;
-            animation-name: spin;
-            -o-animation-duration: 4000ms;
-            animation-duration: 4000ms;
-            -o-animation-iteration-count: infinite;
-            animation-iteration-count: infinite;
-            -o-animation-timing-function: linear;
-            animation-timing-function: linear;
-        }
-@-ms-keyframes spin {
-    from { -ms-transform: rotate(0deg); }
-    to { -ms-transform: rotate(360deg); }
-}
-@-moz-keyframes spin {
-    from { -moz-transform: rotate(0deg); }
-    to { -moz-transform: rotate(360deg); }
-}
-@-webkit-keyframes spin {
-    from { -webkit-transform: rotate(0deg); }
-    to { -webkit-transform: rotate(360deg); }
-}
-@keyframes spin {
-    from {
-        transform:rotate(0deg);
-    }
-    to {
-        transform:rotate(360deg);
-    }
-}
-        .time {
-            color: #bbb;
-        }
-
-        body .brand {
-            width: 230px;
-        }
-        #for-auto-select-latest-build {
-            float: left;
-            margin-bottom: 0;
-            margin-top: 5px;
-            margin-right: 2px;
-        }
-        .build-number a {
-            font-family: 'Courier New', Courier, 'Nimbus Mono L', monospace;
-            color: #3399FF;
-        }
-
-        .icn {
-            margin-right: 5px;
-        }
-
-        .brand img {
-            position: absolute;
-            margin-left: -24px;
-        }
-
-        .started {
-            color: #555;
-        }
-
-        .fixed-box > .box-content {
-            max-height: 300px;
-            overflow: auto;
-        }
-
-        .log-big {
-            margin-left: 0;
-        }
-
-        .report {
-            display: inline-block;
-            margin: 0;
-        }
-
-        .report dd {
-            margin-left: 0;
-        }
-
-        .report label {
-            font-weight: bold;
-            display: inline;
-            margin-right: 5px;
-            clear: left;
-            float: left;
-            min-width: 40px;
-        }
-
-        .report span {
-            float: left;
-        }
-
-
-        .report dt:after, .br:after {
-            content: '\000A';
-            white-space: pre;
-        }
-
-        .qr {
-            background: transparent no-repeat top left;
-            -moz-background-size: 100% auto;
-            -o-background-size: 100% auto;
-            background-size: 100% auto;
-            position: relative;
-            width: 100%; /* desired width */
-        }
-
-        .qr:before {
-            content: "";
-            display: block;
-            padding-top: 100%; /* initial ratio of 1:1*/
-        }
-
-        img.no-build {
-            margin-right: 8px;
-        }
-
-        .sidebar-nav {
-            padding: 9px 0;
-        }
-
-        .log {
-            font-family: 'Courier New';
-            background-color: beige;
-        }
-
-        .log.box-content {
-            overflow: auto;
-            max-height: 280px;
-            padding-top: 0;
-        }
-
-        .log span {
-            white-space: pre;
-        }
-
-        #selectedBuildTab {
-            margin-bottom: 4px;
-        }
-
-        #selectedBuildTabContent {
-            overflow: hidden;
-        }
-
-        #selectedBuildTab img.platform {
-            display: block;
-            float: left;
-            margin-right: 4px;
-            max-width: 16px;
-            max-height: 16px;
-            -webkit-filter: grayscale(1);
-            -webkit-filter: grayscale(100%);
-            -moz-filter: grayscale(100%);
-            -ms-filter: grayscale(100%);
-            -o-filter: grayscale(100%);
-            filter: grayscale(100%);
-        }
-
-        #selectedBuildTab .active img.platform {
-            display: block;
-            float: left;
-            margin-right: 4px;
-            max-width: 16px;
-            max-height: 16px;
-            -webkit-filter: none;
-            -webkit-filter: none;
-            -moz-filter: none;
-            -ms-filter: none;
-            -o-filter: none;
-            filter: none;
-        }
-
-        .grayscale.hover:hover, #selectedBuildTab img.platform.status {
-            -webkit-filter: none;
-            -webkit-filter: none;
-            -moz-filter: none;
-            -ms-filter: none;
-            -o-filter: none;
-            filter: none;
-        }
-
-        img.dashboard-avatar {
-            margin-left: 0;
-            margin-right: 4px;
-        }
-
-        .log .p {
-            color: purple;/*unknown priority*/
-        }
-        .log .p5 {
-            color: #aaa;/*debug*/
-        }
-        .log .p4 {
-            color: #2b86ca;/*build output*/
-        }
-        .log .p3 {
-            color: #000;/*info*/
-        }
-        .log .p2 {
-            color: #a4822c;/*warning*/
-        }
-        .log .p1 {
-            color: #e61414;/*error*/
-        }
-        .has-overlay {
-            position: relative;
-        }
-
-        .overlay {
-            opacity: 0;
-            background-color: black;
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 9999;
-            -moz-transition: all ease-in-out 0.5s;
-            -o-transition: all ease-in-out 0.5s;
-            -webkit-transition: all ease-in-out 0.5s;
-            transition: all ease-in-out 0.5s;
-            pointer-events: none;
-        }
-
-        .overlay.disconnected {
-            opacity: 0.1;
-        }
-
-        .overlay.connected {
-            opacity: 0;
-        }
-
-        @media (max-width: 767px) {
-            .report label {
-                width: 70px;
-            }
-        }
-
-        @media (min-width: 1560px) {
-            .row-fluid .build-info.span2.no-gutter {
-                width: 8.333333333333333%;
-            }
-
-            .row-fluid .build-log.span8.no-gutter {
-                width: 75%;
-            }
-        }
-
-        @media (min-width: 767px) {
-            .row-fluid [class*="span"].no-gutter {
-                margin: 0;
-            }
-
-            .row-fluid .span1.no-gutter {
-                width: 8.333333333333333%;
-            }
-
-            .row-fluid .span2.no-gutter {
-                width: 16.66666666666667%;
-            }
-
-            .row-fluid .span3.no-gutter {
-                width: 25%;
-            }
-
-            .row-fluid .span4.no-gutter {
-                width: 33.33333333333333%;
-            }
-
-            .row-fluid .span5.no-gutter {
-                width: 41.66666666666667%;
-            }
-
-            .row-fluid .span6.no-gutter {
-                width: 50%;
-            }
-
-            .row-fluid .span7.no-gutter {
-                width: 58.33333333333333%;
-            }
-
-            .row-fluid .span8.no-gutter {
-                width: 66.66666666666667%;
-            }
-
-            .row-fluid .span9.no-gutter {
-                width: 75%;
-            }
-
-            .row-fluid .span10.no-gutter {
-                width: 83.33333333333333%;
-            }
-
-            .row-fluid .span11.no-gutter {
-                width: 91.66666666666667%;
-            }
-
-            .row-fluid .span12.no-gutter {
-                width: 100%;
-            }
-        }
-    </style>
+    <link href="css/app.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
     <link href="css/charisma-app.css" rel="stylesheet">
     <link href="css/jquery-ui-1.8.21.custom.css" rel="stylesheet">
@@ -577,7 +244,11 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                         </li>
                                         <!-- ko foreach: selectedBuild() && selectedBuild().platforms-->
                                         <li data-bind="
-    css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }" class="tab-icon">
+    attr: {
+        rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
+        title: [unwrap($data.platform), ' #', unwrap(id), ' &lt;span class=\'label label-{0}\'&gt;{0}&lt;/label&gt;'.format(unwrap(status) == 'success' ? '' : unwrap(status))].join(''),
+    },
+    css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }" class="tab-icon preview">
                                             <a data-bind="    click: function (data) {
         $parent.selectedBuild.tab('#'
                 + unwrap($data && $data.platform));
@@ -641,9 +312,9 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                                                 href="#"></a></b>
                                                         </dd>
                                                         <dd class="status">
-                                                            <label>Status:</label><span data-bind="cls: 'label-'
+                                                            <label>Status:</label><span data-bind="css: 'label-'
         + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
-                                                                class="label label-success"></span>
+                                                                class="label"></span>
                                                         </dd>
 
                                                         <dd class="started">
@@ -755,7 +426,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                     No builds have been done yet.
                                 </div>
                                 <ul data-bind="foreach: $data && $data.builds" class="dashboard-list">
-                                    <li data-bind="with: $data" class="agent">
+                                    <li data-bind="with: $data, css: { 'active': unwrap($parent.selectedBuild) && unwrap($parent.selectedBuild).id == $data.id}" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
                                         <a data-bind="
@@ -764,7 +435,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
     },
     click: function (build) { $parents[2].selectedBuild(build.master || build); $parents[2].selectedBuild.tab('#' + build.platform()); }">
                                             <img data-bind="
-    css: { grayscale: status() != 'success' },
+    css: { grayscale: status() != 'success', spin: status() == 'building' },
     attr: {
         alt: $data.platform,
         rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
@@ -772,7 +443,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
         src: ('img/platforms/' + unwrap($data && $data.platform || $data) + '.png'),
         alt: $data.platform
     }"
-                                                class="dashboard-avatar preview" src="img/platforms/android.png" />
+                                                class="dashboard-avatar preview" />
                                         </a>
                                         <!--/ko-->
                                         <!--</a>-->
@@ -799,9 +470,9 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
     }"></span>
                                             </dd>
                                             <dd class="status">
-                                                <label>Status:</label><span data-bind="cls: 'label-'
+                                                <label>Status:</label><span data-bind="css: 'label-'
         + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
-                                                    class="label label-success"></span>
+                                                    class="label"></span>
                                             </dd>
                                         </dl>
                                     </li>
@@ -880,11 +551,12 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
-                                        <img data-bind="attr: {
-    alt: $data.platform, src: $data.qr
-            || ('img/platforms/' + ($data.platform || $data) + '.png')
-}"
-                                            class="dashboard-avatar grayscale hover" src="img/platforms/android.png">
+                                        <img data-bind="
+    css: { spin: unwrap($parent.buildingPlatform) == unwrap($data && $data.platform || $data) },
+    attr: {
+        alt: $data.platform || $data, src: $data.qr || ('img/platforms/' + ($data.platform || $data) + '.png')
+    }"
+                                            class="dashboard-avatar hover">
                                         <!--/ko-->
                                         <!--</a>-->
                                         <dl class="specs report">

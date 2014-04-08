@@ -117,7 +117,7 @@ Server.define({
                             });
                             agent.conf.platforms = agent.platforms;
                             agent.conf.since = new Date();
-                            conf.status = 'planned';
+                            conf.status = 'ready';
                             this.notifyStatusAllWWWs('connected', 'agent', agent.conf);
                         },
                     }, this);

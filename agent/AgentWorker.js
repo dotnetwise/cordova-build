@@ -16,47 +16,70 @@ var Msg = require('../common/Msg.js');
 var serverUtils = require('../common/serverUtils');
 
 var zipArchiver;
-function AgentWorker() {
+function AgentWorker(conf, options) {
     this.id = shortid.generate();
+    this.conf = conf || {};
+    this.url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'agent');
+    this.workFolder = conf.workFolder || 'work';
+
+    process.on('exit', function () {
+        this.socket.socket.connected && this.socket.disconnect();
+        this.socket.socket.connected = false;
+    }.bind(this));
+
 }
 AgentWorker.define({
-    connect: function (conf) {
-        var url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'agent');
-        this.conf = conf;
-        this.workFolder = conf.workFolder || 'work';
-        this.socket = ioc.connect(url);
-        this.socket.on({
-            'connect': this.onConnect,
-            'disconnect': this.onDisconnect,
-            'build': this.onBuild,
-            'log': function (msg) {
-                var message = new Msg(msg);
-                console.log(message.toString());
-            },
-        }, this);
-        process.on('exit', function () {
-            this.socket.socket.connected && this.socket.disconnect();
-            this.socket.socket.connected = false;
-        }.bind(this));
-        process.on('SIGINT', function () {
-            this.socket.emit('disconnect');
-            this.socket.socket.connected && this.socket.disconnect();
-            this.socket.socket.connected = false;
-            //graceful shutdown
-            process.exit();
-        }.bind(this));
-
-        this.ensureWorkFolder();
-        this.detectZipArchiver();
+    connect: function () {
+        var conf = this.conf;
+        if (!this.socket) {
+            console.log('Connecting agent supporting', conf.agent, 'to:', this.url);
+            this.socket = ioc.connect(this.url, {
+                'max reconnection attempts': Infinity,
+                'force new connection': true, // <-- Add this!
+                'reconnect': true,
+                'sync disconnect on unload': true,
+            }).on({
+                'connect': this.onConnect,
+                'disconnect': this.onDisconnect,
+                'error': this.onError,
+                'build': this.onBuild,
+                'log': function (msg) {
+                    var message = new Msg(msg);
+                    console.log(message.toString());
+                },
+            }, this);
+            this.ensureWorkFolder();
+            this.detectZipArchiver();
+        }
+        else {
+            this.socket.reconnect();
+        }
     },
     'onConnect': function () {
+        console.log('AGENT WORKER CONNECTED supporting platforms:', this.conf.agent);
         this.socket.emit('register', {
             id: this.id,
             platforms: this.conf.agent || ['android', 'wp8'],
         });
     },
     'onDisconnect': function () {
-        console.log('AGENT WORKER DISCONNECTED');
+        console.log('AGENT WORKER DISCONNECTED with platforms:', this.conf.agent);
+    },
+    'onError': function (err) {
+        if (err && (err.code == 'ECONNREFUSED' || err.indexOf && err.indexOf('ECONNREFUSED') >= 0)) {
+            if (!this._reconnecting) {
+                var self = this;
+                this._reconnecting = function () {
+                    self.socket.reconnect();
+                }.defer(500);
+                self.socket.on('connect', function () {
+                    clearTimeout(self._reconnecting);
+                    self._reconnecting = 1;
+                    self.socket.removeListener('connect', arguments.callee);
+                });
+            }
+        }
+        else console.log('Agent Worker socket reported error:', err);
     },
     'onBuild': function (build) {
         if (!build) {
@@ -206,7 +229,7 @@ AgentWorker.define({
                         run && run.on('close', function (code) {
                             if (code) {
                                 agent.log(build, Msg.error, 'child process exited with code ' + code);
-                                this.buildFailed(build);
+                                agent.buildFailed(build);
                             }
                         });
                     }

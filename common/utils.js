@@ -9,6 +9,9 @@ patch(ioc.Socket.prototype, ["on", "addListener"]);
 patch(ioc.SocketNamespace.prototype, ["on", "addListener"]);
 patch(ioc.EventEmitter.prototype, ["on", "addListener"]);
 
+    //patch browser global
+if (typeof window != 'undefined')
+    window.global = window;
 Date.prototype.elapsed = function (until) {
     return new Elapsed(this, until).optimal;
 }
@@ -126,3 +129,48 @@ Array.prototype.unique = (function () {
         return unique;
     };
 })();
+var splice = Array.prototype.splice;
+var defineProperties = Object.defineProperties || (Object.defineProperties = function (obj, props) { for (var i in props) obj[i] = props.value; });
+var bind = Function.prototype.bind || (Function.prototype.bind = function (oThis, args) { var aArgs = Array.prototype.slice.call(arguments, 1), fToBind = this, fNOP = function () { }, fBound = function () { return fToBind.apply(this instanceof fNOP && oThis ? this : oThis, aArgs.concat(Array.prototype.slice.call(arguments))); }; fNOP.prototype = this.prototype; fBound.prototype = new fNOP(); return fBound; });
+
+defineProperties(Function.prototype, {
+    'defer': {
+        enumerable: false, configurable: true, value: function (timeout, thisArg, arg1, arg2, arg3) {
+            var t = timeout || 0;
+            return t < 0
+                ? this.apply(thisArg, splice.call(arguments, 0, 2) && arguments) && 0 || 0
+                : setTimeout(bind.apply(this, splice.call(arguments, 0, 1) && arguments), t);
+        }
+    },
+    'deferApply': {
+        enumerable: false, configurable: true, value: function (timeout, thisArg, argsArray) {
+            return (timeout || 0) < 0
+                ? this.apply(thisArg, argsArray || []) && 0 || 0
+                : setTimeout(bind.apply(this, splice.call(argsArray = argsArray || [], 0, 0, thisArg) && argsArray), timeout);
+        }
+    },
+    'bindDefer': {
+        enumerable: false, configurable: true, value: function (timeout, thisArg, arg1, arg2, arg3) {
+            return bind.apply(this.defer, splice.call(arguments, 0, 0, this) && arguments);
+        }
+    },
+    'bindDeferApply': {
+        enumerable: false, configurable: true, value: function (timeout, thisArg, argsArray) {
+            return bind.apply(this.defer, splice.apply(arguments, splice.call(argsArray = argsArray || [], 0, 0, 0, 3, this, timeout, thisArg) && argsArray) && arguments);
+        }
+    }
+});
+//function f(a,b,c,d,e,f){
+//    console.log(this, a,b,c,d,e,f)
+//}
+//var t = {x:1};
+//f.defer(-1, t, 1,2,3,4,5,6);
+//f.deferApply(-1, t, [1,2,3,4,5,6]);
+//f.bindDefer(-1, t, 1,2,3)(4,5,6);
+//f.applyDefer(-1, t, [1,2,3])(4,5,6);
+
+//f.defer(1, t, 1,2,3,4,5,6);
+//f.deferApply(1, t, [1,2,3,4,5,6]);
+//f.bindDefer(1, t, 1,2,3)(4,5,6);
+//f.applyDefer(1, t, [1,2,3])(4,5,6);
+

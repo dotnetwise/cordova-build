@@ -48,7 +48,14 @@ function ServerBrowser(conf) {
     }.bind(this));
 
     inBrowser && ko.applyBindings(this, document.body);
-    this.connect(url);
+    this.connect(url, {
+        //Note that max reconnection attemps does not mean that the io client will stop to reconnect to the server after 10 failed attempts. If it was able to reconnect to the server 10 times and loses the connection for the 11th time, it will stop to reconnect.
+        'max reconnection attempts': Infinity, // defaults to 10 
+        'sync disconnect on unload': true,
+        'reconnect': true,
+        'auto connect': true,
+        //'force new connection': true, // <-- Add this!
+    });
 }
 ServerBrowser.define({
     statuses: {
@@ -71,6 +78,7 @@ ServerBrowser.define({
         this.socket.on({
             'connect': this.onConnect,
             'disconnect': this.onDisconnect,
+            'error': this.onError,
             'status': this.onStatus,
             'news': this.onPartialStatus,
         }, this);
@@ -89,6 +97,22 @@ ServerBrowser.define({
         this.builds.map = {};
         this.clients.map = {};
         this.logs.map = {};
+    },
+    'onError': function (err) {
+        if (err && (err.code == 'ECONNREFUSED' || err.indexOf && err.indexOf('ECONNREFUSED') >= 0)) {
+            if (!this._reconnecting) {
+                var self = this;
+                this._reconnecting = function () {
+                    self.socket.reconnect();
+                }.defer(500);
+                self.socket.on('connect', function () {
+                    clearTimeout(self._reconnecting);
+                    self._reconnecting = 1;
+                    self.socket.removeListener('connect', arguments.callee);
+                });
+            }
+        }
+        else console.log('Agent Worker socket reported error:', err);
     },
     'onPartialStatus': function (status) {
         //console.warn('partial status', status);
@@ -154,12 +178,15 @@ ServerBrowser.define({
                         selectedBuild(build);
                     }
                     break;
+                case 'agent-status':
                 case 'connected':
                 case 'updated':
-                    var o = list.map[status.obj.id];
-                    var i = list.indexOf(o);
-                    i < 0 ? list.unshift(status.obj) : list[i] = status.obj;
-                    list.map[status.obj.id] = o;
+                    var item = status.obj;
+                    var o = list.map[item.id];
+                    var i = list.indexOf(o); 
+                    i < 0 ? list.unshift(item) : list.splice(i, 1, item);
+                    list.map[item.id] = item;
+                    console.log(status, list.map);
                     //console.log('LIST', status, list);
                     break;
                 case 'disconnected':
@@ -204,20 +231,16 @@ ServerBrowser.define({
                 }
                 build.platforms && build.platforms.forEach(arguments.callee.bind(vm));
             }.bind(1));
+            
             this.agents(status.agents);
             this.builds(builds);
-            if (builds[0] && !this.selectedBuild())
-                this.selectedBuild(builds[0]);
+            if (builds[0]) {
+                var sb = this.selectedBuild();
+                if (!sb || !this.builds.map[sb.id])
+                    this.selectedBuild(builds[0]);
+            }
+            else this.selectedBuild(null);
         }
-    },
-    parseselectedBuild: function (build) {
-        if (build) {
-            build.qr = this.statuses[build.status] || this.generateQR('/download/' + build.id);
-        }
-        build.platforms && build.platforms.forEach(function (platform) {
-            platform.qr = this.statuses[build.status] || this.generateQR('/download/' + build.id);
-        }, this);
-        this.selectedBuild(build);
     },
     generateQR: function (url, level) {
         var uri = qr.toDataURL({

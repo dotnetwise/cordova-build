@@ -33,7 +33,7 @@ Agent.define({
             'build-failed': this.onBuildFailed,
             'log': function (msg) {
                 var build = this.server.builds[msg && msg.buildId];
-                this.server.forwardLog(build, this, msg);
+                this.server.forwardLog(build, this, msg); 
             },
         }, this);
     },
@@ -92,6 +92,7 @@ Agent.define({
                         }));
 
                         agent.busy = null;//free agent to take in another work
+                        agent.updateStatus('ready');
                     }
                     serverUtils.freeMemFiles(build.outputFiles);
                 }.bind(this));
@@ -111,10 +112,16 @@ Agent.define({
             }
             this.server.updateBuildStatus(build, 'failed');
             this.busy = null;
+            this.updateStatus('ready');
         }
         else {
             this.log(build, null, Msg.error, "The build {0} was requested to be failing but we couldn't identify such build");
         }
+    },
+    updateStatus: function(newStatus, platform) {
+        this.conf.status = newStatus;
+        this.conf.buildingPlatform = platform;
+        this.server.notifyStatusAllWWWs('agent-status', 'agent', this.conf);
     },
     log: function (build, client, priority, message, args) {
         Array.prototype.splice.call(arguments, 1, 1, this, 'A');
@@ -125,6 +132,7 @@ Agent.define({
     },
     startBuild: function (build) {
         this.busy = build;
+        this.updateStatus('building', build.conf.platform);
         this.server.updateBuildStatus(build, 'uploading');
         var client = build.client;
         var files = build.files;
@@ -139,6 +147,7 @@ Agent.define({
                     this.log(build, client, Msg.error, 'error while reading input files on the server for sending them to the agent worker: \n{2}', err);
                     build.agent = null;
                     this.busy = null;
+                    this.updateStatus('ready');
                 }
                 else {
                     try {
@@ -153,6 +162,7 @@ Agent.define({
                         this.log(build, client, Msg.error, 'error while sending build files to agent {2} on {3}...{4}', agent.id, build.conf.platform, fileSize(size));
                         build.agent = null;
                         this.busy = null;
+                        this.updateStatus('ready');
                     }
 
                 }

@@ -4,17 +4,11 @@ var listen = conf.listen;
 	
 process.openStdin().on("keypress", function(chunk, key) {
   if(key && key.name === "c" && key.ctrl) {
-    console.log("ctrl+c SIGNIT ");
     process.emit("SIGINT");
     process.exit();
   }
 });
 
-process.on('exit', function () {
-  // We get here because we don't have
-  // any active handles left.
-  console.log('exit');
-});
 if (process.platform === "win32"){
 var readLine = require ("readline");
     var rl = readLine.createInterface ({
@@ -39,13 +33,13 @@ if (listen.agent) {
 //    appName: 'cordova-build'
 //});
     var AgentWorker = require('./agent/AgentWorker.js');
-    var agent = new AgentWorker();
-    agent.connect(conf);
+    var agent = new AgentWorker(conf);
+    agent.connect();
 }
 
 if (listen.client) {
     conf.build = (conf.build || 'ios,android,wp8').split(/,|;/g);
     var ClientWorker = require('./client/ClientWorker.js');
-    var client = new ClientWorker();
-    client.connect(conf);
+    var client = new ClientWorker(conf);
+    client.connect();
 }
