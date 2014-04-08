@@ -4,7 +4,11 @@ var async = require('async');
 var mkdirp = require('mkdirp');
 var extend = require('extend');
 module.exports = {
-    writeFiles: function (folder, files, locationMsg, done) {
+    writeFiles: function (folder, files, locationMsg, doNotFreeMem, done) {
+        if (typeof doNotFreeMem == 'function') {
+            done = doNotFreeMem;
+            doNotFreeMem = false;
+        }
         var server = this;
         mkdirp(folder, function (err) {
             if (err) {
@@ -21,7 +25,7 @@ module.exports = {
                     file.content ? fs.writeFile(fileName, new Buffer(file.content.data, 'binary').toString(), {
                         encoding: 'binary',
                     }, function (err) {
-                        delete file.content; //free server's memory with file's content
+                        !doNotFreeMem && delete file.content; //free server's memory with file's content
                         cb(err);
                     })
                     : cb(null);

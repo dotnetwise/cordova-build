@@ -11,6 +11,13 @@ var commandLine = new CommandLine('node .\\server'); // Construct the model.
 commandLine.addArgument('protocol', { type: 'string' });
 commandLine.addArgument('server', { type: 'string' });
 commandLine.addArgument('port', { type: 'number' });
+commandLine.addArgument('noui', { type: 'boolean' });
+commandLine.addArgument('proxy', { type: 'string' });
+commandLine.addArgument('proxyport', { type: 'number' });
+commandLine.addArgument('proxyprotocol', { type: 'string' });
+commandLine.addArgument('ui', { type: 'string' });
+commandLine.addArgument('uiport', { type: 'number' });
+commandLine.addArgument('uiprotocol', { type: 'string' });
 commandLine.addArgument('mode', { type: 'string', required: true, allowedValues: ['server', 'client', 'agent', 'all'] });
 var conf = commandLine.parseNode.apply(commandLine, process.argv);
 
@@ -32,11 +39,15 @@ if (conf.mode == 'agent' || conf.mode == 'all' || conf.agent) {
     commandLine.addArgument('agent', { type: 'string', required: true });
     listen.agent = true;
 }
+if (conf.mode == 'ui' || conf.mode == 'server' || conf.mode == 'all') {
+    commandLine.addArgument('uiport', { type: 'number', required: false });
+    listen.ui = true;
+}
 
 function parseArgs() {
     //console.log(commandLine.toString()); // Will print the usage syntax.
     conf = commandLine.parseNode.apply(commandLine, process.argv);
-    conf.protocol = conf.protocol || 'http';
+    conf.protocol = conf.protocol || 'http://';
     conf.port = conf.port || 8300;
     conf.server = conf.server || 'localhost';
     conf.listen = listen;

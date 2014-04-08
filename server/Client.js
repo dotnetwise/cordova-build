@@ -22,8 +22,16 @@ module.exports = Function.define({
             'fail-build': this.onFailBuild,
             'log': function (msg) {
                 var build = this.server.builds[msg && msg.buildId];
+                var client = this;
                 this.server.forwardLog(build, this, msg, {
-                    emitLog: function() { /* do nothing. We don't forward client messages back to client*/}                    
+                    emitLog: function(msg) { 
+                        if (client.server.conf.mode == 'all'){
+                            client.emitLog(msg);
+                        }
+                        else {
+                            /* do nothing. We don't forward client messages back to client, that he sent to us and already displayed on its stdout*/
+                        }
+                    }
                 });
             },
         }, this);

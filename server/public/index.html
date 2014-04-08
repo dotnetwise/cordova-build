@@ -1,23 +1,37 @@
-﻿    <!DOCTYPE html > <html lang="en" > <head >
+﻿<!DOCTYPE html >
+<html lang="en">
+<head>
     <!--
     Charisma v1.0.0 Copyright 2012 Muhammad Usman Licensed under the Apache License v2.0 http://www.apache.org/licenses/LICENSE-2.0 http://usman.it http://twitter.com/halalit_usman
     -->
-    <meta charset="utf-8" > <title > Cordova Build</title > <meta name="viewport" content="width=device-width, initial-scale=1.0" > <meta name="description" content="Charisma, a fully featured, responsive, HTML5, Bootstrap admin template." > <meta name="author" content="DotNetWise" >
+    <meta charset="utf-8">
+    <title>Cordova Build interface</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Charisma, a fully featured, responsive, HTML5, Bootstrap admin template.">
+    <meta name="author" content="DotNetWise">
     <!-- The styles -->
-    <script id="bs-js" > (function (d) {
-            var t, e = d.createElement('link'), pairs = d.cookie.split('; '), decode = decodeURIComponent;
-            for (var i = 0, pair; pair = pairs[i] && pairs[i].split('=') ; i++) {
-                if (decode(pair[0]) === 'current_theme') {
-                    t = decode(pair[1] || ''); // IE saves cookies with empty string as "c; ", e.g. without "=" as opposed to EOMB, thus pair[1] may be undefined
-                    break;
-                }
-            }
-            t = t || 'spacelab';
-            e.id = 'bs-css'; e.rel = 'stylesheet'; e.href = 'css/bootstrap-' + t + '.css';
-            window.current_theme = t;
-            d.head.insertBefore(e, d.getElementById('bs-js'));
-            d.documentElement.className += ' theme-' + t + ' ';
-        })(document); </script> 
+    <!--[if lt IE 9]>
+<script>
+    delete Object.defineProperty;
+</script>
+        <![endif]-->
+
+    <script id="bs-js"> (function (d) {
+
+     var t, e = d.createElement('link'), pairs = d.cookie.split('; '), decode = decodeURIComponent;
+     for (var i = 0, pair; pair = pairs[i] && pairs[i].split('=') ; i++) {
+         if (decode(pair[0]) === 'current_theme') {
+             t = decode(pair[1] || ''); // IE saves cookies with empty string as "c; ", e.g. without "=" as opposed to EOMB, thus pair[1] may be undefined
+             break;
+         }
+     }
+     t = t || 'spacelab';
+     e.id = 'bs-css'; e.rel = 'stylesheet'; e.href = 'css/bootstrap-' + t + '.css';
+     window.current_theme = t;
+     var p = d.getElementById('bs-js');
+     p.parentElement.insertBefore(e, p);
+     d.documentElement.className += ' theme-' + t + ' ';
+ })(document); </script>
     <link href="css/app.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
     <link href="css/charisma-app.css" rel="stylesheet">
@@ -45,13 +59,13 @@
     <link rel="shortcut icon" href="img/favicon.ico">
     <script id="tplLog" type="text/html">
         <span data-bind="
-text: unwrap($data && $data.date) && !isNaN(new Date(unwrap($data && $data.date)).getTime()) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          ',
-attr: {
-    title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY'),
-}"
+    text: unwrap($data && $data.date) && !isNaN(new Date(unwrap($data && $data.date)).getTime()) && new Date(unwrap($data && $data.date)).format('mm:ss.SS ') || '          ',
+    attr: {
+        title: unwrap($data && $data.date) && new Date(unwrap($data && $data.date)).format('hh:mm:ss.S, DD MMM YYYY'),
+    }"
             class="time"></span><span data-bind="
-css: 'p'+priority,
-text: ($data && $data.toString(true) || '').replace(/\n/g, '\n          ')"
+    css: 'p' + priority,
+    text: ($data && $data.toString(true) || '').replace(/\n/g, '\n          ')"
                 class="br"></span>
     </script>
 
@@ -206,13 +220,16 @@ text: ($data && $data.toString(true) || '').replace(/\n/g, '\n          ')"
                                 Latest Build</span></h2>
 
                             <div class="box-icon">
-                                
-                                <label id="for-auto-select-latest-build" class="hidden-tablet" for="auto-select-latest-build" title="Auto select a build when it arrives for the first time">
-                        <input data-bind="checked: $root.as" id="auto-select-latest-build" type="checkbox">
-                        Auto select</label>
+
+                                <label id="for-auto-select-latest-build" class="hidden-tablet" for="auto-select-latest-build"
+                                    title="Auto select a build when it arrives for the first time">
+                                    <input data-bind="checked: $root.as" id="auto-select-latest-build" type="checkbox">
+                                    Auto select</label>
                                 <!--<a href="#" class="btn btn-setting btn-round"><i class="icon-cog"></i></a>-->
                                 <a data-bind="
-click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refresh"></i></a><a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+    click: refresh"
+                                    href="#" class="btn btn-refresh btn-round"><i class="icon-refresh"></i></a><a href="#" class="btn btn-minimize btn-round">
+                                        <i class="icon-chevron-up"></i></a>
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
                         </div>
@@ -248,7 +265,8 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
         rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
         title: [unwrap($data.platform), ' #', unwrap(id), ' &lt;span class=\'label label-{0}\'&gt;{0}&lt;/label&gt;'.format(unwrap(status) == 'success' ? '' : unwrap(status))].join(''),
     },
-    css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }" class="tab-icon preview">
+    css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }"
+                                            class="tab-icon preview">
                                             <a data-bind="    click: function (data) {
         $parent.selectedBuild.tab('#'
                 + unwrap($data && $data.platform));
@@ -257,16 +275,20 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
     attr: {
         src: 'img/platforms/' + unwrap($data && $data.platform) + '.png',
         title: $data && $data.platform,
-    }" class="platform"></img>
-                                                                                            <img data-bind="
+    }"
+                                                    class="platform"></img>
+                                                <img data-bind="
     visible: unwrap($data && $data.status) == 'success' || unwrap($data && $data.status) == 'failed',
     attr: {
         src: unwrap($data && $data.status) == 'success' ? 'img/platforms/ok.png' : 'img/platforms/failX.png',
         title: $data && $data.status,
-    }" class="platform status"></img>
+    }"
+                                                    class="platform status"></img>
                                                 <i data-bind="visible: unwrap($data && $data.status) == 'queued'" class="icon-time"></i>
-                                                <i data-bind="visible: unwrap($data && $data.status) == 'building'" class="icon-repeat spin"></i>
-                                                <i data-bind="visible: unwrap($data && $data.status) == 'uploading'" class="icon-repeat globe"></i>
+                                                <i data-bind="visible: unwrap($data && $data.status) == 'building'" class="icon-repeat spin">
+                                                </i>
+                                                <i data-bind="visible: unwrap($data && $data.status) == 'uploading'" class="icon-repeat globe">
+                                                </i>
                                                 <span data-bind="    text: $root.platformNames[unwrap($data.platform)]"></span>
 
                                             </a>
@@ -280,7 +302,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                             <img class="no-build" src="img/platforms/no-build.png" />
                                             <span data-bind="visible: $root.status() == 'connecting'">Connecting and loading data</span>
                                             <span data-bind="visible: $root.status() == 'connected'">No build has been run yet</span>
-                                            </div>
+                                        </div>
                                         <script id="tplLastBuild" type="text/html">
                                             <div class="row-fluid">
                                                 <div class="span2 no-gutter build-qr">
@@ -288,7 +310,8 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
     attr: {
         href: unwrap($data && $data.status) == 'success' ? ['/download/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : '', typeof unwrap($data.platform) == 'string' ? unwrap($data.platform) : ''].join('') : null,
     },
-    " style="display: block;">
+    "
+                                                        style="display: block;">
                                                         <div data-bind="
     style: {
         'backgroundImage':
@@ -427,9 +450,10 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                 </div>
                                 <ul data-bind="template: { name: 'tplBuildListItem', foreach: $data && $data.builds }" class="dashboard-list">
                                 </ul>
-                                    <script type="text/html" id="tplBuildListItem">
+                                <script type="text/html" id="tplBuildListItem">
 
-                                    <li data-bind="with: $data, css: { 'active': unwrap($parent.selectedBuild) && unwrap($parent.selectedBuild).id == $data.id }" class="agent">
+                                    <li data-bind="with: $data, css: { 'active': unwrap($parent.selectedBuild) && unwrap($parent.selectedBuild).id == $data.id }"
+                                        class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
                                         <a data-bind="
@@ -472,9 +496,9 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
             && ('Started:       ' + unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss'))),
             (unwrap($data && $data.completed) && unwrap($data && $data.completed).format
             && ('\nCompleted: ' + unwrap($data && $data.completed).format('DD MMM YYYY hh:mm:ss'))),
-            (unwrap($data && $data.duration) 
+            (unwrap($data && $data.duration)
             && ('\nDuration: ' + unwrap($data && $data.duration))),
-            ].join('')
+        ].join('')
     }"></span>
                                             </dd>
                                             <dd class="status">
@@ -484,7 +508,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                             </dd>
                                         </dl>
                                     </li>
-                                    </script>
+                                </script>
                             </div>
                         </div>
                     </div>
@@ -556,7 +580,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                 <div data-bind="visible: !$data || !(unwrap($data.agents).length)">
                                     No build agents are connected.
                                 </div>
-                                <ul data-bind="template: { name: 'tplAgentItem', foreach: $data && $data.agents}" class="dashboard-list">
+                                <ul data-bind="template: { name: 'tplAgentItem', foreach: $data && $data.agents }" class="dashboard-list">
                                 </ul>
                                 <script type="text/html" id="tplAgentItem">
                                     <li data-bind="with: $data" class="agent">
@@ -649,14 +673,14 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                 </div>
             </div>
         </div>
-    <footer>
-        <p class="pull-left">
-            <a href="http://www.dotnetwise.com" target="_blank">DotNetWise</a> 2014
-        </p>
-        <p class="pull-right">
-            Design template by: <a target="_blank" href="http://usman.it/free-responsive-admin-template">Charisma</a>
-        </p>
-    </footer>
+        <footer>
+            <p class="pull-left">
+                <a href="http://www.dotnetwise.com" target="_blank">DotNetWise</a> 2014
+            </p>
+            <p class="pull-right">
+                Design template by: <a target="_blank" href="http://usman.it/free-responsive-admin-template">Charisma</a>
+            </p>
+        </footer>
 
     </div>
     <!--/.fluid-container-->

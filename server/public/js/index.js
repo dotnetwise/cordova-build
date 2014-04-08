@@ -40,7 +40,7 @@ function ServerBrowser(conf) {
     this.selectedBuild.tab = observable('#noBuild');
     this.status = observable('connecting');
     this.disconnectedSince = observable();
-    var url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
+    var url = '{0}{1}{2}/{3}'.format(conf.protocol || 'http://', conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
     var as = $.cookie('as') !== 'false';
     this.as = observable(as);
     this.as.subscribe(function(as) {
@@ -186,8 +186,6 @@ ServerBrowser.define({
                     var i = list.indexOf(o); 
                     i < 0 ? list.unshift(item) : list.splice(i, 1, item);
                     list.map[item.id] = item;
-                    console.log(status, list.map);
-                    //console.log('LIST', status, list);
                     break;
                 case 'disconnected':
                     var id = status.obj.id;

@@ -54,6 +54,8 @@ Agent.define({
         var id = build.masterId || responseBuild.id;
         var locationPath = path.resolve(server.location, id);
 
+        this.log(build, client, Msg.info, 'files uploaded. Storing them on the server', locationPath);
+
         var outputFiles = responseBuild.outputFiles;
         build.outputFiles = outputFiles;
         outputFiles.forEach(function (file) {
@@ -66,8 +68,9 @@ Agent.define({
                 this.server.updateBuildStatus(build, "failed");
             }
             else {
-                serverUtils.writeFiles(locationPath, outputFiles, 'the cordova build agent worker output files on {0} [a]'.format(build.conf.platform), function (err) {
+                serverUtils.writeFiles(locationPath, outputFiles, 'the cordova build agent worker output files on {0} [a]'.format(build.conf.platform), true, function (err) {
                     if (err) { 
+                        serverUtils.freeMemFiles(build.outputFiles);
                         this.log(build, client, Msg.error, 'error saving build output files on the cordova build server\n{3}', err); 
                         this.server.updateBuildStatus(build, "failed");
                     }
@@ -87,17 +90,20 @@ Agent.define({
                                 server.updateBuildStatus(masterBuild, 'success');
                             }
                         }
+                        if (client.conf.save)
+                            agent.log(build, client, Msg.info, 'Also sending the output files to the client');
+
                         client.socket.emit('build-success', build.serialize({
                             outputFiles: client.conf.save
-                        }));
-
+                        })); 
+                        agent.log(build, client, Msg.info, 'Build done, ready for a new one.');
+                        serverUtils.freeMemFiles(build.outputFiles);
                         agent.busy = null;//free agent to take in another work
                         agent.updateStatus('ready');
                     }
-                    serverUtils.freeMemFiles(build.outputFiles);
                 }.bind(this));
             }
-        }, this);
+        }.bind(this), this);
     },
     'onBuildFailed': function (build) {
         build = this.server.builds[build && build.id || build];

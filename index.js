@@ -22,10 +22,10 @@ var readLine = require ("readline");
 
 }
 
-if (listen.server) {
+if (listen.server || listen.ui) {
     var Server = require('./server/Server.js');
-    var server = conf.serverInstance = new Server();
-    server.listen(conf);
+    var server = conf.serverInstance = new Server(conf);
+    server.listen();
 }
 if (listen.agent) {
 //    require('nodetime').profile({

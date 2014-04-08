@@ -19,7 +19,7 @@ var zipArchiver;
 function AgentWorker(conf, options) {
     this.id = shortid.generate();
     this.conf = conf || {};
-    this.url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'agent');
+    this.url = '{0}{1}{2}/{3}'.format(conf.protocol || 'http://', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'agent');
     this.workFolder = conf.workFolder || 'work';
 
     process.on('exit', function () {
@@ -70,7 +70,7 @@ AgentWorker.define({
             if (!this._reconnecting) {
                 var self = this;
                 this._reconnecting = function () {
-                    self.socket.reconnect();
+                    self.socket.socket.reconnect();
                 }.defer(500);
                 self.socket.on('connect', function () {
                     clearTimeout(self._reconnecting);

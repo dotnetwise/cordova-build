@@ -18,7 +18,7 @@ var sig = 'CW';
 function ClientWorker(conf) {
     this.conf = conf;
     this.id = shortid.generate();
-    this.url = '{0}://{1}{2}/{3}'.format(conf.protocol || 'http', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'client');
+    this.url = '{0}{1}{2}/{3}'.format(conf.protocol || 'http://', conf.server, conf.port == 80 ? '' : ':' + conf.port, 'client');
     this.location = path.resolve(conf.save || 'output');
     this.parseGroupFiles(conf);
     this.built = 0;
