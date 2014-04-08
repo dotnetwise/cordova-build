@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var cordovaBuild = require('../');
 var conf = require("../common/conf.js")();
 var listen = conf.listen;
