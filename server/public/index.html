@@ -425,13 +425,16 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                 <div data-bind="visible: !$data || !(unwrap($data.builds).length)">
                                     No builds have been done yet.
                                 </div>
-                                <ul data-bind="foreach: $data && $data.builds" class="dashboard-list">
-                                    <li data-bind="with: $data, css: { 'active': unwrap($parent.selectedBuild) && unwrap($parent.selectedBuild).id == $data.id}" class="agent">
+                                <ul data-bind="template: { name: 'tplBuildListItem', foreach: $data && $data.builds }" class="dashboard-list">
+                                </ul>
+                                    <script type="text/html" id="tplBuildListItem">
+
+                                    <li data-bind="with: $data, css: { 'active': unwrap($parent.selectedBuild) && unwrap($parent.selectedBuild).id == $data.id }" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
                                         <a data-bind="
     attr: {
-        href: ['#view/', unwrap(id), $data.platform ? '/' : '', $data.platform ?  unwrap($data.platform) : ''].join(''),
+        href: ['#view/', unwrap(id), $data.platform ? '/' : '', $data.platform ? unwrap($data.platform) : ''].join(''),
     },
     click: function (build) { $parents[2].selectedBuild(build.master || build); $parents[2].selectedBuild.tab('#' + build.platform()); }">
                                             <img data-bind="
@@ -455,7 +458,9 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
         href: '#' + unwrap(id) + '?' + unwrap($data.platform),
     },">
 
-                                                    <span data-bind="text: id"></span></a>
+                                                    <span data-bind="text: id" class="build-id"></span>
+                                                </a>
+                                                <!--<span data-bind="text: duration" class="build-duration"></span>-->
                                             </dd>
                                             <dd class="since">
                                                 <label>Since:</label><span datetime-format="{0} ago"
@@ -463,10 +468,13 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
     text: '{0} ago'.format(unwrap($data && $data.started) && unwrap($data && $data.started).elapsed()),
     attr: {
         datetime: $data && $data.started,
-        title: (unwrap($data && $data.started) && unwrap($data && $data.started).format
-            && ('Started:       ' + unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss'))) +
+        title: [(unwrap($data && $data.started) && unwrap($data && $data.started).format
+            && ('Started:       ' + unwrap($data && $data.started).format('DD MMM YYYY hh:mm:ss'))),
             (unwrap($data && $data.completed) && unwrap($data && $data.completed).format
-            && ('\nCompleted: ' + unwrap($data && $data.completed).format('DD MMM YYYY hh:mm:ss')))
+            && ('\nCompleted: ' + unwrap($data && $data.completed).format('DD MMM YYYY hh:mm:ss'))),
+            (unwrap($data && $data.duration) 
+            && ('\nDuration: ' + unwrap($data && $data.duration))),
+            ].join('')
     }"></span>
                                             </dd>
                                             <dd class="status">
@@ -476,7 +484,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                             </dd>
                                         </dl>
                                     </li>
-                                </ul>
+                                    </script>
                             </div>
                         </div>
                     </div>
@@ -498,13 +506,14 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                         </div>
                         <div class="box-content">
                             <div data-bind="
-    visible: !$data || !unwrap($data.logs).length,
-    text: 'Nothing to show yet'"
+    visible: !$data || !unwrap($data.logs).length
+    "
                                 class="box-content">
+                                Nothing to show yet
                             </div>
                             <div data-bind="hidden: !$data || !unwrap($data.logs).length, template:
         { foreach: $data && $data.logs, name: 'tplLog' }"
-                                class="box-content log">
+                                class="box-content log" style="display: none;">
                             </div>
 
                         </div>
@@ -547,7 +556,9 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                 <div data-bind="visible: !$data || !(unwrap($data.agents).length)">
                                     No build agents are connected.
                                 </div>
-                                <ul data-bind="foreach: $data && $data.agents" class="dashboard-list">
+                                <ul data-bind="template: { name: 'tplAgentItem', foreach: $data && $data.agents}" class="dashboard-list">
+                                </ul>
+                                <script type="text/html" id="tplAgentItem">
                                     <li data-bind="with: $data" class="agent">
                                         <!--<a href="#">-->
                                         <!--ko foreach: platforms-->
@@ -578,7 +589,7 @@ click: refresh" href="#" class="btn btn-refresh btn-round"><i class="icon-refres
                                             </dd>
                                         </dl>
                                     </li>
-                                </ul>
+                                </script>
                             </div>
                         </div>
                     </div>

@@ -370,7 +370,13 @@ img.dashboard-avatar {
 	-o-transition: all ease-in-out 0.25s;
 	-webkit-transition: all ease-in-out 0.25s;
 	transition: all ease-in-out 0.25s;
+	background-color: white;
 }
 .dashboard-list > .active {
 	background-color: beige;
+}
+.build-duration {
+	color: #ccc;
+	font-size: 10px;
+	float: right;
 }
