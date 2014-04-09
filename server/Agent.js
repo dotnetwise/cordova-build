@@ -21,7 +21,7 @@ Agent.define({
         this.socket.on({
             'register': function (conf) {
                 this.conf = conf = conf || {};
-                conf.platforms = ((typeof conf.platforms == 'string' ? conf.platforms.split(/;|,| /) : conf.platforms) || []).unique();
+                conf.platforms = ((typeof conf.platforms == 'string' ? conf.platforms.split(/;|,/) : conf.platforms) || []).unique();
                 conf.platforms.forEach(function (platform) {
                     this.platforms.push(platform);
                 }, this);

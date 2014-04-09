@@ -54,7 +54,7 @@ function parseArgs() {
     conf.server = conf.server || 'localhost';
     conf.listen = listen;
     conf.platforms = (conf.platforms || 'wp8,android,ios').split(/;|,/g);
-    conf.wp8 = (conf.wp8 || '').split(/;,/g);
+    conf.wp8 = (conf.wp8 || '').split(/;|,/g);
     conf.android = (conf.android || '').split(/;|,/g);
     conf.ios = (conf.ios || '').split(/;|,/g);
     conf.files = (conf.files || '').split(/;|,/g);

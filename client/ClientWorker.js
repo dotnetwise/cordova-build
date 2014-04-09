@@ -167,7 +167,7 @@ ClientWorker.define({
         var files = [];
         groups.forEach(function (group, isGroup) {
             conf[group].forEach(function (file) {
-                var f = file.split(/;/);
+                var f = file.split(/;|,/);
                 f.forEach(function (file) {
                     files.push({ file: file, group: isGroup ? group : null });
                 });
