@@ -74,7 +74,7 @@ ClientWorker.define({
             started: new Date(),
         }, client, null, platforms, files);
         build.id = client.id;
-        build.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
+        build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {
             id: client.id,
