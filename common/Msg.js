@@ -44,9 +44,10 @@ Msg.define({
         return msg;
     }
 }).defineStatic({
-    debug: 5,
-    build_output: 4,
-    info: 3,
+    debug: 6,
+    build_output: 5,
+    info: 4,
+    status: 3,
     warning: 2,
     error: 1,
 });

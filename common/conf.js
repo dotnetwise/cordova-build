@@ -27,6 +27,7 @@ if (conf.mode == 'server' || conf.mode == 'all') {
     listen.server = true;
 }
 if (conf.mode == 'client' || conf.mode == 'all') {
+    commandLine.addArgument('platforms', { type: 'string', required: false });
     commandLine.addArgument('files', { type: 'string', required: false });
     commandLine.addArgument('wp8', { type: 'string', required: false });
     commandLine.addArgument('ios', { type: 'string', required: false });
@@ -37,6 +38,7 @@ if (conf.mode == 'client' || conf.mode == 'all') {
 }
 if (conf.mode == 'agent' || conf.mode == 'all' || conf.agent) {
     commandLine.addArgument('agent', { type: 'string', required: true });
+    commandLine.addArgument('agentwork', { type: 'string', required: false });
     listen.agent = true;
 }
 if (conf.mode == 'ui' || conf.mode == 'server' || conf.mode == 'all') {
@@ -51,10 +53,11 @@ function parseArgs() {
     conf.port = conf.port || 8300;
     conf.server = conf.server || 'localhost';
     conf.listen = listen;
+    conf.platforms = (conf.platforms || 'wp8,android,ios').split(/;|,/g);
     conf.wp8 = (conf.wp8 || '').split(/;,/g);
-    conf.android = (conf.android || '').split(/;,/g);
-    conf.ios = (conf.ios || '').split(/;,/g);
-    conf.files = (conf.files || '').split(/;,/g);
+    conf.android = (conf.android || '').split(/;|,/g);
+    conf.ios = (conf.ios || '').split(/;|,/g);
+    conf.files = (conf.files || '').split(/;|,/g);
 
     return conf;
 }

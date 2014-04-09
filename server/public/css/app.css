@@ -243,19 +243,23 @@ img.dashboard-avatar {
 }
 
 .log .p {
-	color: purple; /*unknown priority*/
+	color: #218c93; /*unknown priority*/
 }
 
-.log .p5 {
+.log .p6 {
 	color: #aaa; /*debug*/
 }
 
-.log .p4 {
+.log .p5 {
 	color: #2b86ca; /*build output*/
 }
 
-.log .p3 {
+.log .p4 {
 	color: #000; /*info*/
+}
+
+.log .p3 {
+	color: #7d4382; /*status*/
 }
 
 .log .p2 {

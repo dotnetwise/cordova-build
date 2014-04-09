@@ -113,7 +113,6 @@ Agent.define({
                     return platform.conf.status == 'success' || platform.conf.status == 'failed';
                 })) {
                     build.master.conf.completed = new Date();
-                    server.updateBuildStatus(build.master, 'failed');
                 }
             }
             this.server.updateBuildStatus(build, 'failed');
@@ -151,13 +150,17 @@ Agent.define({
             try {
                 if (err) {
                     this.log(build, client, Msg.error, 'error while reading input files on the server for sending them to the agent worker: \n{2}', err);
+                    this.server.updateBuildStatus(build, 'failed');
                     build.agent = null;
                     this.busy = null;
                     this.updateStatus('ready');
                 }
                 else {
+                    var origFilePaths = files.map(function(file) { return file.file });
                     try {
                         var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
+                        //only send file names to the agent worker and not full paths
+                        files.forEach(function (file) { file.file = path.basename(file.file); });
 
                         this.log(build, client, Msg.info, 'sending build to agent {2} on platform {3}...{4}', this.id, build.conf.platform, fileSize(size));
                         this.socket.emit('build', build.serialize({
@@ -165,12 +168,16 @@ Agent.define({
                         }));
                     }
                     catch (e) {
+                        //restore full file paths
                         this.log(build, client, Msg.error, 'error while sending build files to agent {2} on {3}...{4}', agent.id, build.conf.platform, fileSize(size));
                         build.agent = null;
                         this.busy = null;
                         this.updateStatus('ready');
                     }
-
+                    finally 
+                    {
+                        files.forEach(function(file, index) { file.file = origFilePaths[index]; });
+                    }
                 }
             }
             finally {

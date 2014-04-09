@@ -219,11 +219,15 @@ Server.define({
             obj: obj,
         });
     },
-    updateBuildStatus: function (build, status) {
+    updateBuildStatus: function (build, status, doNotLogOnMaster) {
         var buildParam = build;
         if (build && !build.updateStatus) {
             //self detect build if an id was passed
             build = this.builds[build];
+        }
+        if (build.master && !doNotLogOnMaster && build.status != status) {
+            var msg = new Msg(build.master, null, 'S', Msg.status, 'Platform {2} update status: {3}', build.conf.platform, status);
+            this.log(msg, null);
         }
         if (build && build.updateStatus) {
             build.updateStatus(status);

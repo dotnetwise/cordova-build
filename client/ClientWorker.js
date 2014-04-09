@@ -67,11 +67,14 @@ ClientWorker.define({
         var files = this.files;
         var platforms = this.conf.build;
         var build = this.build = new Build({
+            logs: [],
             status: 'uploading',
             name: this.conf.name,
+            number: this.conf.number,
             started: new Date(),
         }, client, null, platforms, files);
         build.id = client.id;
+        build.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {
             id: client.id,
@@ -160,7 +163,7 @@ ClientWorker.define({
         this.socket.emit('log', msg);
     },
     parseGroupFiles: function (conf) {
-        var groups = ['files', 'wp8', 'ios', 'android'];
+        var groups = ['files'].concat(conf.platforms);
         var files = [];
         groups.forEach(function (group, isGroup) {
             conf[group].forEach(function (file) {
