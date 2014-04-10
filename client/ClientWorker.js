@@ -158,9 +158,9 @@ ClientWorker.define({
         var msg = new Msg();
         msg.update.apply(msg, arguments);
 
-        if (this.conf.mode != 'all' || !this.socket.socket.connected)
+        if (!this.socket.socket.connected)
             console.log(msg.toString());
-        this.socket.emit('log', msg);
+        else this.socket.emit('log', msg);
     },
     parseGroupFiles: function (conf) {
         var groups = ['files'].concat(conf.platforms);

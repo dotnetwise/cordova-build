@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:all -port:8300 -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:80 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:ios,wp8,android -b:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
+    <ScriptArguments>-mode:all -port:8300 -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:8300 -files:t:\a\core.7z;t:\a\www.zip -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -build:ios,wp8,android -b:wp8,android -save:clientOutput -agent:wp8  -agents:ios,android</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>

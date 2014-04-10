@@ -179,8 +179,6 @@ AgentWorker.define({
         var locationPath = path.resolve(agent.workFolder);
         var files = build.files;
 
-        fs.remove(agent.workFolder, s2EnsureWorkFolder);
-
         function buildFailed(args) {
             splice.call(arguments, 0, 0, build);
             agent.buildFailed.apply(agent, arguments);
@@ -188,15 +186,27 @@ AgentWorker.define({
             done.apply(agent, arguments);
         }
 
-        function s2EnsureWorkFolder(err) {
-            if (err) return buildFailed('error cleaning the working folder {2}\n{3}', workFolder, err);
 
-            agent.ensureWorkFolder(s3WriteFiles);
+        agent.ensureWorkFolder(s1EmptyWorkFolder);
+
+        function s1EmptyWorkFolder(err) {
+            if (err) return buildFailed('error creating the working folder {2}\n{3}', workFolder, err);
+            var glob = agent.workFolder;
+            if (!/(\/|\\)$/.test(glob))
+                glob += '/';
+            glob += '*';
+            multiGlob.glob(glob, function(err, files){
+                if (err) return s2WriteFiles(err);
+                async.each(files, function(file, cb) {
+                    fs.remove(file, function(err) {
+                        cb(err);
+                    });
+                }, s2WriteFiles);
+            });
         }
 
-        function s3WriteFiles(err, workFolder) {
-            if (err) return buildFailed('error recreating the working folder {2}\n{3}', workFolder, err);
-
+        function s2WriteFiles(err) {
+            if (err) return buildFailed('error cleaning the working folder {2}\n{3}', workFolder, err);
             serverUtils.writeFiles(locationPath, files, 'the cordova build agent worker on {0}'.format(build.conf.platform), s4ProcessFiles);
         }
 
