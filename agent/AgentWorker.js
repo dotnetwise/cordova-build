@@ -67,7 +67,8 @@ AgentWorker.define({
         console.log('AGENT WORKER DISCONNECTED with platforms:', this.conf.agent);
     },
     'onError': function (err) {
-        if (err && (err.code == 'ECONNREFUSED' || err.indexOf && err.indexOf('ECONNREFUSED') >= 0)) {
+        console.log('Agent Worker socket reported error:', err);
+        //if (err && (err.code == 'ETIMEDOUT'err.code == 'ECONNREFUSED' || err.indexOf && err.indexOf('ECONNREFUSED') >= 0)) {
             if (!this._reconnecting) {
                 var self = this;
                 this._reconnecting = function () {
@@ -79,8 +80,8 @@ AgentWorker.define({
                     self.socket.removeListener('connect', arguments.callee);
                 });
             }
-        }
-        else console.log('Agent Worker socket reported error:', err);
+        //}
+        //else 
     },
     'onBuild': function (build) {
         if (!build) {
