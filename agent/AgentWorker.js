@@ -191,7 +191,7 @@ AgentWorker.define({
         agent.ensureWorkFolder(s1EmptyWorkFolder);
 
         function s1EmptyWorkFolder(err) {
-            if (err) return buildFailed('error creating the working folder {2}\n{3}', workFolder, err);
+            if (err) return buildFailed('error creating the working folder {2}\n{3}', agent.workFolder, err);
             var glob = agent.workFolder;
             if (!/(\/|\\)$/.test(glob))
                 glob += '/';
@@ -207,7 +207,7 @@ AgentWorker.define({
         }
 
         function s2WriteFiles(err) {
-            if (err) return buildFailed('error cleaning the working folder {2}\n{3}', workFolder, err);
+            if (err) return buildFailed('error cleaning the working folder {2}\n{3}', agent.workFolder, err);
             serverUtils.writeFiles(locationPath, files, 'the cordova build agent worker on {0}'.format(build.conf.platform), s4ProcessFiles);
         }
 
