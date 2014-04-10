@@ -1,4 +1,4 @@
-﻿module.exports = AgentWorker;
+module.exports = AgentWorker;
 var $ = require('stringformat');
 var async = require('async');
 var shortid = require('shortid');
@@ -70,17 +70,17 @@ AgentWorker.define({
     'onError': function (err) {
         console.log('Agent Worker socket reported error:', err);
         //if (err && (err.code == 'ETIMEDOUT'err.code == 'ECONNREFUSED' || err.indexOf && err.indexOf('ECONNREFUSED') >= 0)) {
-            if (!this._reconnecting) {
-                var self = this;
-                this._reconnecting = function () {
-                    self.socket.socket.reconnect();
-                }.defer(500);
-                self.socket.on('connect', function () {
-                    clearTimeout(self._reconnecting);
-                    self._reconnecting = 1;
-                    self.socket.removeListener('connect', arguments.callee);
-                });
-            }
+        if (!this._reconnecting) {
+            var self = this;
+            this._reconnecting = function () {
+                self.socket.socket.reconnect();
+            }.defer(500);
+            self.socket.on('connect', function () {
+                clearTimeout(self._reconnecting);
+                self._reconnecting = 1;
+                self.socket.removeListener('connect', arguments.callee);
+            });
+        }
         //}
         //else 
     },
@@ -123,7 +123,7 @@ AgentWorker.define({
     ensureWorkFolder: function (done) {
         var workFolder = this.workFolder = path.resolve(this.workFolder);
         var agent = this;
-        
+
         mkdirp(workFolder, function (err) {
             if (err) {
                 agent.log(null, Msg.error, 'Cannot create folder: {2}', workFolder);
@@ -172,7 +172,7 @@ AgentWorker.define({
                 break;
         }
     },
-    genericBuild: function (build, done) {
+    genericBuild: function (build, filesDone, done) {
         var agent = this;
         var locationPath = path.resolve(agent.workFolder);
         var files = build.files;
@@ -193,10 +193,10 @@ AgentWorker.define({
             if (!/(\/|\\)$/.test(glob))
                 glob += '/';
             glob += '*';
-            multiGlob.glob(glob, function(err, files){
+            multiGlob.glob(glob, function (err, files) {
                 if (err) return s2WriteFiles(err);
-                async.each(files, function(file, cb) {
-                    fs.remove(file, function(err) {
+                async.each(files, function (file, cb) {
+                    fs.remove(file, function (err) {
                         cb(err);
                     });
                 }, s2WriteFiles);
@@ -223,12 +223,18 @@ AgentWorker.define({
 
         function s6AllFilesExtracted(err) {// Final callback after each item has been iterated over.
             if (err) return buildFailed('error extracting archive files\n{2}', err);
+            if (filesDone)
+                filesDone.call(agent, s7BuildCordova);
+            else s7BuildCordova();
+        }
+        function s7BuildCordova(err) {
+            if (err) return buildFailed('error starting build\n{2}', err);
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
             var cmd = 'cordova build {0} --{1}'.format(build.conf.platform, build.mode || 'release');
             exec(cmd, {
                 cwd: agent.workFolder,
-            }, s7BuildExecuted)
+            }, s8BuildExecuted)
             .on('close', function (code) {
                 if (code) return buildFailed('child process exited with code ' + code);
             }).stdout.on('data', function (data) {
@@ -237,7 +243,7 @@ AgentWorker.define({
                 agent.log(build, Msg.build_output, data);
             });
         }
-        function s7BuildExecuted(err, stdout, stderr) {
+        function s8BuildExecuted(err, stdout, stderr) {
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
             //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
             stderr && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
@@ -248,17 +254,31 @@ AgentWorker.define({
         }
     },
     buildWP8: function (build) {
-        this.genericBuild(build, function (err, log) {
+        this.genericBuild(build, null, function (err, log) {
             !err && this.buildSuccess(build, log, 'platforms/wp8/Bin/Release/*.xap');
         });
     },
     buildIOS: function (build) {
-        this.genericBuild(build, function (err, log) {
+        this.genericBuild(build, function (startBuild) {
+            var globs = path.resolve(this.workFolder, '**/*.sh');
+            console.log('globs', globs)
+            multiGlob.glob(globs, function (err, files) {
+                if (err) return startBuild(err);
+                async.each(files, function (file, cb) {
+                    console.log('chmodding', globs)
+                    fs.chmod(file, 511 /*777 on nix machines in base 8*/, function (err) {
+                        cb(err);
+                    });
+                }, function (err) {
+                    build(err);
+                });
+            });
+        }, function (err, log) {
             !err && this.buildSuccess(build, log, 'platforms/wp8/Bin/Release/*.ipa');
         });
     },
     buildAndroid: function (build) {
-        this.genericBuild(build, function (err, log) {
+        this.genericBuild(build, null, function (err, log) {
             !err && this.buildSuccess(build, log, 'platforms/android/ant-build/*.apk');
         });
     },
