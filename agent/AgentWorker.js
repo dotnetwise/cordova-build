@@ -9,6 +9,7 @@ var ioc = require('socket.io/node_modules/socket.io-client');
 var fs = require('fs.extra');
 var path = require('path');
 var exec = require('child_process').exec;
+var mkdirp = require('mkdirp');
 
 
 var Build = require('../common/Build.js');
@@ -122,17 +123,13 @@ AgentWorker.define({
     ensureWorkFolder: function (done) {
         var workFolder = this.workFolder = path.resolve(this.workFolder);
         var agent = this;
-        fs.exists(workFolder, function (exists) {
-            if (!exists) {
-                fs.mkdir(workFolder, function (err) {
-                    if (err) {
-                        agent.log(null, Msg.error, 'Cannot create folder: {2}', workFolder);
-                        process.env.PWD = workFolder;
-                    }
-                    done && done(err, workFolder);
-                });
+        
+        mkdirp(workFolder, function (err) {
+            if (err) {
+                agent.log(null, Msg.error, 'Cannot create folder: {2}', workFolder);
+                process.env.PWD = workFolder;
             }
-            else done && done(null, workFolder);
+            done && done(err, workFolder);
         });
     },
     detectZipArchiver: function () {
