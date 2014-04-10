@@ -260,7 +260,7 @@ AgentWorker.define({
     },
     buildIOS: function (build) {
         this.genericBuild(build, function (startBuild) {
-            var globs = path.resolve(this.workFolder, '**/*.sh');
+            var globs = path.resolve(this.workFolder, '**/*');
             console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
