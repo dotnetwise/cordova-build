@@ -246,7 +246,7 @@ AgentWorker.define({
         function s8BuildExecuted(err, stdout, stderr) {
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
             //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
-            stderr && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+            stderr && stderr != err && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
             var e = stderr || err;
             e && agent.buildFailed(build);
 
@@ -265,7 +265,7 @@ AgentWorker.define({
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
                 async.each(files, function (file, cb) {
-                    console.log('chmodding', globs)
+                    console.log('chmodding', file)
                     fs.chmod(file, 511 /*777 on nix machines in base 8*/, function (err) {
                         cb(err);
                     });
@@ -327,5 +327,6 @@ AgentWorker.define({
 
         serverUtils.freeMemFiles(build.files);
         this.socket.emit('build-failed', build.serialize());
+        process.exit();
     },
 });
