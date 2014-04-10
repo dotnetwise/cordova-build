@@ -270,7 +270,7 @@ AgentWorker.define({
                         cb(err);
                     });
                 }, function (err) {
-                    build(err);
+                    startBuild(err);
                 });
             });
         }, function (err, log) {
