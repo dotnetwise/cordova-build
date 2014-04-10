@@ -1,4 +1,5 @@
-﻿module.exports = Server;
+
+module.exports = Server;
 var Build = require('../common/Build');
 var Msg = require('../common/Msg.js');
 var Client = require('./Client');
@@ -34,22 +35,24 @@ function Server(conf) {
     var www = this.www = __dirname + '/public';
     var htmlFiles = ['index.html', 'server.html'];
     var encoding = { encoding: 'utf-8' };
+    var server = this;
     htmlFiles.forEach(function (file) {
         var path = www + '/' + file;
         var lastTime = new Date();
         read();
         fs.watch(path, function (event, filename) {
-            setTimeout(function () {
-                if (lastTime < new Date()) {
-                    lastTime = new Date(new Date().getTime() + 500);//500 ms treshold to avoid duplicates on windows
+            if (lastTime < new Date()) {
+                lastTime = new Date(new Date().getTime() + 500);//500 ms treshold to avoid duplicates on windows
+                setTimeout(function () {
                     read(true);
-                }
-            }, 100);
+                }, 100);
+            }
         });
         function read(async) {
             if (async)
                 fs.readFile(path, encoding, function (err, content) {
                     cache[file] = err || content;
+                    server.wwws && server.wwws.socket && server.wwws.socket.emit.defer(500, server.wwws.socket, 'reload');
                 });
             else cache[file] = fs.readFileSync(path, encoding);
         }
@@ -192,9 +195,20 @@ Server.define({
                                 www.onDisconnect();
                                 this.wwws.remove(www);
                             },
+                            'rebuild': function (build) {
+                                var build = server.builds[build];
+                                if (build) {
+                                    server.updateBuildStatus(build, 'queued');
+                                    var platforms = build.master ? [build] : build.platforms;
+                                    server.log(new Msg(build, build.client, 'S', Msg.status, 'This build as been rescheduled for rebuild'), build.client);
+
+                                    platforms.forEach(function (platformBuild) { server.buildsQueue.push(platformBuild); });
+                                }
+                            },
                         }, this);
                         //socket.emit('news', { news: 'item' });
                     },
+
                 }, this);
 
             this.log(new Msg(null, null, 'S', Msg.info, 'listening on port {2}', conf.port), null);

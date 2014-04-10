@@ -1,4 +1,4 @@
-﻿var ioc = require('socket.io/node_modules/socket.io-client');
+var ioc = require('socket.io/node_modules/socket.io-client');
 require('../../../common/utils.js');
 var Msg = require('../../../common/Msg.js');
 require('./qtip.js');
@@ -58,6 +58,9 @@ function ServerBrowser(conf) {
     });
 }
 ServerBrowser.define({
+    rebuild: function(build) {
+        this.socket.emit('rebuild', build && build.id);
+    },
     statuses: {
         'building': 'img/platforms/building.gif',
         'uploading': 'img/platforms/working.gif',
@@ -80,6 +83,7 @@ ServerBrowser.define({
             'disconnect': this.onDisconnect,
             'error': this.onError,
             'status': this.onStatus,
+            'reload': this.onReload,
             'news': this.onPartialStatus,
         }, this);
     },
@@ -113,6 +117,9 @@ ServerBrowser.define({
             }
         }
         else console.log('Agent Worker socket reported error:', err);
+    },
+    'onReload': function() {
+        location.reload();
     },
     'onPartialStatus': function (status) {
         //console.warn('partial status', status);
