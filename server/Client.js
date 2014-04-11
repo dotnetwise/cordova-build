@@ -40,7 +40,6 @@ module.exports = Function.define({
         this.server = server;
     },
     'onDisconnect': function () {
-        this.server.clients.remove(this);
     },
     'onRegisterBuild': function (build) {
         var buildConf = build && build.conf;

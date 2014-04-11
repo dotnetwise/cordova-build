@@ -1,4 +1,4 @@
-﻿module.exports = ClientWorker;
+module.exports = ClientWorker;
 var ioc = require('socket.io/node_modules/socket.io-client');
 var fs = require('fs');
 var path = require('path');
@@ -74,6 +74,8 @@ ClientWorker.define({
             started: new Date(),
         }, client, null, platforms, files);
         build.id = client.id;
+        if (this.conf.iossignonly) 
+            build.conf.iossignonly = true,
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {

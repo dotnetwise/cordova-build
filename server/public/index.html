@@ -292,7 +292,7 @@
                                                 <i data-bind="visible: unwrap($data && $data.status) == 'queued'" class="icon-time"></i>
                                                 <i data-bind="visible: unwrap($data && $data.status) == 'building'" class="icon-repeat spin">
                                                 </i>
-                                                <i data-bind="visible: unwrap($data && $data.status) == 'uploading'" class="icon-repeat globe">
+                                                <i data-bind="visible: unwrap($data && $data.status) == 'uploading'" class="icon-repeat spin globe">
                                                 </i>
                                                 <span data-bind="    text: $root.platformNames[unwrap($data.platform)]"></span>
 
@@ -469,7 +469,7 @@
     },
     click: function (build) { $parents[2].selectedBuild(build.master || build); $parents[2].selectedBuild.tab('#' + build.platform()); }">
                                             <img data-bind="
-    css: { grayscale: status() != 'success', spin: status() == 'building' },
+    css: { grayscale: status() != 'success', spin: status() == 'building' || status() == 'uploading' },
     attr: {
         alt: $data.platform,
         rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,

@@ -1,4 +1,4 @@
-﻿module.exports = parseArgs;
+module.exports = parseArgs;
 require('./utils.js');
 var io = require('socket.io');
 //patch on to support binding with multiple events at once
@@ -34,6 +34,12 @@ if (conf.mode == 'client' || conf.mode == 'all') {
     commandLine.addArgument('android', { type: 'string', required: false });
     commandLine.addArgument('build', { type: 'string', required: true  });
     commandLine.addArgument('number', { type: 'string', required: false });
+    if (conf.build && conf.build.indexOf('ios')>=0 && conf.iossignonly) {
+        commandLine.addArgument('iosprovisioningpath', { type: 'string', required: true});
+        commandLine.addArgument('iosprovisioningname', { type: 'string', required: true});
+        commandLine.addArgument('iosprojectpath', { type: 'string', required: true});
+        commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
+    }
     listen.client = true;
 }
 if (conf.mode == 'agent' || conf.mode == 'all' || conf.agent) {
@@ -58,6 +64,7 @@ function parseArgs() {
     conf.android = (conf.android || '').split(/;|,/g);
     conf.ios = (conf.ios || '').split(/;|,/g);
     conf.files = (conf.files || '').split(/;|,/g);
+    conf.iosprojpath = conf.iosprojpath || 'platforms/ios/build/device/Safetybank.app';
 
     return conf;
 }

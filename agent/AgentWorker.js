@@ -172,9 +172,9 @@ AgentWorker.define({
                 break;
         }
     },
-    genericBuild: function (build, filesDone, done) {
+    genericBuild: function (build, filesDone, done, onExecutingCordovaBuild) {
         var agent = this;
-        var locationPath = path.resolve(agent.workFolder);
+        var locationPath = path.resolve(agent.workFolder, build.id);
         var files = build.files;
 
         function buildFailed(args) {
@@ -183,7 +183,6 @@ AgentWorker.define({
             splice.call(arguments, 0, 1);
             done.apply(agent, arguments);
         }
-
 
         agent.ensureWorkFolder(s1EmptyWorkFolder);
 
@@ -224,7 +223,14 @@ AgentWorker.define({
         function s6AllFilesExtracted(err) {// Final callback after each item has been iterated over.
             if (err) return buildFailed('error extracting archive files\n{2}', err);
             if (filesDone)
-                filesDone.call(agent, s7BuildCordova);
+                filesDone.call(agent, s6DecideExecuteCordovaBuild);
+            else (s6DecideExecuteCordovaBuild);
+        }
+        function s6DecideExecuteCordovaBuild() {
+            if (onExecutingCordovaBuild)
+                onExecutingCordovaBuild.call(agent, build, function (executeStandardCordovaBuild) {
+                    executeStandardCordovaBuild !== false && s7BuildCordova();
+                }, s8BuildExecuted, buildFailed);
             else s7BuildCordova();
         }
         function s7BuildCordova(err) {
@@ -274,7 +280,24 @@ AgentWorker.define({
                 });
             });
         }, function (err, log) {
-            !err && this.buildSuccess(build, log, 'platforms/wp8/Bin/Release/*.ipa');
+            !err && this.buildSuccess(build, log, 'platforms/ios/*.ipa');
+        }, function (build, executeStandardCordovaBuild, buildExecuted, buildFailed) {
+            if (!build.conf.iossignonly)
+                return executeStandardCordovaBuild(true);
+            console.log('iossignonly is true, creating only a new signed ipa without a full rebuild')
+            var agent = this;
+            var pathOfIpa = path.resolve(this.workFolder, "platforms/ios/app.ipa");
+            var iosProjectPath = path.resolve(this.workFolder, build.conf.iosprojectpath);
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
+            console.log('executing: ', execPath);
+            exec(execPath, function (err, stdout, stderr) {
+                console.log('executed sign command', !!err, !!stderr, execPath);
+                buildExecuted.apply(this, arguments);
+            }).on('close', function (code) {
+                if (code) return buildFailed.call(agent, 'sign process exited with code ' + code);
+            }).stdout.on('data', function (data) {
+                agent.log(build, new Msg(build, Msg.build_output, data));
+            });;
         });
     },
     buildAndroid: function (build) {

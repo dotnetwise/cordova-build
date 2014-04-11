@@ -111,7 +111,7 @@ Server.define({
                     })));
                     res.send(html);
                 })
-                .get('/download/:id/:platform', function (req, res) {
+                .get('/download/:id/:platform?', function (req, res) {
                     return this.downloadRelease(req, res);
                 }.bind(this));
         }
@@ -318,7 +318,7 @@ Server.define({
                 if (browser.windows())
                     platform = 'wp8';
                 //for now assuming we need the xap in any other case
-                platform = 'wp8';
+                //platform = 'wp8';
                 break;
         }
         return platform;
@@ -332,7 +332,13 @@ Server.define({
         }
         var platform = this.detectPlatform(req);
         var mime_type = { android: 'application/vnd.android.package-archive', wp8: 'application/x-silverlight-app', ios: 'application/octet-stream' }[platform];
-        if (platform == build.conf.platform) {
+        if (platform == 'autodetect')
+            platform = Array.isArray(build.conf.platform) ? build.conf.platform[0] : build.conf.platform || build.platforms && build.platforms[0] && build.platforms[0].conf && build.platforms[0].platform || platform;
+        if (platform == 'autodetect') {
+            res.send(500, 'We could not detect your platform. Please download a specific platform from the nearby tabs!'.format(buildId));
+            return;
+        }
+        //if (platform == build.conf.platform) {
             if (build.master) {
                 var master = build.master;
                 var platformBuild = master.platforms.findOne(function (build) {
@@ -345,16 +351,24 @@ Server.define({
                 build = platformBuild;
             }
             else {
-                res.send(500, "The specified build {0} was not requested on {1}!".format(buildId, platform));
-                return;
+                var platformBuild = build.platforms && build.platforms.findOne(function (build) {
+                    return build && build.conf && build.conf.platform == platform;
+                });
+                if (!platformBuild) {
+                    res.send(500, 'The build {0} contains no child builds on platform {1}!'.format(buildId, platform));
+                    return;
+                }
+                build = platformBuild;
+                //    res.send(500, "The specified build {0} was not requested on {1}!".format(buildId, platform));
+                //    return;
             }
-        }
-        if (build.conf.status != 'success') {
+        //}
+        if (!build.conf || build.conf.status != 'success') {
             res.send(500, 'The build {0} has not completed successfully yet. Currently it is on status: {1}!'.format(buildId, build.conf.status));
             return;
         }
 
-        if (!build.outputFiles.length) {
+        if (!build.outputFiles || !build.outputFiles.length) {
             res.send(500, 'There are no output files for the build {0}!'.format(buildId));
             return;
         }
