@@ -327,6 +327,5 @@ AgentWorker.define({
 
         serverUtils.freeMemFiles(build.files);
         this.socket.emit('build-failed', build.serialize());
-        process.exit();
     },
 });
