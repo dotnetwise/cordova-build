@@ -27,7 +27,7 @@ if (conf.mode == 'server' || conf.mode == 'all') {
     commandLine.addArgument('location', { type: 'string' });
     listen.server = true;
 }
-if (conf.mode == 'client' || conf.mode == 'all') {
+if (conf.mode == 'client' || conf.mode == 'all' || conf.build) {
     commandLine.addArgument('platforms', { type: 'string', required: false });
     commandLine.addArgument('files', { type: 'string', required: false });
     commandLine.addArgument('wp8', { type: 'string', required: false });
