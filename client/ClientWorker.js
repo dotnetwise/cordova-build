@@ -62,7 +62,7 @@ ClientWorker.define({
         }
     },
     'onConnect': function () {
-        console.log('CLIENT CONNECTED');
+        console.log('CLIENT CONNECTED requesting build on {0}'.format(this.conf.build));
         var client = this;
         var files = this.files;
         var platforms = this.conf.build;
@@ -74,8 +74,16 @@ ClientWorker.define({
             started: new Date(),
         }, client, null, platforms, files);
         build.id = client.id;
-        if (this.conf.iossignonly) 
-            build.conf.iossignonly = true,
+        if (this.conf.iossignonly)
+            build.conf.iossignonly = true;
+        if (this.conf.iosprojectpath)
+            build.conf.iosprojectpath = this.conf.iosprojectpath;
+        if (this.conf.iosprovisioningname)
+            build.conf.iosprovisioningname = this.conf.iosprovisioningname;
+        if (this.conf.iosprovisioningpath)
+            build.conf.iosprovisioningpath = this.conf.iosprovisioningpath;
+        
+
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {
