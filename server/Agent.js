@@ -106,7 +106,7 @@ Agent.define({
         }.bind(this), this);
     },
     'onBuildFailed': function (build) {
-        build = this.server.builds[build && build.id || build];
+        var foundBuild = this.server.builds[build && build.id || build];
         if (build) {
             if (build && build.master) {
                 if (build.master.platforms.every(function (platform) {
@@ -115,9 +115,11 @@ Agent.define({
                     build.master.conf.completed = new Date();
                 }
             }
-            this.server.updateBuildStatus(build, 'failed');
-            this.busy = null;
-            this.updateStatus('ready');
+            if (foundBuild && foundBuild.conf && foundBuild.conf.status != 'failed') {
+                this.server.updateBuildStatus(build, 'failed');
+                this.busy = null;
+                this.updateStatus('ready');
+            }
         }
         else {
             this.log(build, null, Msg.error, "The build {0} was requested to be failing but we couldn't identify such build");

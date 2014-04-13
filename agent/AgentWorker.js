@@ -311,7 +311,7 @@ AgentWorker.define({
                 agent.buildSuccess(build, log, 'platforms/ios/*.ipa');
                 //buildExecuted.apply(this, arguments);
             }).on('close', function (code) {
-                if (code) return buildFailed.call(agent, 'sign process exited with code ' + code);
+                if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
             });
             xcrun.stdout.on('data', function (data) {
                 agent.log(build, Msg.build_output, new Msg(build, Msg.build_output, data));
