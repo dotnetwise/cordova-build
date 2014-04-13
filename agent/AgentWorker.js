@@ -231,16 +231,17 @@ AgentWorker.define({
                 onExecutingCordovaBuild.call(agent, build, function (executeStandardCordovaBuild) {
                     executeStandardCordovaBuild !== false && s7BuildCordova();
                 }, s8BuildExecuted, buildFailed);
-            else s7BuildCordova();
+            else s7BuildCordova(s8BuildExecuted);
         }
-        function s7BuildCordova(err) {
+        function s7BuildCordova(err, done) {
             if (err) return buildFailed('error starting build\n{2}', err);
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
-            var cmd = 'cordova build {0} --{1}'.format(build.conf.platform, build.mode || 'release');
+            var cmd = 'cordova build {0} --device --{1}'.format(build.conf.platform, build.mode || 'release');
+            agent.log(build, 'Executing {2}', cmd);
             exec(cmd, {
                 cwd: agent.workFolder,
-            }, s8BuildExecuted)
+            }, s8BuildExecuted.bind(this))
             .on('close', function (code) {
                 if (code) return buildFailed('child process exited with code ' + code);
             }).stdout.on('data', function (data) {
@@ -252,11 +253,12 @@ AgentWorker.define({
         function s8BuildExecuted(err, stdout, stderr) {
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
             //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
-            stderr && stderr != err && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
-            var e = stderr || err;
-            e && agent.buildFailed(build);
+            stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
 
-            done.call(agent, e);
+            var e = stderr || err;
+            if (e) return agent.buildFailed(build);
+
+            done.call(agent, err, stdout, stderr);
         }
     },
     buildWP8: function (build) {
@@ -265,6 +267,7 @@ AgentWorker.define({
         });
     },
     buildIOS: function (build) {
+        var agent = this;
         this.genericBuild(build, function (startBuild) {
             var globs = path.resolve(this.workFolder, '**/*');
             console.log('globs', globs)
@@ -280,30 +283,36 @@ AgentWorker.define({
                 });
             });
         }, function (err, log) {
-            !err && this.buildSuccess(build, log, 'platforms/ios/*.ipa');
-        }, function (build, executeStandardCordovaBuild, buildExecuted, buildFailed) {
-            var agent = this;
-            if (!build.conf.iossignonly)
-                return executeStandardCordovaBuild(true);
-            agent.log(Msg.debug, 'iossignonly is true, creating only a new signed ipa without a full rebuild');
+            agent.log(Msg.debug, 'creating a new signed ipa');
+            function buildFailed() {
+                splice.call(arguments, 0, 0, build);
+                return agent.buildFailed.apply(agent, arguments);
+            }
             if (!build.conf.iosprojectpath) return buildFailed('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
             if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
-            var pathOfIpa = path.resolve(this.workFolder, "platforms/ios/app.ipa");
+            var pathOfIpa = path.resolve(this.workFolder, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
             var iosProjectPath = path.resolve(this.workFolder, build.conf.iosprojectpath);
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
-            if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
+            //if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -sign "{2}" -embed "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
             agent.log(Msg.info, 'executing: {2}', execPath);
             exec(execPath, function (err, stdout, stderr) {
-                console.log('executed sign command', !!err, !!stderr, execPath);
-                buildExecuted.apply(this, arguments);
+                err && agent.log(build, Msg.error, 'error:\n{2}', err);
+                stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+                var e = stderr || err;
+                if (e) return agent.buildFailed(build);
+                this.buildSuccess(build, log, 'platforms/ios/*.ipa');
+                //buildExecuted.apply(this, arguments);
             }).on('close', function (code) {
                 if (code) return buildFailed.call(agent, 'sign process exited with code ' + code);
             }).stdout.on('data', function (data) {
                 agent.log(build, new Msg(build, Msg.build_output, data));
             });;
+        }, function (build, executeStandardCordovaBuild, buildExecuted, buildFailed) {
+            var agent = this;
+            executeStandardCordovaBuild(true);
         });
     },
     buildAndroid: function (build) {

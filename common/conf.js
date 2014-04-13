@@ -19,7 +19,7 @@ commandLine.addArgument('ui', { type: 'string' });
 commandLine.addArgument('uiport', { type: 'number' });
 commandLine.addArgument('uiprotocol', { type: 'string' });
 commandLine.addArgument('mode', { type: 'string', required: true, allowedValues: ['server', 'client', 'agent', 'all'] });
-commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
+//commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
 var conf = commandLine.parseNode.apply(commandLine, process.argv);
 
 var listen = {};
@@ -35,8 +35,8 @@ if (conf.mode == 'client' || conf.mode == 'all' || conf.build) {
     commandLine.addArgument('android', { type: 'string', required: false });
     commandLine.addArgument('build', { type: 'string', required: true  });
     commandLine.addArgument('number', { type: 'string', required: false });
-    commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
-    if (conf.build && conf.build.indexOf('ios')>=0 && conf.iossignonly) {
+    //commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
+    if (conf.build && conf.build.indexOf && conf.build.indexOf('ios') >= 0) {
         if (!conf.iosprojectpath) throw new Error('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
         if (!conf.iosprovisioningpath) throw new Error('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
         if (!conf.iosprovisioningname) throw new Error('-iosprovisioningname:"your-provision-name" was not being specified!');
