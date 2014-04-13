@@ -259,16 +259,17 @@ AgentWorker.define({
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
             //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
             stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+            stdout && agent.log(build, Msg.build_output, stdout);
 
             var e = stderr || err;
             if (e) return agent.buildFailed(build);
 
-            done.call(agent, err, stdout, stderr);
+            done.call(agent, e);
         }
     },
     buildWP8: function (build) {
-        this.genericBuild(build, null, function (err, log) {
-            !err && this.buildSuccess(build, log, 'platforms/wp8/Bin/Release/*.xap');
+        this.genericBuild(build, null, function (err) {
+            !err && this.buildSuccess(build, 'platforms/wp8/Bin/Release/*.xap');
         });
     },
     buildIOS: function (build) {
@@ -287,7 +288,7 @@ AgentWorker.define({
                     startBuild(err);
                 });
             });
-        }, function (err, log) {
+        }, function (err) {
             agent.log(build, Msg.info, 'creating a new signed ipa');
             function buildFailed() {
                 splice.call(arguments, 0, 0, build);
@@ -308,7 +309,7 @@ AgentWorker.define({
                 stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build);
-                agent.buildSuccess(build, log, 'platforms/ios/*.ipa');
+                agent.buildSuccess(build, 'platforms/ios/*.ipa');
                 //buildExecuted.apply(this, arguments);
             }).on('close', function (code) {
                 if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
@@ -323,11 +324,11 @@ AgentWorker.define({
         });
     },
     buildAndroid: function (build) {
-        this.genericBuild(build, null, function (err, log) {
-            !err && this.buildSuccess(build, log, 'platforms/android/ant-build/*.apk');
+        this.genericBuild(build, null, function (err) {
+            !err && this.buildSuccess(build, 'platforms/android/ant-build/*.apk');
         });
     },
-    buildSuccess: function (build, log, globFiles) {
+    buildSuccess: function (build, globFiles) {
 
         var agent = this;
         var workFolder = this.workFolder;
