@@ -185,7 +185,7 @@ AgentWorker.define({
             done.apply(agent, arguments);
         }
 
-        agent.ensureWorkFolder(s1EmptyWorkFolder);
+        return agent.ensureWorkFolder(s1EmptyWorkFolder);
 
         function s1EmptyWorkFolder(err) {
             if (err) return buildFailed('error creating the working folder {2}\n{3}', agent.workFolder, err);
@@ -233,9 +233,9 @@ AgentWorker.define({
                 onExecutingCordovaBuild.call(agent, build, function (executeStandardCordovaBuild) {
                     executeStandardCordovaBuild !== false && s7BuildCordova();
                 }, s8BuildExecuted, buildFailed);
-            else s7BuildCordova(s8BuildExecuted);
+            else s7BuildCordova();
         }
-        function s7BuildCordova(err, done) {
+        function s7BuildCordova(err) {
             if (err) return buildFailed('error starting build\n{2}', err);
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
@@ -244,7 +244,7 @@ AgentWorker.define({
             var cordova_build = exec(cmd, {
                 cwd: agent.workFolder,
                 maxBuffer: maxBuffer,
-            }, s8BuildExecuted.bind(this))
+            }, s8BuildExecuted)
             .on('close', function (code) {
                 if (code) return buildFailed('child process exited with code ' + code);
             });
@@ -256,11 +256,13 @@ AgentWorker.define({
             cordova_build.stderr.on('data', function (data) {                if (data)//get rid of new lines at the end                    data = data.replace(/\r?\n?$/m, '');                agent.log(build, Msg.error, data);            });
         }
         function s8BuildExecuted(err, stdout, stderr) {
-            err && agent.log(build, Msg.error, 'error:\n{2}', err);
-            //stdout && agent.log(build, Msg.info, '\n{2}', stdout);
-            stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
-            stdout && agent.log(build, Msg.build_output, stdout);
-
+            if (stdout) 
+                agent.log(build, Msg.build_output, stdout);
+            if (err)
+                 agent.log(build, Msg.error, 'error:\n{2}', err);
+            if (stderr)
+                 ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+            
             var e = stderr || err;
             if (e) return agent.buildFailed(build);
 
@@ -275,25 +277,27 @@ AgentWorker.define({
     buildIOS: function (build) {
         var agent = this;
         this.genericBuild(build, function (startBuild) {
-            var globs = path.resolve(agent.workFolder, '**/*');
+            var globs = path.resolve(agent.workFolder, 'platforms/ios/cordova/**/*');
             //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
                 async.each(files, function (file, cb) {
                     //console.log('chmodding', file)
                     fs.chmod(file, 511 /*777 on nix machines in base 8*/, function (err) {
-                        cb(err);
+                        cb.defer(0, null, err);
                     });
                 }, function (err) {
-                    startBuild(err);
+                    startBuild.defer(0, agent, err);
                 });
             });
         }, function (err) {
-            agent.log(build, Msg.info, 'creating a new signed ipa');
+            if (err)
+                return buildFailed(err);
             function buildFailed() {
                 splice.call(arguments, 0, 0, build);
                 return agent.buildFailed.apply(agent, arguments);
             }
+            agent.log(build, Msg.info, 'creating a new signed ipa');
             if (!build.conf.iosprojectpath) return buildFailed('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
             if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
@@ -318,8 +322,6 @@ AgentWorker.define({
                 agent.log(build, Msg.build_output, new Msg(build, Msg.build_output, data));
             });;
             xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, new Msg(build, Msg.build_output, data));            });;
-        }, function (build, executeStandardCordovaBuild, buildExecuted, buildFailed) {
-            executeStandardCordovaBuild(true);
         });
     },
     buildAndroid: function (build) {

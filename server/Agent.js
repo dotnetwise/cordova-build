@@ -107,16 +107,16 @@ Agent.define({
     },
     'onBuildFailed': function (build) {
         var foundBuild = this.server.builds[build && build.id || build];
-        if (build) {
-            if (build && build.master) {
-                if (build.master.platforms.every(function (platform) {
+        if (foundBuild) {
+            if (foundBuild && foundBuild.master) {
+                if (foundBuild.master.platforms.every(function (platform) {
                     return platform.conf.status == 'success' || platform.conf.status == 'failed';
                 })) {
-                    build.master.conf.completed = new Date();
+                    foundBuild.master.conf.completed = new Date();
                 }
             }
             if (foundBuild && foundBuild.conf && foundBuild.conf.status != 'failed') {
-                this.server.updateBuildStatus(build, 'failed');
+                this.server.updateBuildStatus(foundBuild, 'failed');
                 this.busy = null;
                 this.updateStatus('ready');
             }
