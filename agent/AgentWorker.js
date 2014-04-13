@@ -68,9 +68,9 @@ AgentWorker.define({
         console.log('AGENT WORKER DISCONNECTED with platforms:', this.conf.agent);
     },
     'onError': function (err) {
-        console.log('Agent Worker socket reported error:', err);
         //if (err && (err.code == 'ETIMEDOUT'err.code == 'ECONNREFUSED' || err.indexOf && err.indexOf('ECONNREFUSED') >= 0)) {
         if (!this._reconnecting) {
+            console.log('Agent Worker will attempt to reconnect because it the socket reported an error:', err);
             var self = this;
             this._reconnecting = function () {
                 self.socket.socket.reconnect();
@@ -294,7 +294,7 @@ AgentWorker.define({
             var pathOfIpa = path.resolve(this.workFolder, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
             var iosProjectPath = path.resolve(this.workFolder, build.conf.iosprojectpath);
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
-            //if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
+            if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
             var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -sign "{2}" -embed "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
             agent.log(Msg.info, 'executing: {2}', execPath);
