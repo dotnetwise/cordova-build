@@ -241,17 +241,19 @@ AgentWorker.define({
 
             var cmd = 'cordova build {0} --device --{1}'.format(build.conf.platform, build.mode || 'release');
             agent.log(build, 'Executing {2}', cmd);
-            exec(cmd, {
+            var cordova_build = exec(cmd, {
                 cwd: agent.workFolder,
                 maxBuffer: maxBuffer,
             }, s8BuildExecuted.bind(this))
             .on('close', function (code) {
                 if (code) return buildFailed('child process exited with code ' + code);
-            }).stdout.on('data', function (data) {
+            });
+            cordova_build.stdout.on('data', function (data) {
                 if (data)//get rid of new lines at the end
                     data = data.replace(/\r?\n?$/m, '');
                 agent.log(build, Msg.build_output, data);
             });
+            cordova_build.stderr.on('data', function (data) {                if (data)//get rid of new lines at the end                    data = data.replace(/\r?\n?$/m, '');                agent.log(build, Msg.error, data);            });
         }
         function s8BuildExecuted(err, stdout, stderr) {
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
@@ -273,7 +275,7 @@ AgentWorker.define({
         var agent = this;
         this.genericBuild(build, function (startBuild) {
             var globs = path.resolve(this.workFolder, '**/*');
-            console.log('globs', globs)
+            //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
                 async.each(files, function (file, cb) {
@@ -286,7 +288,7 @@ AgentWorker.define({
                 });
             });
         }, function (err, log) {
-            agent.log(Msg.debug, 'creating a new signed ipa');
+            agent.log(build, Msg.info, 'creating a new signed ipa');
             function buildFailed() {
                 splice.call(arguments, 0, 0, build);
                 return agent.buildFailed.apply(agent, arguments);
@@ -299,20 +301,22 @@ AgentWorker.define({
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
             if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -sign "{2}" -embed "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
-            agent.log(Msg.info, 'executing: {2}', execPath);
-            exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
+            agent.log(build, Msg.info, 'executing: {2}', execPath);
+            var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 err && agent.log(build, Msg.error, 'error:\n{2}', err);
                 stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build);
-                this.buildSuccess(build, log, 'platforms/ios/*.ipa');
+                agent.buildSuccess(build, log, 'platforms/ios/*.ipa');
                 //buildExecuted.apply(this, arguments);
             }).on('close', function (code) {
                 if (code) return buildFailed.call(agent, 'sign process exited with code ' + code);
-            }).stdout.on('data', function (data) {
-                agent.log(build, new Msg(build, Msg.build_output, data));
+            });
+            xcrun.stdout.on('data', function (data) {
+                agent.log(build, Msg.build_output, new Msg(build, Msg.build_output, data));
             });;
+            xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, new Msg(build, Msg.build_output, data));            });;
         }, function (build, executeStandardCordovaBuild, buildExecuted, buildFailed) {
             var agent = this;
             executeStandardCordovaBuild(true);
