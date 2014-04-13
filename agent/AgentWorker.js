@@ -275,7 +275,7 @@ AgentWorker.define({
     buildIOS: function (build) {
         var agent = this;
         this.genericBuild(build, function (startBuild) {
-            var globs = path.resolve(this.workFolder, '**/*');
+            var globs = path.resolve(agent.workFolder, '**/*');
             //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
@@ -297,8 +297,8 @@ AgentWorker.define({
             if (!build.conf.iosprojectpath) return buildFailed('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
             if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
-            var pathOfIpa = path.resolve(this.workFolder, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
-            var iosProjectPath = path.resolve(this.workFolder, build.conf.iosprojectpath);
+            var pathOfIpa = path.resolve(agent.workFolder, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
+            var iosProjectPath = path.resolve(agent.workFolder, build.conf.iosprojectpath);
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
             if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
@@ -307,10 +307,10 @@ AgentWorker.define({
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 err && agent.log(build, Msg.error, 'error:\n{2}', err);
                 stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+                stdout && agent.log(build, Msg.build_output, '{2}', stdout);
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build);
-                agent.buildSuccess(build, 'platforms/ios/*.ipa');
-                //buildExecuted.apply(this, arguments);
+                agent.buildSuccess(build, pathOfIpa);
             }).on('close', function (code) {
                 if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
             });
@@ -319,27 +319,27 @@ AgentWorker.define({
             });;
             xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, new Msg(build, Msg.build_output, data));            });;
         }, function (build, executeStandardCordovaBuild, buildExecuted, buildFailed) {
-            var agent = this;
             executeStandardCordovaBuild(true);
         });
     },
     buildAndroid: function (build) {
+        var agent = this;
         this.genericBuild(build, null, function (err) {
-            !err && this.buildSuccess(build, 'platforms/android/ant-build/*.apk');
+            !err && agent.buildSuccess(build, 'platforms/android/ant-build/*.apk');
         });
     },
     buildSuccess: function (build, globFiles) {
 
         var agent = this;
-        var workFolder = this.workFolder;
+        var workFolder = agent.workFolder;
         multiGlob.glob(globFiles, {
             cwd: workFolder,
         }, function (err, files) {
-            if (err) return this.buildFailed(build, 'error globbing {2}', globFiles);
+            if (err) return agent.buildFailed(build, 'error globbing {2}', globFiles);
             files = files.map(function (file) {
                 return { file: path.resolve(workFolder, file) };
             });
-            this.socket.emit('uploading', build.id);//change build status to uploading..
+            agent.socket.emit('uploading', build.id);//change build status to uploading..
             serverUtils.readFiles(files, '[Agent WORKER] cordova build agent worker output files', function (err) {
                 if (err) {
                     serverUtils.freeMemFiles(files);
@@ -347,8 +347,8 @@ AgentWorker.define({
                 } else {
                     uploadFiles(files);
                 }
-            }.bind(this));
-        }.bind(this));
+            });
+        });
         function uploadFiles(outputFiles) {
             try {
                 build.outputFiles = outputFiles;
