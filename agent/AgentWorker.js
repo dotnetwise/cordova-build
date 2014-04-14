@@ -152,19 +152,19 @@ AgentWorker.define({
         switch (zipArchiver) {
             case '7z':
                 exec('7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stdErr) {
-                    if (err) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stdErr);
+                    if (err || stdErr) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stdErr);
                     done();
                 });
                 break;
             case 'keka7z':
                 exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err) {
-                    if (err) return agent.buildFailed(build, 'error executing keka7z\n{2}', err);
+                    if (err || stdErr) return agent.buildFailed(build, 'error executing keka7z\n{2}', err);
                     done();
                 });
                 break;
             case 'unzip':
                 exec('unzip -uo {0} -d {1} >nul'.format(file, target), opts, function (err) {
-                    if (err) return agent.buildFailed(build, 'error executing unzip\n{2}', err);
+                    if (err || stdErr) return agent.buildFailed(build, 'error executing unzip\n{2}', err);
                     done();
                 });
                 break;
@@ -226,7 +226,7 @@ AgentWorker.define({
             if (err) return buildFailed('error extracting archive files\n{2}', err);
             if (filesDone)
                 filesDone.call(agent, s6DecideExecuteCordovaBuild);
-            else (s6DecideExecuteCordovaBuild);
+            else s6DecideExecuteCordovaBuild();
         }
         function s6DecideExecuteCordovaBuild() {
             if (onExecutingCordovaBuild)

@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:server -port:8300 -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:8300 -files:t:\a\core.7z;t:\a\www.7z -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -iosprojectpath:platforms/ios/build/device/Safetybank.app -iosprovisioningname:"iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)" -iosprovisioningpath="/usr/local/provisions/safetybank.mobileprovision" -iosprovisioningpath:"/usr/local/provisions/safetybank.mobileprovision" -save:clientOutput -agentX:ios  -build:ios  -agent:ios,wp8,android</ScriptArguments>
+    <ScriptArguments>-mode:server -port:8300 -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:8300 -files:t:\a\core.7z;t:\a\www.7z -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -iosprojectpath:platforms/ios/build/device/Safetybank.app -iosprovisioningname:"iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)" -iosprovisioningpath="/usr/local/provisions/safetybank.mobileprovision" -iosprovisioningpath:"/usr/local/provisions/safetybank.mobileprovision" -save:clientOutput -build:wp8  -agent:wp8,android</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
