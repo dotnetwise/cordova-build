@@ -151,20 +151,20 @@ AgentWorker.define({
         var agent = this;
         switch (zipArchiver) {
             case '7z':
-                exec('7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stdErr) {
-                    if (err || stdErr) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stdErr);
+                exec('7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+                    if (err || stderr) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
             case 'keka7z':
                 exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err) {
-                    if (err || stdErr) return agent.buildFailed(build, 'error executing keka7z\n{2}', err);
+                    if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}', err);
                     done();
                 });
                 break;
             case 'unzip':
                 exec('unzip -uo {0} -d {1} >nul'.format(file, target), opts, function (err) {
-                    if (err || stdErr) return agent.buildFailed(build, 'error executing unzip\n{2}', err);
+                    if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}', err);
                     done();
                 });
                 break;
