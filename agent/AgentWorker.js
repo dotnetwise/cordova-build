@@ -313,15 +313,15 @@ AgentWorker.define({
                 err && agent.log(build, Msg.error, 'error:\n{2}', err);
                 stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
                 var e = stderr || err;
-                if (e) return agent.buildFailed(build);
+                if (e) return agent.buildFailed(build, '');
                 agent.buildSuccess(build, pathOfIpa);
             }).on('close', function (code) {
                 if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
             });
             xcrun.stdout.on('data', function (data) {
-                agent.log(build, Msg.build_output, new Msg(build, Msg.build_output, data));
+                agent.log(build, Msg.build_output, data);
             });;
-            xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, new Msg(build, Msg.build_output, data));            });;
+            xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, data);            });;
         });
     },
     buildAndroid: function (build) {

@@ -1,4 +1,4 @@
-﻿module.exports = Msg;
+module.exports = Msg;
 require('./utils');
 var extend = require('extend');
 var concat = Array.prototype.concat;
@@ -21,7 +21,9 @@ Msg.define({
         this.by = by;
         var msg = message;
         splice.call(arguments, 0, 5, this.senderId, this.buildId);
-
+        if (typeof msg != "string") {
+            console.error('UPDATE ',  arguments);
+        }
         this.message = ''.format.apply(msg || '', arguments);
     },
     toString: function(doNotIncludePrefix) {
