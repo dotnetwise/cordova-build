@@ -240,7 +240,7 @@ AgentWorker.define({
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
             var cmd = 'cordova build {0} --device --{1}'.format(build.conf.platform, build.mode || 'release');
-            agent.log(build, 'Executing {2}', cmd);
+            agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
                 cwd: agent.workFolder,
                 maxBuffer: maxBuffer,
@@ -309,9 +309,9 @@ AgentWorker.define({
             var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
+                stdout && agent.log(build, Msg.build_output, '{2}', stdout);
                 err && agent.log(build, Msg.error, 'error:\n{2}', err);
                 stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
-                stdout && agent.log(build, Msg.build_output, '{2}', stdout);
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build);
                 agent.buildSuccess(build, pathOfIpa);
