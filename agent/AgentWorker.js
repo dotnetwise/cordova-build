@@ -157,14 +157,14 @@ AgentWorker.define({
                 });
                 break;
             case 'keka7z':
-                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err) {
-                    if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}', err);
+                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
+                    if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err);
                     done();
                 });
                 break;
             case 'unzip':
-                exec('unzip -uo {0} -d {1} >nul'.format(file, target), opts, function (err) {
-                    if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}', err);
+                exec('unzip -uo {0} -d {1} >nul'.format(file, target), opts, function (err, stdout, stderr) {
+                    if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err);
                     done();
                 });
                 break;
