@@ -230,16 +230,16 @@ AgentWorker.define({
         }
         function s6DecideExecuteCordovaBuild() {
             if (onExecutingCordovaBuild)
-                onExecutingCordovaBuild.call(agent, build, function (executeStandardCordovaBuild) {
-                    executeStandardCordovaBuild !== false && s7BuildCordova();
+                onExecutingCordovaBuild.call(agent, build, function (err, executeStandardCordovaBuild, args) {
+                    executeStandardCordovaBuild !== false && s7BuildCordova(err, args);
                 }, s8BuildExecuted, buildFailed);
             else s7BuildCordova();
         }
-        function s7BuildCordova(err) {
+        function s7BuildCordova(err, args) {
             if (err) return buildFailed('error starting build\n{2}', err);
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
-            var cmd = 'cordova build {0} --device --{1}'.format(build.conf.platform, build.mode || 'release');
+            var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args, build.mode || 'release');
             agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
                 cwd: agent.workFolder,
@@ -322,6 +322,8 @@ AgentWorker.define({
                 agent.log(build, Msg.build_output, data);
             });;
             xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, data);            });;
+        }, function(build, buildCordova) {
+            buildCordova(null, true, '--device');//pass the --device argument only on ios
         });
     },
     buildAndroid: function (build) {
