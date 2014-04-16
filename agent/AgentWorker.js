@@ -239,7 +239,7 @@ AgentWorker.define({
             if (err) return buildFailed('error starting build\n{2}', err);
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
-            var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args, build.mode || 'release');
+            var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.mode || 'release');
             agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
                 cwd: agent.workFolder,
@@ -302,6 +302,7 @@ AgentWorker.define({
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
             if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
             var pathOfIpa = path.resolve(agent.workFolder, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
+            var pathOfInfo_plist = path.resolve(agent.workFolder, build.conf.iosprojectpath, 'Info.plist');
             var iosProjectPath = path.resolve(agent.workFolder, build.conf.iosprojectpath);
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
             if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
@@ -314,7 +315,13 @@ AgentWorker.define({
                 stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build, '');
-                agent.buildSuccess(build, pathOfIpa);
+                agent.log(build, Msg.build_output, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
+                exec('plutil -convert xml1 '+pathOfInfo_plist, function(err, stdout, stderr) {
+                    if (err || stderr)
+                        return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
+                        agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
+                        agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist]);
+                    });
             }).on('close', function (code) {
                 if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
             });
@@ -358,10 +365,12 @@ AgentWorker.define({
                 build.outputFiles = outputFiles;
                 var size = 0; outputFiles.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; })
                 size && agent.log(build, Msg.info, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
+                var paths = []; outputFiles.forEach(function (file) { paths.push(file.file); file.file = path.basename(file.file); });
 
                 agent.socket.emit('build-success', build.serialize({
                     outputFiles: 1
                 }));
+                outputFiles.forEach(function (file, index) { file.file = paths[index]; });
             }
             finally {
                 //free agent's memory of output files contents

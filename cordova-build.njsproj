@@ -49,6 +49,7 @@
     <Compile Include="server\Agent.js" />
     <Compile Include="server\Client.js" />
     <Compile Include="common\Msg.js" />
+    <Compile Include="server\ipa\ipa-file.js" />
     <Compile Include="server\public\js\qtip.js" />
     <Compile Include="server\Server.js" />
     <Compile Include="common\utils.js" />
@@ -66,6 +67,7 @@
     <Folder Include="client\" />
     <Folder Include="agent\" />
     <Folder Include="common\" />
+    <Folder Include="server\ipa\" />
     <Folder Include="server\public\" />
     <Folder Include="server\public\js\" />
     <Folder Include="server\public\css\" />

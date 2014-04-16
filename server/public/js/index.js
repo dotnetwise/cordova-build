@@ -319,7 +319,7 @@ BuildVM.define({
     QR: function () {
         var l = location;
         var platform = this.conf && typeof this.conf.platform == 'string' && this.conf.platform;
-        return ServerBrowser.prototype.generateQR([l.protocol, '//', l.host, '/download/', this.id, platform ? '/' : '', platform ? platform : ''].join(''));
+        return ServerBrowser.prototype.generateQR([l.protocol, '//', l.host, '/download/', this.id, '/', platform || 'autodetect', '/qr'].join(''));
     }
 });
 

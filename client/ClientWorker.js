@@ -130,10 +130,6 @@ ClientWorker.define({
             var id = build.masterId || build.id;
             var locationPath = path.resolve(this.location, id);
             var files = build.outputFiles;
-            files.forEach(function (file) {
-                var ext = path.extname(file.file);
-                file.file = [build.number, build.number && '.' || '', path.basename(file.file, ext), '.', id, ext].join('');
-            });
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
                     client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);

@@ -1,10 +1,24 @@
-﻿module.exports = Build
+module.exports = Build
 require('fast-class');
 var extend = require('extend');
 var shortid = require('shortid');
 var statuses = ['unknown', 'success', 'planned', 'queued', 'building', 'failed']
 
 function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
+    if (arguments.length == 1) {
+        var b = conf || {};
+        var r = new Build(b.conf, b.client, b.agent, b.conf && b.conf.platform, b.files, b.outputFiles, b.id, b.masterId);
+        if (Array.isArray(b.platforms))
+        {
+                r.platforms = [];
+                b.platforms.forEach(function(platformBuild) {
+                    var pb = new Build(platformBuild);
+                    pb.master = r;
+                    r.platforms.push(pb);
+                });
+        }
+        return r;
+    }
     this.conf = extend(true, {}, conf);
     this.client = client;
     this.agent = agent;
@@ -22,7 +36,7 @@ function Build(conf, client, agent, platform, files, outputFiles, id, masterId) 
         this.outputFiles = outputFiles;
 }
 Build.define({
-    serialize: function (includeOptions) {
+    serialize: function (includeOptions, platformOptions) {
         var result = {
             conf: this.conf,
             id: this.id,
@@ -37,7 +51,7 @@ Build.define({
                 if (this.platforms) {
                     result.platforms = [];
                     (this.platforms || []).forEach(function (platformBuild) {
-                        result.platforms.push(platformBuild.serialize());
+                        result.platforms.push(platformBuild.serialize(platformOptions));
                     });
                 }
             }
