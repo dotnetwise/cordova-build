@@ -241,7 +241,7 @@ AgentWorker.define({
 
             var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.mode || 'release');
             if (build.conf.platform == 'ios')
-                cmd += ' | tee "' + path.combine(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running)"';
+                cmd += ' | tee "' + path.resolve(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running)"';
             agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
                 cwd: locationPath,
