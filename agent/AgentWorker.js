@@ -189,12 +189,12 @@ AgentWorker.define({
 
         function s1EmptyWorkFolder(err) {
             if (err) return buildFailed('error creating the working folder {2}\n{3}', agent.workFolder, err);
-            var glob = agent.workFolder;
+            var glob = locationPath;
             if (!/(\/|\\)$/.test(glob))
                 glob += '/';
             glob += '*';
             multiGlob.glob(glob, function (err, files) {
-                if (err) return s2WriteFiles(err);
+                if (err) return s2WriteFiles(null);
                 async.each(files, function (file, cb) {
                     fs.remove(file, function (err) {
                         cb(err);
@@ -216,8 +216,8 @@ AgentWorker.define({
             async.each(files, s5ExtractFile, s6AllFilesExtracted);
         };
         function s5ExtractFile(item, cb) {
-            agent.extractArchive(build, item.file, agent.workFolder, {
-                cwd: agent.workFolder,
+            agent.extractArchive(build, item.file, locationPath, {
+                cwd: locationPath,
                 maxBuffer: maxBuffer,
             }, cb);
         };
@@ -240,9 +240,11 @@ AgentWorker.define({
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
             var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.mode || 'release');
+            if (build.conf.platform == 'ios')
+                cmd += ' | tee "' + locationPath + '"/xcodebuild.log | egrep -A 5 -i "(error|warning|succeeded|fail|codesign)"';
             agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
-                cwd: agent.workFolder,
+                cwd: locationPath,
                 maxBuffer: maxBuffer,
             }, s8BuildExecuted)
             .on('close', function (code) {
@@ -253,16 +255,19 @@ AgentWorker.define({
                     data = data.replace(/\r?\n?$/m, '');
                 agent.log(build, Msg.build_output, data);
             });
-            cordova_build.stderr.on('data', function (data) {                if (data)//get rid of new lines at the end                    data = data.replace(/\r?\n?$/m, '');                agent.log(build, Msg.error, data);            });
+            cordova_build.stderr.on('data', function (data) {
+                if (data)//get rid of new lines at the end                    data = data.replace(/\r?\n?$/m, '');                agent.log(build, Msg.error, data);
+            });
+
         }
         function s8BuildExecuted(err, stdout, stderr) {
-            if (stdout) 
+            if (stdout)
                 agent.log(build, Msg.build_output, stdout);
             if (err)
-                 agent.log(build, Msg.error, 'error:\n{2}', err);
+                agent.log(build, Msg.error, 'error:\n{2}', err);
             if (stderr)
-                 ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
-            
+                ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+
             var e = stderr || err;
             if (e) return agent.buildFailed(build);
 
@@ -277,7 +282,7 @@ AgentWorker.define({
     buildIOS: function (build) {
         var agent = this;
         this.genericBuild(build, function (startBuild) {
-            var globs = path.resolve(agent.workFolder, 'platforms/ios/cordova/**/*');
+            var globs = path.resolve(agent.workFolder, build.id, 'platforms/ios/cordova/**/*');
             //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
@@ -301,13 +306,13 @@ AgentWorker.define({
             if (!build.conf.iosprojectpath) return buildFailed('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
             if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
-            var pathOfIpa = path.resolve(agent.workFolder, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
-            var pathOfInfo_plist = path.resolve(agent.workFolder, build.conf.iosprojectpath, 'Info.plist');
-            var iosProjectPath = path.resolve(agent.workFolder, build.conf.iosprojectpath);
+            var pathOfIpa = path.resolve(agent.workFolder, build.id, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
+            var pathOfInfo_plist = path.resolve(agent.workFolder, build.id, build.conf.iosprojectpath, 'Info.plist');
+            var iosProjectPath = path.resolve(agent.workFolder, build.id, build.conf.iosprojectpath);
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
             if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath);
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}" | tee "{3}{4}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath,  locationPath, '/xcodebuild.log');
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -316,20 +321,22 @@ AgentWorker.define({
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build, '');
                 agent.log(build, Msg.build_output, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
-                exec('plutil -convert xml1 '+pathOfInfo_plist, function(err, stdout, stderr) {
+                exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
                     if (err || stderr)
                         return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
-                        agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
-                        agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist]);
-                    });
+                    agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
+                    agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist]);
+                });
             }).on('close', function (code) {
                 if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
             });
             xcrun.stdout.on('data', function (data) {
                 agent.log(build, Msg.build_output, data);
             });;
-            xcrun.stderr.on('data', function (data) {                agent.log(build, Msg.error, data);            });;
-        }, function(build, buildCordova) {
+            xcrun.stderr.on('data', function (data) {
+                agent.log(build, Msg.error, data);
+            });;
+        }, function (build, buildCordova) {
             buildCordova(null, true, '--device');//pass the --device argument only on ios
         });
     },
@@ -342,7 +349,7 @@ AgentWorker.define({
     buildSuccess: function (build, globFiles) {
 
         var agent = this;
-        var workFolder = agent.workFolder;
+        var workFolder = path.resolve(agent.workFolder, build.id);
         multiGlob.glob(globFiles, {
             cwd: workFolder,
         }, function (err, files) {
