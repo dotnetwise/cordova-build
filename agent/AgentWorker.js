@@ -241,7 +241,7 @@ AgentWorker.define({
 
             var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.mode || 'release');
             if (build.conf.platform == 'ios')
-                cmd += ' | tee "' + locationPath + '"/xcodebuild.log | egrep -A 5 -i "(error|warning|succeeded|fail|codesign)"';
+                cmd += ' | tee "' + path.combine(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running)"';
             agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
                 cwd: locationPath,
@@ -276,7 +276,7 @@ AgentWorker.define({
     },
     buildWP8: function (build) {
         this.genericBuild(build, null, function (err) {
-            !err && this.buildSuccess(build, 'platforms/wp8/Bin/Release/*.xap');
+            !err && this.buildSuccess(build, ['platforms/wp8/Bin/Release/*.xap', 'build.wp8.log']);
         });
     },
     buildIOS: function (build) {
@@ -312,7 +312,9 @@ AgentWorker.define({
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
             if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}" | tee "{3}{4}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath,  locationPath, '/xcodebuild.log');
+            var xcodebuildLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.xcodebuild.log');
+            var signLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.sign.xcrun.log');
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}" | tee "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -325,7 +327,7 @@ AgentWorker.define({
                     if (err || stderr)
                         return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
                     agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
-                    agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist]);
+                    agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist, signLogPath, xcodebuildLogPath]);
                 });
             }).on('close', function (code) {
                 if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
@@ -343,7 +345,7 @@ AgentWorker.define({
     buildAndroid: function (build) {
         var agent = this;
         this.genericBuild(build, null, function (err) {
-            !err && agent.buildSuccess(build, 'platforms/android/ant-build/*.apk');
+            !err && agent.buildSuccess(build, ['platforms/android/ant-build/*.apk', , 'build.android.log']);
         });
     },
     buildSuccess: function (build, globFiles) {

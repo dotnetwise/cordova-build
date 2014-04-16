@@ -456,7 +456,8 @@ Server.define({
 					'/ios/'
             ].join('');
             var ipaPath = build.outputFiles[0].file;
-            var file = build.ipaFile || new IPAFile(ipaPath, build.outputFiles[1] && build.outputFiles[1].file);
+            var Info_plist = build.outputFiles.findOne(function(file) { return path.basename(file.file) == 'Info.plist'; });
+            var file = build.ipaFile || new IPAFile(ipaPath, Info_plist);
             build.ipaFile = file;
             var manifest = {
                 fileURL: baseURL + path.basename(ipaPath || 'application.ipa'),
