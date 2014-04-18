@@ -59,8 +59,7 @@ Agent.define({
         var outputFiles = responseBuild.outputFiles;
         build.outputFiles = outputFiles;
         outputFiles.forEach(function (file) {
-            var ext = path.extname(file.file);
-            file.file = [build.number, build.number && '.' || '', path.basename(file.file, ext), '.', id, ext].join('');
+            file.file = [build.number, build.number && '.' || '', file.name || path.basename(file.file)].join('');
         });
         mkdirp(locationPath, function (err) {
             if (err) {

@@ -314,7 +314,7 @@ AgentWorker.define({
 
             var xcodebuildLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.xcodebuild.log');
             var signLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.sign.xcrun.log');
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" -embed "{2}" | tee "{3}"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(error|warning|succeeded|fail|running)'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -374,7 +374,20 @@ AgentWorker.define({
                 build.outputFiles = outputFiles;
                 var size = 0; outputFiles.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; })
                 size && agent.log(build, Msg.info, 'Uploading results file(s) to cordova build server...{0}'.format(fileSize(size)));
-                var paths = []; outputFiles.forEach(function (file) { paths.push(file.file); file.file = path.basename(file.file); });
+                var paths = []; outputFiles.forEach(function (file) {
+                    paths.push(file.file); 
+                    if (build.conf.name) {
+                    var ext = path.extname(file.file);
+                        switch (ext) {
+                            case '.ipa':
+                            case '.apk':
+                            case '.xap':
+                                file.name = build.conf.name ? build.conf.name + ext : file.file;
+                                break;
+                        }
+                    }
+                    file.file = path.basename(file.file);
+                });
 
                 agent.socket.emit('build-success', build.serialize({
                     outputFiles: 1

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
  
+var extend = require('extend');
 var cordovaBuild = require('../');
 var conf = require('../common/conf.js')();
 var listen = conf.listen;
@@ -40,8 +41,16 @@ if (listen.server || listen.ui) {
     server.listen();
 }
 if (listen.agent) {
-    var agent = new cordovaBuild.AgentWorker(conf);
-    agent.connect();
+    var platforms = conf.agent.split(/,|;/g);
+    var agents = [];
+    platforms.forEach(function(platform) {
+        var config = extend(true, {}, conf);
+        config.agent = platform;
+        var agent = new cordovaBuild.AgentWorker(config);
+        agents.push(agent);
+        agent.connect();
+    });
+    
 }
 
 if (listen.client) {
