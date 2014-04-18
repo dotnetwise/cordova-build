@@ -185,7 +185,7 @@ Server.define({
 				    var html = cache['index.html'].replace('<script id="start"></script>', '<script id="start">var serverBrowser = new ServerBrowser({0});</script>'.format(JSON.stringify({
 				        protocol: conf.proxyprotocol || conf.uiprotocol || conf.protocol || 'http://',
 				        host: conf.proxy || conf.ui || conf.server,
-				        port: conf.proxyport || config.uiport || conf.port,
+				        port: conf.proxyport || conf.port,
 				    })));
 				    res.send(html);
 				})
@@ -331,7 +331,7 @@ Server.define({
     },
     processQueue: function () {
         var build = this.buildsQueue.shift();
-        if (build) {
+        while(build) {
             var server = this;
             var platform = build.conf.platform;
             var startBuilding = false;
@@ -344,8 +344,13 @@ Server.define({
                 }
                 return true;
             });
-            if (!startBuilding)
-                this.buildsQueue.push(build);
+            if (!startBuilding) {
+            	this.buildsQueue.push(build);
+            	build = null;
+            }
+            else {
+            	build = this.buildsQueue.shift();
+            }
         }
     },
     log: function (msg, forwardToClientOrAgent) {
@@ -423,8 +428,8 @@ Server.define({
         if (platform == 'ios' && req.params.file == 'qr') {
             var port = this.conf.proxyport || this.conf.port;
             var url = [
-                req.protocol,
-                '//',
+                this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
+                '://',
                 this.conf.proxy || this.conf.server,
                 port != 80 ? ':' : '',
                 port != 80 ? port : '',
@@ -447,7 +452,7 @@ Server.define({
         if (platform == 'ios') {
             var port = this.conf.proxyport || this.conf.port;
             var baseURL = [
-					req.protocol,
+					this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
 					'://',
 					this.conf.proxy || this.conf.server,
 					port != 80 ? ':' : '',
@@ -456,17 +461,17 @@ Server.define({
 					build.id,
 					'/ios/'
             ].join('');
-            var ipaPath = build.outputFiles[0].file;
+            var ipaPath = build.outputFiles.findOne(function (file) { return path.extname(file) == '.ipa'; });
             var Info_plist = build.outputFiles.findOne(function(file) { return path.basename(file.file) == 'Info.plist'; });
-            var file = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
-            build.ipaFile = file;
+            var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
+            build.ipaFile = ipaFile;
             var manifest = {
                 fileURL: baseURL + path.basename(ipaPath || 'application.ipa'),
                 displayImage: baseURL + '57.png',
                 fullSizeImage: baseURL + '512.png',
-                bundleIdentifier: file.id,
-                subtitle: file.team,
-                title: file.name
+                bundleIdentifier: ipaFile.id,
+                subtitle: ipaFile.team,
+                title: ipaFile.name
             };
 
             res.writeHead(200, { 'Content-Type': 'text/xml' });
@@ -479,33 +484,37 @@ Server.define({
         if (!parsedBuild) return;
         var build = parsedBuild.build;
         var platform = parsedBuild.platform;
-        var askForFile = req.param.file;
-        if (askForFile) {
-            var ipaFile = build.ipaFile || new IPAFile(ipaPath, build.outputFiles[1] && build.outputFiles[1].file);
-            build.ipaFile = ipaFile;
-            switch (askForFile) {
-                case '57.png':
-                    res.writeHead(200, { 'Content-Type': 'image/png' });
-                    res.end(file.icon);
-                    return;
-                case '512.png':
-                    res.writeHead(200, { 'Content-Type': 'image/png' });
-                    var filestream = fs.createReadStream(__dirname + '/512.png');
-                    filestream.pipe(res);
-                    return;
-                default:
-                    res.send(500, 'There is no file with name {0} known for build {1}!'.format(askForFile, build.id));
-                    return;
-            }
+        var askForFile = req.params.file;
+        var ipaPath = build.outputFiles.findOne(function (file) { return path.extname(file.file) == '.ipa'; });
+        ipaPath = ipaPath && ipaPath.file;
+        if (!ipaPath)
+        	throw "cannot find any .ipa output files";
+        if (askForFile && askForFile != path.basename(ipaPath)) {
+        	var Info_plist = build.outputFiles.findOne(function (file) { return path.basename(file.file) == 'Info.plist'; });
+        	var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
+        	build.ipaFile = ipaFile;
+        	switch (askForFile) {
+        		case '57.png':
+        			res.writeHead(200, { 'Content-Type': 'image/png' });
+        			res.end(ipaFile.icon);
+        			return;
+        		case '512.png':
+        			res.writeHead(200, { 'Content-Type': 'image/png' });
+        			var filestream = fs.createReadStream(__dirname + '/512.png');
+        			filestream.pipe(res);
+        			return;
+        		default:
+        			res.send(500, 'There is no file with name {0} known for build {1}!'.format(askForFile, build.id));
+        			return;
+        	}
         }
 
-        var file = build.outputFiles[0].file;
-        var filename = path.basename(file);
+        var filename = path.basename(ipaPath);
         if (platform != 'ios')
             res.setHeader('Content-disposition', 'attachment; filename=' + filename);
         res.setHeader('Content-type', this.mime_types[platform] || this.mime_types.ios);
 
-        var filestream = fs.createReadStream(file);
+        var filestream = fs.createReadStream(ipaPath);
         filestream.pipe(res);
     },
     mime_types: { android: 'application/vnd.android.package-archive', wp8: 'application/x-silverlight-app', ios: 'application/octet-stream' },

@@ -145,7 +145,7 @@ Agent.define({
         var server = this.server;
         build.agent = this;
 
-        this.log(build, client, Msg.debug, 'Reading {2} file{3} from the server...', files.length, files.length == 1 ? '' : 's');
+        this.log(build, client, Msg.debug, 'Downloading {2} file{3} from the server...', files.length, files.length == 1 ? '' : 's');
         //console.log('FILES', files)
         serverUtils.readFiles(files, '[AGENT.startBuild] the cordova build server\n', function (err) {
             try {

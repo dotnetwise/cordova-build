@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:server -port:8300 -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:8300 -files:t:\a\core.7z;t:\a\www.7z -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -iosprojectpath:platforms/ios/build/device/Safetybank.app -iosprovisioningname:"iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)" -iosprovisioningpath="/usr/local/provisions/safetybank.mobileprovision" -iosprovisioningpath:"/usr/local/provisions/safetybank.mobileprovision" -name:Safetybank -save:clientOutput -build:wp8,android,ios  -agent:wp8,android</ScriptArguments>
+    <ScriptArguments>-mode:server -server:cb.dnw.ro -proxy:cb.dnw.ro -port:8300 -proxyport:8300 -files:t:\a\core.7z;t:\a\www.7z -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -iosprojectpath:platforms/ios/build/device/Safetybank.app -iosprovisioningname:"iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)" -iosprovisioningpath="/usr/local/provisions/safetybank.mobileprovision" -iosprovisioningpath:"/usr/local/provisions/Safetybank_Development.mobileprovision" -name:Safetybank -save:clientOutput -build:wp8,android,ios  -agent:wp8,android -buildmode:debug</ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
@@ -39,28 +39,15 @@
     <Compile Include="agent\AgentWorker.js" />
     <Compile Include="bin\cmd.js" />
     <Compile Include="client\ClientWorker.js" />
-    <Compile Include="common\BrowserDetect.js" />
     <Compile Include="common\conf.js" />
-    <Compile Include="common\Build.js" />
-    <Compile Include="common\patch.js" />
-    <Compile Include="common\serverUtils.js" />
-    <Compile Include="index.js" />
-    <Compile Include="server.js" />
     <Compile Include="server\Agent.js" />
     <Compile Include="server\Client.js" />
-    <Compile Include="common\Msg.js" />
-    <Compile Include="server\ipa\ipa-file.js" />
-    <Compile Include="server\public\js\qtip.js" />
     <Compile Include="server\Server.js" />
-    <Compile Include="common\utils.js" />
     <Compile Include="server\WWW.js" />
-    <Compile Include="server\public\js\index.js" />
     <Content Include="server\public\css\app.css" />
-    <Content Include="server\public\server.html" />
     <Content Include="watch.bat" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="server\public\index.html" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\" />
