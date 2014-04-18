@@ -327,7 +327,7 @@
                                                     <a data-bind="
     visible: typeof unwrap($data.platform) == 'string',
     attr: {
-        href: unwrap($data && $data.status) == 'success' ? encodeURIComponent(['/manifest/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : ''].join('')) : null,
+        href: unwrap($data && $data.status) == 'success' ? encodeURIComponent(['/download/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : '', typeof unwrap($data.platform) == 'string' ? unwrap(platform) : '', '/qr'].join('')) : null,
     },
     "
                                                         style="display: block;">

@@ -130,7 +130,7 @@ function startParsing(target) {
 			target.team = getKey(data, keys.team);
 		}
 		
-		if (!foundIcon && entry.entryName.match(/Icon\.png$/)) {
+		if (!foundIcon && entry.entryName.match(/Icon\.png$/i)) {
 			foundIcon = true;
 			var data = file.readFile(entry);
 			target.icon = data;

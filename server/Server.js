@@ -148,7 +148,12 @@ Server.define({
         var uiOnly = conf.mode == 'ui';
         conf.port = conf.port || 8300;
         conf.uiport = conf.uiport == 0 || conf.uiport == false ? false : conf.uiport || 8300;
-        if (conf.uiport) console.log('Cordova build INTERFACE is accesible at {0}{1}{2}/'.format(conf.proxyprotocol || conf.uiprotocol || 'http://', conf.proxy || conf.ui || 'localhost', (conf.proxyport || conf.uiport) == 80 ? '' : ':' + (conf.proxyport || conf.uiport)));
+        var interfacePort = conf.proxyport || conf.uiport || conf.port;
+        console.log("");
+        if (conf.uiport) console.log('Cordova build INTERFACE is accesible at {0}{1}{2}/'
+			.format(conf.proxyprotocol || conf.uiprotocol || conf.protocol || 'http://', 
+					conf.proxy || conf.ui || conf.server || 'localhost', 
+					interfacePort == 80 ? '' : ':' + interfacePort));
         if (!conf.uiport) console.log('Cordova build INTERFACE is disabled because you have specified -ui:false');
         console.log('Cordova build    SERVER is {0} at {1}{2}{3}/\n'.format(uiOnly ? 'targeted' : 'hosted', conf.protocol, conf.server, conf.port == 80 ? '' : ':' + conf.port));
 
@@ -167,7 +172,7 @@ Server.define({
 					    var html = cache['server.html'].replace('<script id="start"></script>', '<script id="start">var serverBrowser = new ServerBrowser({0});</script>'.format(JSON.stringify({
 					        protocol: conf.protocol,
 					        host: conf.server,
-					        port: conf.publicport || conf.port,
+					        port: conf.port,
 					    })));
 					    res.send(html);
 					});
@@ -183,9 +188,9 @@ Server.define({
 				.get('/', function (req, res) {
 				    res.setHeader('Content-Type', 'text/html');
 				    var html = cache['index.html'].replace('<script id="start"></script>', '<script id="start">var serverBrowser = new ServerBrowser({0});</script>'.format(JSON.stringify({
-				        protocol: conf.proxyprotocol || conf.uiprotocol || conf.protocol || 'http://',
-				        host: conf.proxy || conf.ui || conf.server,
-				        port: conf.proxyport || conf.port,
+				        protocol: conf.protocol || 'http://',
+				        host: conf.server,
+				        port: conf.port,
 				    })));
 				    res.send(html);
 				})
@@ -426,7 +431,7 @@ Server.define({
         var build = parsedBuild.build; req.url;
         //var m = CircularJSON.stringify((build && build.master || build).serialize({ files: 1, outputFiles: 1, platforms: 1 }, { files: 1, outputFiles: 1 }));
         if (platform == 'ios' && req.params.file == 'qr') {
-            var port = this.conf.proxyport || this.conf.port;
+            var port = this.conf.proxyport || this.conf.uiport || this.conf.port;
             var url = [
                 this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
                 '://',
@@ -435,9 +440,9 @@ Server.define({
                 port != 80 ? port : '',
                 '/manifest/',
                 build.id,
-                '/manifest.plist',
+                '/Info.plist',
             ].join('');
-            var manifestUrl = "https://www.safetybank.co.uk/forwardDownload/download.aspx?name=manifest.plist&url={0}".format(encodeURIComponent(url));
+            var manifestUrl = "https://www.safetybank.co.uk/forwardDownload/download.aspx?name=Info.plist&url={0}".format(encodeURIComponent(url));
             url = 'itms-services://?action=download-manifest&url={0}'.format(encodeURIComponent(manifestUrl));
             return res.redirect(url);
         }
@@ -450,7 +455,7 @@ Server.define({
         var build = parsedBuild.build; req.url
 
         if (platform == 'ios') {
-            var port = this.conf.proxyport || this.conf.port;
+            var port = this.conf.proxyport || this.conf.uiport || this.conf.port;
             var baseURL = [
 					this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
 					'://',
@@ -461,7 +466,10 @@ Server.define({
 					build.id,
 					'/ios/'
             ].join('');
-            var ipaPath = build.outputFiles.findOne(function (file) { return path.extname(file) == '.ipa'; });
+            var ipaPath = build.outputFiles.findOne(function (file) {
+                 return path.extname(file.file) == '.ipa'; 
+            });
+            ipaPath = ipaPath && ipaPath.file;
             var Info_plist = build.outputFiles.findOne(function(file) { return path.basename(file.file) == 'Info.plist'; });
             var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
             build.ipaFile = ipaFile;
@@ -473,8 +481,13 @@ Server.define({
                 subtitle: ipaFile.team,
                 title: ipaFile.name
             };
-
-            res.writeHead(200, { 'Content-Type': 'text/xml' });
+            //manifest.fileURL = "https://www.safetybank.co.uk/forwardDownload/download.aspx?name=Safetybank.ipa&url={0}".format(encodeURIComponent(manifest.fileURL));
+            res.writeHead(200, {
+                'Content-Type': 'text/xml' ,
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': 0
+            });
             mu.compileAndRender(__dirname + '/ipa/manifest.xml', manifest).pipe(res);
         }
     },
@@ -500,7 +513,7 @@ Server.define({
         			return;
         		case '512.png':
         			res.writeHead(200, { 'Content-Type': 'image/png' });
-        			var filestream = fs.createReadStream(__dirname + '/512.png');
+        			var filestream = fs.createReadStream(__dirname + '/ipa/512.png');
         			filestream.pipe(res);
         			return;
         		default:

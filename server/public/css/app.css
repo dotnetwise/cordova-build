@@ -1,4 +1,4 @@
-﻿body {
+body {
 	padding-bottom: 40px;
 	overflow-y: scroll;
 }
@@ -14,10 +14,11 @@ body ul.dashboard-list li:first-child {
 body #screenshot {
 	position: absolute;
 	border: 1px solid #ccc;
-	background: #333;
-	padding: 5px;
+	background: white;
+	border: 2px solid black;
+	padding: 10px;
 	display: none;
-	color: #fff;
+	color: black;
 }
 
 .spin {
