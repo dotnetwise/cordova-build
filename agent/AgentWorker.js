@@ -239,9 +239,9 @@ AgentWorker.define({
             if (err) return buildFailed('error starting build\n{2}', err);
             agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
-            var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.mode || 'release');
+            var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.conf.buildmode || 'release');
             if (build.conf.platform == 'ios')
-                cmd += ' | tee "' + path.resolve(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running)"';
+                cmd += ' | tee "' + path.resolve(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running|return)"';
             agent.log(build, Msg.info, 'Executing {2}', cmd);
             var cordova_build = exec(cmd, {
                 cwd: locationPath,
@@ -314,7 +314,7 @@ AgentWorker.define({
 
             var xcodebuildLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.xcodebuild.log');
             var signLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.sign.xcrun.log');
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(error|warning|succeeded|fail|running)'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|fail|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);

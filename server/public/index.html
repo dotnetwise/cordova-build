@@ -244,7 +244,7 @@
 
                                     <ul class="nav nav-tabs" id="selectedBuildTab">
                                         <li data-bind="hidden: !selectedBuild() ? selectedBuild.tab('#noBuild')
-        && false : (selectedBuild.tab() == '#noBuild' && selectedBuild.tab('#info') || true), css: {
+        && false : (selectedBuild.tab() == '#noBuild' && selectedBuild.tab(initialTab) || true), css: {
             active:
             selectedBuild.tab() == '#noBuild'
         }"
@@ -324,20 +324,29 @@
     }"
                                                             class="qr center" />
                                                     </a>
+                                                    <a data-bind="
+    visible: typeof unwrap($data.platform) == 'string',
+    attr: {
+        href: unwrap($data && $data.status) == 'success' ? encodeURIComponent(['/manifest/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : ''].join('')) : null,
+    },
+    "
+                                                        style="display: block;">
+                                                        <div class="center">QR</div>
+                                                    </a>
                                                 </div>
                                                 <div class="span2 build-report no-gutter build-info">
                                                     <dl class="build-status report">
                                                         <dd class="name">
-                                                            <b><a data-bind="attr: {
-    href: '#' + ($data && $data.id || $parent && $parent.id || $parents[1] && $parents[1].id || $parents[2]
-                                                        && $parents[2].id),
+
+                                                            <b><h3 data-bind="
+attr: {
     title: ($data.conf.number && $data.conf.number && ('Release number: ' + $data.conf.number && $data.conf.number + '\n') || '')
         + 'Build id: #' + ($data.id || $parent && $parent.id || $parents[1]
                     && $parents[1].id || $parents[2] && $parents[2].id)
 },
     text: '#' + ($data.conf.number && $data.conf.number || $data.id || $parent && $parent.id || $parents[1]
                                                 && $parents[1].id || $parents[2] && $parents[2].id)"
-                                                                href="#"></a></b>
+                                                                href="#"></h3></b>
                                                         </dd>
                                                         <dd class="status">
                                                             <label>Status:</label><span data-bind="css: 'label-'
@@ -486,7 +495,7 @@
                                                 <a data-bind="
     click: function (build) { $parents[1].selectedBuild(build.master || build); $parents[1].selectedBuild.tab('#info'); },
     attr: {
-        href: '#' + unwrap(id) + '?' + unwrap($data.platform),
+        href: '#view/' + unwrap(id) + '/' + unwrap($data.platform),
     },">
 
                                                     <span data-bind="text: id" class="build-id"></span>
@@ -763,7 +772,7 @@
     <!-- multiple file upload plugin -->
     <script src="js/jquery.uploadify-3.1.min.js"></script>
     <!-- history.js for cross-browser state change on ajax -->
-    <script src="js/jquery.history.js"></script>
+    <!--<script src="js/jquery.history.js"></script>-->
     <!-- application script for Charisma demo -->
     <script src="js/charisma.js"></script>
     <script src="js/qr-js/qr.min.js"></script>

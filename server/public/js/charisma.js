@@ -44,43 +44,43 @@ $(document).ready(function(){
 	});
 	
 	//establish history variables
-	var
-		History = window.History, // Note: We are using a capital H instead of a lower h
-		State = History.getState(),
-		$log = $('#log');
+	//var History = window.History; // Note: We are using a capital H instead of a lower h
+    //var State = History.getState();
+	//var	$log = $('#log');
 
 	//bind to State Change
-	History.Adapter.bind(window,'statechange',function(){ // Note: We are using statechange instead of popstate
-		var State = History.getState(); // Note: We are using History.getState() instead of event.state
-		$.ajax({
-			url:State.url,
-			success:function(msg){
-				$('#content').html($(msg).find('#content').html());
-				$('#loading').remove();
-				$('#content').fadeIn();
-				var newTitle = $(msg).filter('title').text();
-				$('title').text(newTitle);
-				docReady();
-			}
-		});
-	});
+//	History.Adapter.bind(window,'statechange',function(){ // Note: We are using statechange instead of popstate
+//		var State = History.getState(); // Note: We are using History.getState() instead of event.state
+//console.error('hash change', State);
+	//	$.ajax({
+	//		url:State.url,
+	//		success:function(msg){
+	//			$('#content').html($(msg).find('#content').html());
+	//			$('#loading').remove();
+	//			$('#content').fadeIn();
+	//			var newTitle = $(msg).filter('title').text();
+	//			$('title').text(newTitle);
+	//			docReady();
+	//		}
+	//	});
+	//});
 	
 	//ajaxify menus
-	$('a.ajax-link').click(function(e){
-		if($.browser.msie) e.which=1;
-		if(e.which!=1 || !$('#is-ajax').prop('checked') || $(this).parent().hasClass('active')) return;
-		e.preventDefault();
-		if($('.btn-navbar').is(':visible'))
-		{
-			$('.btn-navbar').click();
-		}
-		$('#loading').remove();
-		$('#content').fadeOut().parent().append('<div id="loading" class="center">Loading...<div class="center"></div></div>');
-		var $clink=$(this);
-		History.pushState(null, null, $clink.attr('href'));
-		$('ul.main-menu li.active').removeClass('active');
-		$clink.parent('li').addClass('active');	
-	});
+	//$('a.ajax-link').click(function(e){
+	//	if($.browser.msie) e.which=1;
+	//	if(e.which!=1 || !$('#is-ajax').prop('checked') || $(this).parent().hasClass('active')) return;
+	//	e.preventDefault();
+	//	if($('.btn-navbar').is(':visible'))
+	//	{
+	//		$('.btn-navbar').click();
+	//	}
+	//	$('#loading').remove();
+	//	$('#content').fadeOut().parent().append('<div id="loading" class="center">Loading...<div class="center"></div></div>');
+	//	var $clink=$(this);
+	//	//History.pushState(null, null, $clink.attr('href'));
+	//	$('ul.main-menu li.active').removeClass('active');
+	//	$clink.parent('li').addClass('active');	
+	//});
 	
 	//animating menus on hover
 	$('ul.main-menu li:not(.nav-header)').hover(function(){

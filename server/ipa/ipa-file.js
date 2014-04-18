@@ -21,7 +21,7 @@ module.exports = function() {
 
 
 function IPAFile(path, Info_plist) {
-    this.Info_plist = Info_plist;
+	this.Info_plist = Info_plist;
 	if (path)
 		this.path = path;
 }
@@ -127,13 +127,13 @@ function startParsing(target) {
 		if (!foundProvision && entry.entryName.match(/embedded\.mobileprovision$/)) {
 			foundProvision = true;
 			var data = file.readAsText(entry);
-	        target.team = getKey(data, keys.team);
+			target.team = getKey(data, keys.team);
 		}
 		
 		if (!foundIcon && entry.entryName.match(/Icon\.png$/)) {
 			foundIcon = true;
 			var data = file.readFile(entry);
-		    target.icon = data;
+			target.icon = data;
 		}
 		
 		if (foundInfo && foundProvision && foundIcon)

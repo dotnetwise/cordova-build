@@ -35,11 +35,33 @@ function ServerBrowser(conf) {
     this.agents = observableArray([]);
     this.builds = observableArray([]);
     this.clients = observableArray([]);
-    this.selectedBuild = observable();
-    this.selectedBuild = observable();
-    this.selectedBuild.tab = observable('#noBuild');
+    var selectedBuild = this.selectedBuild = observable();
+    var hash = /view\/(.*)(\/(.*?))$/.exec(location.hash || '');
+    var tab = hash && hash[3] && '#'+hash[3] || '#noBuild';
+    var initialTab = this.initialTab = tab || "#info";
+    this.initialBuildId = hash && hash[1];
+    var selectedTab = this.selectedBuild.tab = observable(tab);
     this.status = observable('connecting');
     this.disconnectedSince = observable();
+    this.selectedBuild.subscribe(updateHash);
+    this.selectedBuild.tab.subscribe(updateHash);
+    updateHash();
+    function updateHash() {
+        var build = selectedBuild();
+        var tab = selectedTab();
+        //console.error("TAB", tab, build && build.id, build);
+        if (tab == '#noBuild')
+            tab = initialTab;
+        tab = tab.substr(1);
+        if (build && tab != "info" && !build.conf.platform.findOne(function(platform) { return platform == tab; })) {
+            selectedTab("#info");
+        }
+        else if (build) { 
+            //console.error(tab);
+            location.href = build && '#view/'+build.id+'/'+tab || "/";
+        }
+    }
+
     var url = '{0}{1}{2}/{3}'.format(conf.protocol || 'http://', conf.host || 'localhost', conf.port == 80 ? '' : ':' + conf.port, 'www');
     var as = $.cookie('as') !== 'false';
     this.as = observable(as);
@@ -239,10 +261,12 @@ ServerBrowser.define({
             
             this.agents(status.agents);
             this.builds(builds);
-            if (builds[0]) {
+            var initialBuildId = this.initialBuildId;
+            var selectBuild = builds.findOne(function(build) { return build.id == initialBuildId }) || builds[0];
+            if (selectBuild) {
                 var sb = this.selectedBuild();
                 if (!sb || !this.builds.map[sb.id])
-                    this.selectedBuild(builds[0]);
+                    this.selectedBuild(selectBuild);
             }
             else this.selectedBuild(null);
         }

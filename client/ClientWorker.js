@@ -84,7 +84,9 @@ ClientWorker.define({
             build.conf.iosprovisioningpath = this.conf.iosprovisioningpath;
         if (this.conf.name)
             build.conf.name = this.conf.name;
-        
+        if (this.conf.buildmode)
+        	build.conf.buildmode = this.conf.buildmode;
+
 
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 

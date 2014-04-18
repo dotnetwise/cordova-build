@@ -432,7 +432,8 @@ Server.define({
                 build.id,
                 '/manifest.plist',
             ].join('');
-            url = 'itms-services://?action=download-manifest&url={0}'.format(encodeURIComponent(url));
+            var manifestUrl = "https://www.safetybank.co.uk/forwardDownload/download.aspx?name=manifest.plist&url={0}".format(encodeURIComponent(url));
+            url = 'itms-services://?action=download-manifest&url={0}'.format(encodeURIComponent(manifestUrl));
             return res.redirect(url);
         }
         else this.serveRelease(req, res);
@@ -447,7 +448,7 @@ Server.define({
             var port = this.conf.proxyport || this.conf.port;
             var baseURL = [
 					req.protocol,
-					'//',
+					'://',
 					this.conf.proxy || this.conf.server,
 					port != 80 ? ':' : '',
 					port != 80 ? port : '',
@@ -457,7 +458,7 @@ Server.define({
             ].join('');
             var ipaPath = build.outputFiles[0].file;
             var Info_plist = build.outputFiles.findOne(function(file) { return path.basename(file.file) == 'Info.plist'; });
-            var file = build.ipaFile || new IPAFile(ipaPath, Info_plist);
+            var file = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
             build.ipaFile = file;
             var manifest = {
                 fileURL: baseURL + path.basename(ipaPath || 'application.ipa'),

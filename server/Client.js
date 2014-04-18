@@ -104,7 +104,7 @@ module.exports = Function.define({
                         var files = [];
                         allFiles.forEach(function (file) {
                             if (!file.group || file.group == platformBuild.conf.platform)
-                                files.push(file);
+                                files.push(extend({}, file));
                         });
                         platformBuild.files = files;
                         server.updateBuildStatus(platformBuild, 'queued', true);
