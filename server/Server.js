@@ -149,7 +149,6 @@ Server.define({
         conf.port = conf.port || 8300;
         conf.uiport = conf.uiport == 0 || conf.uiport == false ? false : conf.uiport || 8300;
         var interfacePort = conf.proxyport || conf.uiport || conf.port;
-        console.log("");
         if (conf.uiport) console.log('Cordova build INTERFACE is accesible at {0}{1}{2}/'
 			.format(conf.proxyprotocol || conf.uiprotocol || conf.protocol || 'http://', 
 					conf.proxy || conf.ui || conf.server || 'localhost', 
@@ -473,8 +472,9 @@ Server.define({
             var Info_plist = build.outputFiles.findOne(function(file) { return path.basename(file.file) == 'Info.plist'; });
             var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
             build.ipaFile = ipaFile;
+            var fileURL = baseURL + path.basename(ipaPath || 'application.ipa');
             var manifest = {
-                fileURL: baseURL + path.basename(ipaPath || 'application.ipa'),
+                fileURL: fileURL,
                 displayImage: baseURL + '57.png',
                 fullSizeImage: baseURL + '512.png',
                 bundleIdentifier: ipaFile.id,
@@ -483,7 +483,7 @@ Server.define({
             };
             //manifest.fileURL = "https://www.safetybank.co.uk/forwardDownload/download.aspx?name=Safetybank.ipa&url={0}".format(encodeURIComponent(manifest.fileURL));
             res.writeHead(200, {
-                'Content-Type': 'text/xml' ,
+                'Content-Type': 'application/xml' ,
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': 0
