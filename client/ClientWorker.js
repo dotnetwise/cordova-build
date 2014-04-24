@@ -86,7 +86,8 @@ ClientWorker.define({
             build.conf.name = this.conf.name;
         if (this.conf.buildmode)
         	build.conf.buildmode = this.conf.buildmode;
-
+        if (this.conf.number)
+        	build.conf.number = this.conf.number;
 
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 

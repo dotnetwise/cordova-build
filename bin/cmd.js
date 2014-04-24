@@ -37,7 +37,7 @@ var listen = conf.listen;
 
         }
     }
-    finally {
+    catch(e) {
     }
 
 if (listen.server || listen.ui) {
