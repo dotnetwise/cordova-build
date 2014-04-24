@@ -407,7 +407,7 @@ Server.define({
                  return path.extname(file.file) == '.ipa'; 
             });
             ipaPath = ipaPath && ipaPath.file;
-            var Info_plist = build.outputFiles.findOne(function(file) { return path.basename(file.file) == 'Info.plist'; });
+            var Info_plist = build.outputFiles.findOne(function(file) { return /Info\.plist/i.test(path.basename(file.file)); });
             var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
             build.ipaFile = ipaFile;
             var fileURL = baseURL + path.basename(ipaPath || 'application.ipa');
@@ -441,7 +441,7 @@ Server.define({
         if (!ipaPath)
         	throw "cannot find any .ipa output files";
         if (askForFile && askForFile != path.basename(ipaPath)) {
-        	var Info_plist = build.outputFiles.findOne(function (file) { return path.basename(file.file) == 'Info.plist'; });
+            var Info_plist = build.outputFiles.findOne(function(file) { return /Info\.plist/i.test(path.basename(file.file)); });
         	var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
         	build.ipaFile = ipaFile;
         	switch (askForFile) {
