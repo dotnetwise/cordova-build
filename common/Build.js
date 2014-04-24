@@ -36,6 +36,7 @@ function Build(conf, client, agent, platform, files, outputFiles, id, masterId) 
         this.outputFiles = outputFiles;
 }
 Build.define({
+	Id: function () { return this.conf.number || this.Id; },
     serialize: function (includeOptions, platformOptions) {
         var result = {
             conf: this.conf,

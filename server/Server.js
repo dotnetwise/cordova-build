@@ -32,74 +32,8 @@ function Server(conf) {
     this.wwws = [];
     this.platforms = {};
     this.builds = [];
-    var m = {
-        "conf": {
-            "status": "success",
-            "started": "2014-04-15T23:33:08.230Z",
-            "platform": [
-              "ios"
-            ],
-            "iosprojectpath": "platforms\/ios\/build\/device\/Safetybank.app",
-            "iosprovisioningname": "iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)",
-            "iosprovisioningpath": "\/usr\/local\/provisions\/safetybank.mobileprovision",
-            "completed": "2014-04-15T23:33:38.409Z",
-            "duration": "30 seconds"
-        },
-        "id": "xJqd1Po3n",
-        "files": [
-          {
-              "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\input\\core.7z",
-              "group": null
-          },
-          {
-              "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\input\\www.7z",
-              "group": null
-          },
-          {
-              "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\input\\wp8.7z",
-              "group": "wp8"
-          },
-          {
-              "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\input\\android.7z",
-              "group": "android"
-          },
-          {
-              "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\input\\ios.7z",
-              "group": "ios"
-          }
-        ],
-        "platforms": [
-          {
-              "conf": {
-                  "status": "success",
-                  "started": "2014-04-15T23:33:08.230Z",
-                  "platform": "ios",
-                  "iosprojectpath": "platforms\/ios\/build\/device\/Safetybank.app",
-                  "iosprovisioningname": "iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)",
-                  "iosprovisioningpath": "\/usr\/local\/provisions\/safetybank.mobileprovision",
-                  "completed": "2014-04-15T23:33:38.392Z",
-                  "duration": "30 seconds"
-              },
-              "id": "eklt1Pj23",
-              "masterId": "xJqd1Po3n",
-              "files": [
-                "~files~0",
-                "~files~1",
-                "~files~4"
-              ],
-              "outputFiles": [
-                {
-                    "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\Safetybank.xJqd1Po3n.ipa"
-                },
-                {
-                    "file": "D:\\Work\\DotNetWise\\Nuggets\\cordova-build\\builds\\xJqd1Po3n\\Info.xJqd1Po3n.plist"
-                }
-              ]
-          }
-        ]
-    };
-    var build = new Build(m);
-    this.registerBuild(build);
+    //var build = new Build(m);
+    //this.registerBuild(build);
 
     this.location = conf.location || path.resolve('builds');
     var cache = this.cache = {};
@@ -319,7 +253,11 @@ Server.define({
         var buildParam = build;
         if (build && !build.updateStatus) {
             //self detect build if an id was passed
-            build = this.builds[build];
+        	build = this.builds[build];
+        	if (!build) {
+        		this.log(new Msg(null, agent, 'S', Msg.debug, 'Build not found with id: {2}', buildParam));
+        		return;
+        	}
         }
         if (build.master && !doNotLogOnMaster && build.status != status) {
             var msg = new Msg(build.master, null, 'S', Msg.status, 'Platform {2} update status: {3}', build.conf.platform, status);

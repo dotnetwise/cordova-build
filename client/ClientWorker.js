@@ -66,6 +66,8 @@ ClientWorker.define({
         var client = this;
         var files = this.files;
         var platforms = this.conf.build;
+        if (this.conf.number && this.conf.number.indexOf && this.conf.number.indexOf('0.') == 0)
+        	this.conf.number = this.conf.number.substr(2);
         var build = this.build = new Build({
             logs: [],
             status: 'uploading',
@@ -86,9 +88,6 @@ ClientWorker.define({
             build.conf.name = this.conf.name;
         if (this.conf.buildmode)
         	build.conf.buildmode = this.conf.buildmode;
-        if (this.conf.number)
-        	build.conf.number = this.conf.number;
-
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {
@@ -132,8 +131,8 @@ ClientWorker.define({
     'onBuildSuccess': function (build) {
         var client = this;
         if (this.conf.save) {
-            var id = build.masterId || build.id;
-            var locationPath = path.resolve(this.location, id);
+            //var id = build.masterId || build.id;
+            var locationPath = path.resolve(this.location, this.build.Id());
             var files = build.outputFiles;
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {

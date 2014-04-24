@@ -10,6 +10,9 @@ body ul.dashboard-list li {
 body ul.dashboard-list li:first-child {
 	border: none;
 }
+body ul.dashboard-list li a span {
+	text-align: left;
+}
 
 body #screenshot {
 	position: absolute;

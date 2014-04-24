@@ -52,14 +52,14 @@ Agent.define({
         var agent = this;
         var server = this.server;
         var id = build.masterId || responseBuild.id;
-        var locationPath = path.resolve(server.location, id);
+        var locationPath = path.resolve(server.location, build.master && build.master.Id() || build.Id());
 
         this.log(build, client, Msg.info, 'files uploaded. Storing them on the server', locationPath);
 
         var outputFiles = responseBuild.outputFiles;
         build.outputFiles = outputFiles;
         outputFiles.forEach(function (file) {
-            file.file = [build.number, build.number && '.' || '', file.name || path.basename(file.file)].join('');
+            file.file = [build.conf.number, build.conf.number && '.' || '', file.name || path.basename(file.file)].join('');
         });
         mkdirp(locationPath, function (err) {
             if (err) {

@@ -20,6 +20,10 @@ Msg.define({
         this.senderId = sender && sender.id || sender;
         this.by = by;
         var msg = message;
+        if (build && build.conf && build.conf.number)
+        	this.buildNumber = build.conf.number;
+		if (sender && sender.name) 
+			this.senderName = sender.name;
         splice.call(arguments, 0, 5, this.senderId, this.buildId);
         if (typeof msg != "string") {
             console.error('UPDATE ',  arguments);
@@ -39,10 +43,10 @@ Msg.define({
             msg = this.message;
         }
         else {        
-            msg = [by, this.senderId ? ' @{0}' : '', this.buildId ? ' about #{1}' : '', ': ', this.message];
+        	msg = [by, this.senderName || this.senderId ? ' @{0}' : '', this.buildNumber || this.buildId ? ' about #{1}' : '', ': ', this.message];
             msg = msg.join('');
         }
-        msg = msg.format(this.senderId, this.buildId);
+        msg = msg.format(this.senderName || this.senderId, this.buildNumber || this.buildId);
         return msg;
     }
 }).defineStatic({

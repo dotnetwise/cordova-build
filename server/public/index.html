@@ -221,7 +221,7 @@
                     <div class="box span12 has-overlay" style="margin-top: 0;">
                         <div data-bind="css: { disconnected: status() != 'connected' }" class="overlay"></div>
                         <div class="box-header well">
-                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id)) : 'Latest Build'">
+                            <h2><i class="icn icon-info-sign"></i><span data-bind="text: unwrap(selectedBuild) && unwrap(unwrap(selectedBuild).id) ? 'Build #' + (unwrap(selectedBuild) && (unwrap(unwrap(selectedBuild).conf.number)) || unwrap(unwrap(selectedBuild).id)) : 'Latest Build'">
                                 Latest Build</span></h2>
 
                             <div class="box-icon">
@@ -268,7 +268,7 @@
                                         <li data-bind="
     attr: {
         rel: (unwrap(qr) || '').indexOf('data:') + 1 ? qr : null,
-        title: [unwrap($data.platform), ' #', unwrap(id), ' &lt;span class=\'label label-{0}\'&gt;{0}&lt;/label&gt;'.format(unwrap(status) == 'success' ? '' : unwrap(status))].join(''),
+        title: [unwrap($data.platform), ' #', conf && conf.number || unwrap(id), ' &lt;span class=\'label label-{0}\'&gt;{0}&lt;/label&gt;'.format(unwrap(status) == 'success' ? '' : unwrap(status))].join(''),
     },
     css: { active: $parent.selectedBuild.tab() == '#' + unwrap($data && $data.platform) }"
                                             class="tab-icon preview">
@@ -344,7 +344,7 @@ attr: {
         + 'Build id: #' + ($data.id || $parent && $parent.id || $parents[1]
                     && $parents[1].id || $parents[2] && $parents[2].id)
 },
-    text: '#' + ($data.conf.number && $data.conf.number || $data.id || $parent && $parent.id || $parents[1]
+    text: '#' + ($data.conf && $data.conf.number || $data.id || $parent && $parent.id || $parents[1]
                                                 && $parents[1].id || $parents[2] && $parents[2].id)"
                                                                 href="#"></h3></b>
                                                         </dd>
@@ -498,8 +498,8 @@ attr: {
         href: '#view/' + unwrap(id) + '/' + unwrap($data.platform),
     },">
 
-                                                    <span data-bind="text: id" class="build-id"></span>
-                                                </a>
+                                                    <span data-bind="text: '#'+(unwrap(conf.number) || unwrap(id))" class="build-id"></span>
+                                                </a> 
                                                 <!--<span data-bind="text: duration" class="build-duration"></span>-->
                                             </dd>
                                             <dd class="since">

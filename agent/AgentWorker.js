@@ -175,7 +175,7 @@ AgentWorker.define({
     },
     genericBuild: function (build, filesDone, done, onExecutingCordovaBuild) {
         var agent = this;
-        var locationPath = path.resolve(agent.workFolder, build.id);
+        var locationPath = path.resolve(agent.workFolder, build.Id());
         var files = build.files;
 
         function buildFailed(args) {
@@ -282,7 +282,7 @@ AgentWorker.define({
     buildIOS: function (build) {
         var agent = this;
         this.genericBuild(build, function (startBuild) {
-            var globs = path.resolve(agent.workFolder, build.id, 'platforms/ios/cordova/**/*');
+            var globs = path.resolve(agent.workFolder, build.Id(), 'platforms/ios/cordova/**/*');
             //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
@@ -303,17 +303,18 @@ AgentWorker.define({
                 return agent.buildFailed.apply(agent, arguments);
             }
             agent.log(build, Msg.info, 'creating a new signed ipa');
+            var buildId = build.Id();
             if (!build.conf.iosprojectpath) return buildFailed('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
             if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
-            var pathOfIpa = path.resolve(agent.workFolder, build.id, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
-            var pathOfInfo_plist = path.resolve(agent.workFolder, build.id, build.conf.iosprojectpath, 'Info.plist');
-            var iosProjectPath = path.resolve(agent.workFolder, build.id, build.conf.iosprojectpath);
+            var pathOfIpa = path.resolve(agent.workFolder, buildId, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
+            var pathOfInfo_plist = path.resolve(agent.workFolder, buildId, build.conf.iosprojectpath, 'Info.plist');
+            var iosProjectPath = path.resolve(agent.workFolder, buildId, build.conf.iosprojectpath);
             if (!fs.statSync(iosProjectPath).isDirectory()) return buildFailed('-iosprojectpath:"{2}" does not exist or not a directory! Full path: {3}', build.conf.iosprojectpath, iosProjectPath);
             if (!fs.existsSync(build.conf.iosprovisioningpath)) return buildFailed('-iosprovisioningpath:"{2}" file does not exist!', build.conf.iosprojectpath);
 
-            var xcodebuildLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.xcodebuild.log');
-            var signLogPath = path.resolve(agent.workFolder, build.id, 'build.ios.sign.xcrun.log');
+            var xcodebuildLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.xcodebuild.log');
+            var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
             var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|fail|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
@@ -351,7 +352,7 @@ AgentWorker.define({
     buildSuccess: function (build, globFiles) {
 
         var agent = this;
-        var workFolder = path.resolve(agent.workFolder, build.id);
+        var workFolder = path.resolve(agent.workFolder, build.Id());
         multiGlob.glob(globFiles, {
             cwd: workFolder,
         }, function (err, files) {
