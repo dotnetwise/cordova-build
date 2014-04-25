@@ -185,9 +185,16 @@ AgentWorker.define({
             done.apply(agent, arguments);
         }
 
-        return agent.ensureWorkFolder(s1EmptyWorkFolder);
+        return s1Cleanup();
+        function s1Cleanup() {
+        	serverUtils.cleanLastFolders(agent.conf.keep, agent.workFolder + '/*', s1CleanupDone);
+        }
+        function s1CleanupDone(err) {
+        	err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in AGENT {3} working folder {4}:\n{5}', agent.conf.keep, agent.conf.platform, agent.workFolder, err);
+        	agent.ensureWorkFolder(s2EmptyWorkFolder);
+        }
 
-        function s1EmptyWorkFolder(err) {
+        function s2EmptyWorkFolder(err) {
             if (err) return buildFailed('error creating the working folder {2}\n{3}', agent.workFolder, err);
             var glob = locationPath;
             if (!/(\/|\\)$/.test(glob))
@@ -276,7 +283,7 @@ AgentWorker.define({
     },
     buildWP8: function (build) {
         this.genericBuild(build, null, function (err) {
-            !err && this.buildSuccess(build, ['platforms/wp8/Bin/Release/*.xap', 'build.wp8.log']);
+            !err && this.buildSuccess(build, ['platforms/wp8/**/*.xap', 'build.wp8.log']);
         });
     },
     buildIOS: function (build) {

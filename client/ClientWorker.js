@@ -131,20 +131,21 @@ ClientWorker.define({
     'onBuildSuccess': function (build) {
         var client = this;
         if (this.conf.save) {
-            //var id = build.masterId || build.id;
-            var locationPath = path.resolve(this.location, this.build.Id());
+        	//var id = build.masterId || build.id;
+        	var locationPath = path.resolve(client.location, this.build.Id());
             var files = build.outputFiles;
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
                     client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);
-                    client.onBuildFailed(result);
+                    return client.onBuildFailed(result);
                 }
-                else done();
+                serverUtils.cleanLastFolders(client.conf.keep, client.location+"/*", done);
             });
         }
-        else done;
-        function done() {
-            serverUtils.freeMemFiles(build.outputFiles);
+        else done();
+        function done(err) {
+        	err && client.log(build, Msg.debug, 'Error while cleaning up last {2} folders in CLIENT output folder {3}:\n{4}', client.conf.keep, client.location, err);
+        	serverUtils.freeMemFiles(build.outputFiles);
             client.log(build, Msg.info, 'Build done! It took {2}.', new Date(build.conf.started).elapsed());
             if (++client.built >= client.conf.build.length)
                 client.disconnect();

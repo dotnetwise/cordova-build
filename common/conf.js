@@ -18,7 +18,8 @@ commandLine.addArgument('proxyprotocol', { type: 'string' });
 commandLine.addArgument('ui', { type: 'string' });
 commandLine.addArgument('uiport', { type: 'number' });
 commandLine.addArgument('uiprotocol', { type: 'string' });
-commandLine.addArgument('mode', { type: 'string', required: true, allowedValues: ['server', 'client', 'agent', 'all'] });
+commandLine.addArgument('mode', { type: 'string', required: true, allowedValues: ['server', 'client', 'agent', 'all', 'ui'] });
+commandLine.addArgument('keep', { type: 'number'});
 //commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
 var conf = commandLine.parseNode.apply(commandLine, process.argv);
 
@@ -70,6 +71,6 @@ function parseArgs() {
     conf.ios = (conf.ios || '').split(/;|,/g);
     conf.files = (conf.files || '').split(/;|,/g);
     conf.iosprojpath = conf.iosprojpath || 'platforms/ios/build/device/Safetybank.app';
-
+    conf.keep = conf.keep || 0;
     return conf;
 }

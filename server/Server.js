@@ -461,8 +461,8 @@ Server.define({
         }
 
         var filename = path.basename(ipaPath);
-        if (platform != 'ios')
-            res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+        //if (platform != 'ios')
+        res.setHeader('Content-disposition', 'attachment; filename=' + filename);
         res.setHeader('Content-type', this.mime_types[platform] || this.mime_types.ios);
 
         var filestream = fs.createReadStream(ipaPath);

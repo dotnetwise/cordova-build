@@ -1,8 +1,9 @@
-﻿var path = require('path');
-var fs = require('fs');
+var path = require('path');
+var fs = require('fs.extra');
 var async = require('async');
 var mkdirp = require('mkdirp');
 var extend = require('extend');
+var multiGlob = require('multi-glob');
 module.exports = {
     writeFiles: function (folder, files, locationMsg, doNotFreeMem, done) {
         if (typeof doNotFreeMem == 'function') {
@@ -61,5 +62,29 @@ module.exports = {
                 err = "error reading build input files on {0}\n{1}".format(locationMsg, err);
             done(err);
         }) : done(null);
+    },
+    cleanLastFolders: function (keepLast, globsArray, done) {
+    	if (keepLast <= 0)
+    		done();
+    	multiGlob.glob(globsArray, function (err, paths) {
+    		if (err) return done(err);
+    		if (!paths.length) return done();
+				
+    		async.map(paths, function (path, done) {
+    			fs.stat(path, function (err, stat) {
+    				done(err, { path: path, stat: stat });
+    			});
+    		}, function (err, stats) {
+    			if (err) return done(err);
+    			stats = stats.filter(function (stat) { return stat.stat.isDirectory(); });
+    			stats.sort(function (a, b) { return b.stat.mtime - a.stat.mtime; });
+    			stats.splice(0, keepLast);
+    			async.each(stats, function (stat, cb) {
+    				fs.remove(stat.path, cb);
+    			}, function (err) {
+    				done(err);
+    			});
+    		});
+    	});
     },
 };
