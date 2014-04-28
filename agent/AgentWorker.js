@@ -140,10 +140,10 @@ AgentWorker.define({
             else exec('/Applications/Keka.app/Contents/Resources/keka7z', { maxBuffer: maxBuffer }, function (err) {
                 if (!err)
                     zipArchiver = 'keka7z';
-                else exec('unzip', { maxBuffer: maxBuffer }, function (err) {
-                    if (!err)
-                        zipArchiver = 'unzip';
-                });
+                //else exec('unzip', { maxBuffer: maxBuffer }, function (err) {
+                //    if (!err)
+                //        zipArchiver = 'unzip';
+                //});
             });
         });
     },
@@ -151,28 +151,28 @@ AgentWorker.define({
         var agent = this;
         switch (zipArchiver) {
             case '7z':
-                exec('7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+                exec('7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
         	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err || stderr) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
             case 'keka7z':
-                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >/dev/null'.format(file, target), opts, function (err, stdout, stderr) {
         	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
-            case 'unzip':
-                exec('unzip -uo {0} -d {1}'.format(file, target), opts, function (err, stdout, stderr) {
-        	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
-                    if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
-                    done();
-                });
-                break;
+            //case 'unzip':
+            //    exec('unzip -uo {0} -d {1} '.format(file, target), opts, function (err, stdout, stderr) {
+        	//        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+            //        if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
+            //        done();
+            //    });
+            //    break;
             default:
-                agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z, unzip');
+                agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z');
                 break;
         }
     },
@@ -209,11 +209,11 @@ AgentWorker.define({
                     fs.remove(file, function (err) {
                         cb(err);
                     });
-                }, s2WriteFiles);
+                }, s3WriteFiles);
             });
         }
 
-        function s2WriteFiles(err) {
+        function s3WriteFiles(err) {
         	if (err) return buildFailed('error cleaning the working folder {2}\n{3}', agent.workFolder, err);
         	files.forEach(function (file) {
         		file.file = path.resolve(locationPath, path.basename(file.file));
@@ -229,7 +229,7 @@ AgentWorker.define({
             async.each(files, s5ExtractFile, s6AllFilesExtracted);
         };
         function s5ExtractFile(item, cb) {
-            agent.log(build, Msg.info, 'extracting {2} to {3}', item.file, locationPath);
+            agent.log(build, Msg.debug, 'extracting {2} to {3}', item.file, locationPath);
             agent.extractArchive(build, item.file, locationPath, {
                 cwd: locationPath,
                 maxBuffer: maxBuffer,

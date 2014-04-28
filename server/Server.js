@@ -32,15 +32,37 @@ function Server(conf) {
     this.wwws = [];
     this.platforms = {};
     this.builds = [];
-    //var build = new Build(m);
-    //this.registerBuild(build);
-
     this.location = conf.location || path.resolve('builds');
+    var server = this;
+    multiGlob.glob(server.location + '/*/build.json', function (err, builds) {
+    	var loadedBuilds = [];
+    	async.each(builds, function (buildPath, cb) {
+    		fs.readFile(buildPath, function (err, data) {
+    			var buildJSON;
+    			try {
+    				buildJSON = JSON.parse(data);
+    			}
+    			catch (e) {
+    				return cb(e);
+    			}
+    			var build = new Build(buildJSON);
+    			server.builds.push(build);
+    			server.builds[build.id] = build;
+                build.platforms && build.platforms.forEach(function(platformBuild) {
+                    server.builds[platformBuild.id] = platformBuild;
+                });
+    			loadedBuilds.push(build);
+    			cb();
+    		});
+    	}, function (err) {
+    		loadedBuilds.length && server.log(new Msg(null, null, 'S', Msg.debug, '{2} previous build(s) were successfully read from the disk', loadedBuilds.length));
+    		err && server.log(new Msg(null, null, 'S', Msg.debug, 'an error occurred while trying to read previous build(s) from the disk\n{2}', err));
+    	});
+    });
     var cache = this.cache = {};
     var www = this.www = __dirname + '/public';
     var htmlFiles = ['index.html', 'server.html'];
     var encoding = { encoding: 'utf-8' };
-    var server = this;
     htmlFiles.forEach(function (file) {
         var path = www + '/' + file;
         var lastTime = new Date();
@@ -436,10 +458,11 @@ Server.define({
         var build = parsedBuild.build;
         var platform = parsedBuild.platform;
         var askForFile = req.params.file;
-        var ipaPath = build.outputFiles.findOne(function (file) { return path.extname(file.file) == '.ipa'; });
+        var server = this;
+        var ipaPath = build.outputFiles.findOne(function (file) { return path.extname(file.file) == server.exts[platform]; });
         ipaPath = ipaPath && ipaPath.file;
-        if (!ipaPath)
-        	throw "cannot find any .ipa output files";
+        if (platform == 'ios' && !ipaPath)
+            throw "cannot find any .ipa output files {0}".format(askForFile);
         if (askForFile && askForFile != path.basename(ipaPath)) {
             var Info_plist = build.outputFiles.findOne(function(file) { return /Info\.plist/i.test(path.basename(file.file)); });
         	var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
@@ -469,6 +492,7 @@ Server.define({
         filestream.pipe(res);
     },
     mime_types: { android: 'application/vnd.android.package-archive', wp8: 'application/x-silverlight-app', ios: 'application/octet-stream' },
+    exts: { android: '.apk', wp8: '.xap', ios: '.ipa' },
     parseBuildRequest: function (req, res) {
         var buildId = req.params.id;
         var build = this.builds[buildId]

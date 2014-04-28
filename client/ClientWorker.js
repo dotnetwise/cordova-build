@@ -8,6 +8,7 @@ var async = require('async');
 var fileSize = require('filesize');
 var shortid = require('shortid');
 var Elapsed = require('elapsed');
+var CircularJSON = require('circular-json');
 
 
 var Build = require('../common/Build.js');
@@ -132,19 +133,24 @@ ClientWorker.define({
         var client = this;
         if (this.conf.save) {
         	//var id = build.masterId || build.id;
-        	var locationPath = path.resolve(client.location, this.build.Id());
             var files = build.outputFiles;
+            var locationPath = path.resolve(client.location, this.build.Id());
+            var buildPath = path.resolve(locationPath, 'build.json');
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
                     client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);
                     return client.onBuildFailed(result);
                 }
-                serverUtils.cleanLastFolders(client.conf.keep, client.location+"/*", done);
+                serverUtils.cleanLastFolders(client.conf.keep, client.location + "/*", saveBuildLog);
             });
         }
         else done();
-        function done(err) {
+        function saveBuildLog(err) {
         	err && client.log(build, Msg.debug, 'Error while cleaning up last {2} folders in CLIENT output folder {3}:\n{4}', client.conf.keep, client.location, err);
+        	fs.writeFile(buildPath, CircularJSON.stringify(build, null, 4), done);
+        }
+        function done(err) {
+        	err && client.log(build, Msg.debug, 'Error while saving {2}:\n{3}', buildPath, err);
         	serverUtils.freeMemFiles(build.outputFiles);
             client.log(build, Msg.info, 'Build done! It took {2}.', new Date(build.conf.started).elapsed());
             if (++client.built >= client.conf.build.length)

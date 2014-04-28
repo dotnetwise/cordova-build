@@ -10,6 +10,7 @@ var Msg = require('../common/Msg.js');
 var extend = require('extend');
 var fileSize = require('filesize');
 var mkdirp = require('mkdirp');
+var CircularJSON = require('circular-json');
 function Agent(socket) {
     this.socket = socket;
     this.platforms = [];
@@ -99,8 +100,25 @@ Agent.define({
                         serverUtils.freeMemFiles(build.outputFiles);
                         serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err) {
                         	err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
-                        	agent.busy = null;//free agent to take in another work
-                        	agent.updateStatus('ready');
+                        	var buildPath = path.resolve(locationPath, 'build.json');
+                        	var b = build && build.master || b;
+                        	var json = CircularJSON.stringify(b.serialize({
+                        		files: true,
+                        		outputFiles: true,
+                        		platforms: true,
+                        	}, {
+                        		files: true,
+                        		outputFiles: true,
+                        	}), null, 4);
+                        	try {
+                        		fs.writeFileSync(buildPath, json);
+                        	}
+                        	catch (e) {
+                        	}
+                        	finally {
+                        		agent.busy = null;//free agent to take in another work
+                        		agent.updateStatus('ready');
+                        	}                                                                            
                         });
                     }
                 }.bind(this));

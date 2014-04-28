@@ -8,7 +8,7 @@
     <NodeExePath />
     <NodeExeArguments>
     </NodeExeArguments>
-    <ScriptArguments>-mode:server -server:localhost -proxy:localhost -port:8300 -proxyport:80 -uiport:8300 -files:t:\a\core.7z;t:\a\www.7z -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -iosprojectpath:platforms/ios/build/device/Safetybank.app -iosprovisioningname:"iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)" -iosprovisioningpath="/usr/local/provisions/safetybank.mobileprovision" -iosprovisioningpath:"/usr/local/provisions/Safetybank_Development.mobileprovision" -name:Safetybank -save:clientOutput -build:wp8,android  -agent:wp8,android -buildmode:debug -number:1002 -keep:10 -save:clientOutput</ScriptArguments>
+    <ScriptArguments>-mode:server -server:localhost -proxy:localhost -port:8300 -proxyport:80 -uiport:8300 -files:t:\a\core.7z;t:\a\www.7z -wp8:t:\a\wp8.7z -ios:t:\a\ios.7z -android:t:\a\android.7z  -iosprojectpath:platforms/ios/build/device/Safetybank.app -iosprovisioningname:"iPhone Developer: Tudor Dumitriu (7XAE2UT2Y6)" -iosprovisioningpath="/usr/local/provisions/safetybank.mobileprovision" -iosprovisioningpath:"/usr/local/provisions/Safetybank_Development.mobileprovision" -name:Safetybank -save:clientOutput  -agent:wp8,android -buildmode:debug -number:1002 -keep:10 -save:clientOutput -buildX:wp8,android </ScriptArguments>
     <StartWebBrowser>True</StartWebBrowser>
     <LaunchUrl />
   </PropertyGroup>
