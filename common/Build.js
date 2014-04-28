@@ -73,8 +73,8 @@ Build.define({
         }
     },
     save: function (buildPath) {
-    	var b = build && build.master || build;
-    	var json = CircularJSON.stringify(b.serialize({
+    	var build = this.master || this;
+    	var json = CircularJSON.stringify(build.serialize({
     		files: true,
     		outputFiles: true,
     		platforms: true,
