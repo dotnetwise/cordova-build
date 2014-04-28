@@ -152,19 +152,22 @@ AgentWorker.define({
         switch (zipArchiver) {
             case '7z':
                 exec('7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
-                    if (err) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
+        	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+                    if (err || stderr) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
             case 'keka7z':
-                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
-                    if (err) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
+                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+        	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+                    if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
             case 'unzip':
-                exec('unzip -uo {0} -d {1} >nul'.format(file, target), opts, function (err, stdout, stderr) {
-                    if (err) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
+                exec('unzip -uo {0} -d {1}'.format(file, target), opts, function (err, stdout, stderr) {
+        	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+                    if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
@@ -211,7 +214,10 @@ AgentWorker.define({
         }
 
         function s2WriteFiles(err) {
-            if (err) return buildFailed('error cleaning the working folder {2}\n{3}', agent.workFolder, err);
+        	if (err) return buildFailed('error cleaning the working folder {2}\n{3}', agent.workFolder, err);
+        	files.forEach(function (file) {
+        		file.file = path.resolve(locationPath, path.basename(file.file));
+        	});
             serverUtils.writeFiles(locationPath, files, 'the cordova build agent worker on {0}'.format(build.conf.platform), s4ProcessFiles);
         }
 
@@ -223,6 +229,7 @@ AgentWorker.define({
             async.each(files, s5ExtractFile, s6AllFilesExtracted);
         };
         function s5ExtractFile(item, cb) {
+            agent.log(build, Msg.info, 'extracting {2} to {3}', item.file, locationPath);
             agent.extractArchive(build, item.file, locationPath, {
                 cwd: locationPath,
                 maxBuffer: maxBuffer,
