@@ -126,8 +126,9 @@ ClientWorker.define({
         console.log('CLIENT DISCONNECTED');
     },
     'onBuildFailed': function (result) {
-        if (++this.built >= this.build.conf.platforms.length)
-            this.disconnect();
+    	var client = this;
+    	if (++client.built >= client.conf.build.length)
+    		client.disconnect();
     },
     'onBuildSuccess': function (build) {
         var client = this;
