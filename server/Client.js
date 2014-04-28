@@ -1,7 +1,7 @@
 require('fast-class');
 require('array-sugar');
 var path = require('path');
-var fs = require('fs');
+var fs = require('fs.extra');
 var async = require('async');
 var mkdirp = require('mkdirp');
 var extend = require('extend');

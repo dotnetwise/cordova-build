@@ -1,6 +1,6 @@
 module.exports = ClientWorker;
 var ioc = require('socket.io/node_modules/socket.io-client');
-var fs = require('fs');
+var fs = require('fs.extra');
 var path = require('path');
 var mkdirp = require('mkdirp');
 

@@ -12,7 +12,7 @@ var util		 = require('util'),
 	typer		 = require('proto-typer'),
 	EventEmitter = require('events').EventEmitter,
 	AdmZip		 = require('adm-zip');
-var fs = require('fs');
+var fs = require('fs.extra');
 
 module.exports = function() {
 	define();

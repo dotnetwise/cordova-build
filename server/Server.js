@@ -12,7 +12,7 @@ var IPAFile = require('./ipa/ipa-file.js');
 //patch on to support binding with multiple events at once
 
 var path = require('path');
-var fs = require('fs');
+var fs = require('fs.extra');
 var multiGlob = require('multi-glob');
 var async = require('async');
 var mkdirp = require('mkdirp');
