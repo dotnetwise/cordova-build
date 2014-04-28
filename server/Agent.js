@@ -101,9 +101,11 @@ Agent.define({
 						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err) {
 							err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
 							var buildPath = path.resolve(locationPath, 'build.json');
-							build.save(buildPath);
-							agent.busy = null;//free agent to take in another work
-							agent.updateStatus('ready');
+							build.save(buildPath, function (err, e, path, json) {
+								err && agent.log(build, Msg.debug, err);
+								agent.busy = null;//free agent to take in another work
+								agent.updateStatus('ready');
+							});
 						});
 					}
 				}.bind(this));
@@ -111,6 +113,7 @@ Agent.define({
 		}.bind(this), this);
 	},
 	'onBuildFailed': function (build) {
+		var agent = this;
 		var foundBuild = this.server.builds[build && build.id || build];
 		if (foundBuild) {
 			if (foundBuild.master) {
@@ -126,7 +129,9 @@ Agent.define({
 				this.updateStatus('ready');
 			}
 			var buildPath = path.resolve(this.server.location, foundBuild.master && foundBuild.master.Id() || foundBuild.Id(), 'build.json');
-			foundBuild.save(buildPath);
+			foundBuild.save(buildPath, function (err, e, bp, json) {
+				err && agent.log(foundBuild, foundBuild.client, Msg.debug, err);
+			});
 		}
 		else {
 			this.log(build, null, Msg.error, "The build {0} was requested to be failing but we couldn't identify such build");

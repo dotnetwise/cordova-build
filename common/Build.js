@@ -73,7 +73,7 @@ Build.define({
             this.master.conf.status = statuses[masterStatus];
         }
     },
-    save: function (buildPath) {
+    save: function (buildPath, callback) {
     	var build = this.master || this;
     	var json = CircularJSON.stringify(build.serialize({
     		files: true,
@@ -83,11 +83,9 @@ Build.define({
     		files: true,
     		outputFiles: true,
     	}), null, 4);
-    	try {
-    		fs.writeFileSync(buildPath, json);
-    	}
-    	catch (e) {
-    		console.log("Error while saving build.json for {0}:\n{1}".format(this.Id(), e));
-    	}
+    	return fs.writeFile(buildPath, json, function (e) {
+    		if (e) return callback("Error while saving build.json for {0}:\n{1}".format(this.Id(), e), e, buildPath, json);
+    		callback(null, null, buildPath, json);
+    	});
     },
 });
