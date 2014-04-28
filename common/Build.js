@@ -1,5 +1,6 @@
 module.exports = Build
 require('fast-class');
+var CircularJSON = require('circular-json');
 var extend = require('extend');
 var shortid = require('shortid');
 var statuses = ['unknown', 'success', 'planned', 'queued', 'building', 'failed']
