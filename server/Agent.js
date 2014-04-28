@@ -101,7 +101,7 @@ Agent.define({
 						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err) {
 							err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
 							var buildPath = path.resolve(locationPath, 'build.json');
-							build.save(locationPath);
+							build.save(buildPath);
 							agent.busy = null;//free agent to take in another work
 							agent.updateStatus('ready');
 						});
