@@ -158,7 +158,7 @@ AgentWorker.define({
                 });
                 break;
             case 'keka7z':
-                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >/dev/null'.format(file, target), opts, function (err, stdout, stderr) {
+                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >> /dev/null'.format(file, target), opts, function (err, stdout, stderr) {
         	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
                     done();
