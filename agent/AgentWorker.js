@@ -152,15 +152,15 @@ AgentWorker.define({
         switch (zipArchiver) {
             case '7z':
                 exec('7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
-        	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
-                    if (err || stderr) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
+        	        //stdout && agent.log(build, Msg.debug, '{2}', stdout);
+                    if (err) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
             case 'keka7z':
-                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y >> /dev/null'.format(file, target), opts, function (err, stdout, stderr) {
-        	        stdout && agent.log(build, Msg.debug, '{2}', stdout);
-                    if (err || stderr) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
+                exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+        	        //stdout && agent.log(build, Msg.debug, '{2}', stdout);
+                	if (err) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
                     done();
                 });
                 break;
@@ -411,7 +411,9 @@ AgentWorker.define({
             }
             finally {
                 //free agent's memory of output files contents
-                serverUtils.freeMemFiles(outputFiles);
+            	serverUtils.freeMemFiles(outputFiles);
+            	var buildPath = path.resolve(agent.workFolder, build.Id(), 'build.json');
+            	build.save(buildPath);
             }
         }
     },
@@ -423,6 +425,8 @@ AgentWorker.define({
         }
 
         serverUtils.freeMemFiles(build.files);
+        var buildPath = path.resolve(this.workFolder, build.Id(), 'build.json');
+        build.save(buildPath);
         this.socket.emit('build-failed', build.serialize());
     },
 });

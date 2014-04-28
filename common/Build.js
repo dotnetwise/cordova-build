@@ -72,4 +72,20 @@ Build.define({
             this.master.conf.status = statuses[masterStatus];
         }
     },
+    save: function (buildPath) {
+    	var b = build && build.master || build;
+    	var json = CircularJSON.stringify(b.serialize({
+    		files: true,
+    		outputFiles: true,
+    		platforms: true,
+    	}, {
+    		files: true,
+    		outputFiles: true,
+    	}), null, 4);
+    	try {
+    		fs.writeFileSync(buildPath, json);
+    	}
+    	catch (e) {
+    	}
+    },
 });
