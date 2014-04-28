@@ -1,6 +1,6 @@
 {
   "name": "cordova-build",
-  "version": "0.0.106",
+  "version": "0.0.107",
   "description": "Cordova build - an alternative to phonegap build that runs on your servers/agents",
   "main": "index.js",
   "bin": "bin/cmd.js",

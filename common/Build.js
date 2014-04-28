@@ -87,6 +87,7 @@ Build.define({
     		fs.writeFileSync(buildPath, json);
     	}
     	catch (e) {
+    		console.log("Error while saving build.json for {0}:\n{1}".format(this.Id(), e));
     	}
     },
 });
