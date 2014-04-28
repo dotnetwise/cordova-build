@@ -354,7 +354,7 @@ AgentWorker.define({
                 agent.log(build, Msg.error, data);
             });;
         }, function (build, buildCordova) {
-        	buildCordova(null, true, "--device CODE_SIGN_IDENTITY='{0}'".format(build.conf.ioscodesignidentity));//pass the --device argument only on ios
+        	buildCordova(null, true, "--device{0}{1}".format(build.conf.ioscodesignidentity && "CODE_SIGN_IDENTITY='{0}'".format(build.conf.ioscodesignidentity) || '', build.conf.iosprovisioningpath && "PROVISIONING_PROFILE='{0}'".format(build.conf.iosprovisioningpath) || ''));//pass the --device argument only on ios
         });
     },
     buildAndroid: function (build) {
