@@ -320,7 +320,7 @@ AgentWorker.define({
             var buildId = build.Id();
             if (!build.conf.iosprojectpath) return buildFailed('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
             if (!build.conf.iosprovisioningpath) return buildFailed('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
-            if (!build.conf.iosprovisioningname) return buildFailed('-iosprovisioningname:"your-provision-name" was not being specified!');
+            if (!build.conf.ioscodesignidentity) return buildFailed('-ioscodesignidentity:"your-provision-name" was not being specified!');
             var pathOfIpa = path.resolve(agent.workFolder, buildId, "platforms/ios/", path.basename(build.conf.iosprojectpath || 'app.app', '.app') + '.ipa');
             var pathOfInfo_plist = path.resolve(agent.workFolder, buildId, build.conf.iosprojectpath, 'Info.plist');
             var iosProjectPath = path.resolve(agent.workFolder, buildId, build.conf.iosprojectpath);
@@ -329,7 +329,7 @@ AgentWorker.define({
 
             var xcodebuildLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.xcodebuild.log');
             var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
-            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|fail|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.iosprovisioningname, build.conf.iosprovisioningpath, signLogPath);
+            var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|fail|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.info, 'executing: {2}', execPath);
             var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -354,7 +354,7 @@ AgentWorker.define({
                 agent.log(build, Msg.error, data);
             });;
         }, function (build, buildCordova) {
-            buildCordova(null, true, '--device');//pass the --device argument only on ios
+        	buildCordova(null, true, '--device --CODE_SIGN_IDENTITY="{0}"'.format(build.conf.ioscodesignidentity));//pass the --device argument only on ios
         });
     },
     buildAndroid: function (build) {

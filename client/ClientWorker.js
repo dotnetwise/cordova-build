@@ -81,8 +81,8 @@ ClientWorker.define({
             build.conf.iossignonly = true;
         if (this.conf.iosprojectpath)
             build.conf.iosprojectpath = this.conf.iosprojectpath;
-        if (this.conf.iosprovisioningname)
-            build.conf.iosprovisioningname = this.conf.iosprovisioningname;
+        if (this.conf.ioscodesignidentity)
+            build.conf.ioscodesignidentity = this.conf.ioscodesignidentity;
         if (this.conf.iosprovisioningpath)
             build.conf.iosprovisioningpath = this.conf.iosprovisioningpath;
         if (this.conf.name)

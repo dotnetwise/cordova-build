@@ -40,10 +40,10 @@ if (conf.mode == 'client' || conf.mode == 'all' || conf.build) {
     if (conf.build && conf.build.indexOf && conf.build.indexOf('ios') >= 0) {
         if (!conf.iosprojectpath) throw new Error('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');
         if (!conf.iosprovisioningpath) throw new Error('-iosprovisioningpath:"path-to-your-provision-file.mobileprovision" was not being specified!');
-        if (!conf.iosprovisioningname) throw new Error('-iosprovisioningname:"your-provision-name" was not being specified!');
+        if (!conf.ioscodesignidentity) throw new Error('-ioscodesignidentity:"your-provision-name" was not being specified!');
             
         commandLine.addArgument('iosprovisioningpath', { type: 'string', required: true});
-        commandLine.addArgument('iosprovisioningname', { type: 'string', required: true});
+        commandLine.addArgument('ioscodesignidentity', { type: 'string', required: true});
         commandLine.addArgument('iosprojectpath', { type: 'string', required: true});
     }
     listen.client = true;
