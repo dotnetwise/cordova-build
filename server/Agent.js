@@ -79,7 +79,7 @@ Agent.define({
 						var started = build.conf.started;
 						var masterBuild = build.master;
 						server.updateBuildStatus(build, 'success');
-						build.conf.duration = (started && started.format && started || new Date(started)).elapsed(build.conf.completed);
+						build.conf.duration = (started && started.format && started || new Date(started).elapsed(build.conf.completed));
 						if (masterBuild) {
 							if (masterBuild.platforms.every(function (platform) {
                                 return platform.conf.status == 'success' || platform.conf.status == 'failed';
@@ -98,13 +98,18 @@ Agent.define({
 						}));
 						agent.log(build, client, Msg.info, 'Build done, ready for a new one.');
 						serverUtils.freeMemFiles(build.outputFiles);
-						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err) {
+						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err, stats) {
 							err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
 							var buildPath = path.resolve(locationPath, 'build.json');
 							build.save(buildPath, function (err, e, path, json) {
 								err && agent.log(build, Msg.debug, err);
 								agent.busy = null;//free agent to take in another work
 								agent.updateStatus('ready');
+								stats.forEach(function (stat) {
+									var buildId = path.basename(stat.path);
+									var build = server.findBuildById(buildId);
+									buildId && server.updateBuildStatus(build, 'deleted', true);
+								});
 							});
 						});
 					}

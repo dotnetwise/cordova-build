@@ -216,7 +216,8 @@ ServerBrowser.define({
                     i < 0 ? list.unshift(item) : list.splice(i, 1, item);
                     list.map[item.id] = item;
                     break;
-                case 'disconnected':
+            	case 'deleted':
+            	case 'disconnected':
                     var id = status.obj.id;
                     list.remove(function (item) {
                         return item.id == id;

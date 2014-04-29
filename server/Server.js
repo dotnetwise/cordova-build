@@ -277,24 +277,42 @@ Server.define({
 	},
 	updateBuildStatus: function (build, status, doNotLogOnMaster) {
 		var buildParam = build;
+		var server = this;
 		if (build && !build.updateStatus) {
 			//self detect build if an id was passed
-			build = this.builds[build];
+			build = server.builds[build];
 			if (!build) {
-				this.log(new Msg(null, agent, 'S', Msg.debug, 'Build not found with id: {2}', buildParam));
+				server.log(new Msg(null, agent, 'S', Msg.debug, 'Build not found with id: {2}', buildParam));
 				return;
 			}
 		}
 		if (build.master && !doNotLogOnMaster && build.status != status) {
 			var msg = new Msg(build.master, null, 'S', Msg.status, 'Platform {2} update status: {3}', build.conf.platform, status);
-			this.log(msg, null);
+			server.log(msg, null);
 		}
 		if (build && build.updateStatus) {
-			build.updateStatus(status);
-			this.notifyStatusAllWWWs(status, 'build', build.serialize({ platforms: 1 }));
+			if (status == 'deleted') {
+				delete server.builds[build.id];
+				server.builds.remove(build);
+				server.buildsQueue.remove(build);
+				if (build.master) {
+					build.master.platforms.remove(build);
+				}
+				else if (build.platforms) {
+					build.platforms.forEach(function (platformBuild) {
+						delete server.builds[platformBuild.id];
+						server.builds.remove(platformBuild);
+						server.buildsQueue.remove(platformBuild);
+					});
+				}
+			}
+			else {
+				build.updateStatus(status);
+			}
+			server.notifyStatusAllWWWs(status, 'build', build.serialize({ platforms: 1 }));
 		}
 		else {
-			this.log(buildParam, null, 'S', Msg.error, "A request to change a build's status to {2} was made but that build cannot be found. We have tried to identify it by {3}", status, buildParam);
+			server.log(buildParam, null, 'S', Msg.error, "A request to change a build's status to {2} was made but that build cannot be found. We have tried to identify it by {3}", status, buildParam);
 		}
 	},
 	processQueue: function () {

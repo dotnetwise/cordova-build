@@ -82,7 +82,7 @@ module.exports = {
     			async.each(stats, function (stat, cb) {
     				fs.remove(stat.path, cb);
     			}, function (err) {
-    				done(err);
+    				done(err, stats);
     			});
     		});
     	});
