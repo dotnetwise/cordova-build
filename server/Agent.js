@@ -111,7 +111,7 @@ Agent.define({
 								stats.forEach(function (stat) {
 									var buildId = path.basename(stat.path);
 									var build = server.findBuildById(buildId);
-									buildId && server.updateBuildStatus(build, 'deleted', true);
+									build && server.updateBuildStatus(build, 'deleted', true);
 								});
 							});
 						});

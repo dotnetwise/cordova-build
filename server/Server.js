@@ -281,10 +281,10 @@ Server.define({
 		if (build && !build.updateStatus) {
 			//self detect build if an id was passed
 			build = server.builds[build];
-			if (!build) {
-				server.log(new Msg(null, agent, 'S', Msg.debug, 'Build not found with id: {2}', buildParam));
-				return;
-			}
+		}
+		if (!build) {
+			server.log(new Msg(null, agent, 'S', Msg.debug, 'Build not found with id: {2}', buildParam));
+			return;
 		}
 		if (build.master && !doNotLogOnMaster && build.status != status) {
 			var msg = new Msg(build.master, null, 'S', Msg.status, 'Platform {2} update status: {3}', build.conf.platform, status);
