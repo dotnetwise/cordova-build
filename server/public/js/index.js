@@ -217,6 +217,12 @@ ServerBrowser.define({
                     list.map[item.id] = item;
                     break;
             	case 'deleted':
+            		var id = status.obj.id;
+            		list.remove(function (item) {
+            			return item.id == id;
+            		});
+            		delete list.map[status.obj.id];
+            		break;
             	case 'disconnected':
                     var id = status.obj.id;
                     list.remove(function (item) {

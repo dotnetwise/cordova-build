@@ -49,6 +49,9 @@ Agent.define({
 	},
 	'onBuildSuccess': function (responseBuild) {
 		var build = this.server.findBuildById(responseBuild);
+		if (!build)
+			this.log(null, null, Msg.error, 'Build with id {2} is not defined on the server', responseBuild && responseBuild.id || responseBuild);
+
 		var client = build.client;
 		var agent = this;
 		var server = this.server;
@@ -101,7 +104,7 @@ Agent.define({
 						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err, stats) {
 							err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
 							var buildPath = path.resolve(locationPath, 'build.json');
-							build.save(buildPath, function (err, e, path, json) {
+							build.save(buildPath, function (err, e, bp, json) {
 								err && agent.log(build, Msg.debug, err);
 								agent.busy = null;//free agent to take in another work
 								agent.updateStatus('ready');
