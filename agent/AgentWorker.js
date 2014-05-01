@@ -373,7 +373,7 @@ AgentWorker.define({
 					apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
 					var tee = path.resolve(__dirname, '../bin/tee.exe');
 					var egrep = path.resolve(__dirname, '../bin/egrep.exe');
-					androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2"} -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
+					androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2}" -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
 					agent.log(build, Msg.status, androidsign);
 					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
 						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
