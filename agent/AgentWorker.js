@@ -257,7 +257,7 @@ AgentWorker.define({
 			var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.conf.buildmode || 'release');
 			if (build.conf.platform == 'ios')
 				cmd += ' | tee "' + path.resolve(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running|return)"';
-			agent.log(build, Msg.info, 'Executing {2}', cmd);
+			agent.log(build, Msg.status, 'Executing {2}', cmd);
 			var cordova_build = exec(cmd, {
 				cwd: locationPath,
 				maxBuffer: maxBuffer,
@@ -330,14 +330,14 @@ AgentWorker.define({
 			var xcodebuildLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.xcodebuild.log');
 			var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
 			var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|fail|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
-			agent.log(build, Msg.info, 'executing: {2}', execPath);
+			agent.log(build, Msg.status, 'executing: {2}', execPath);
 			var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
 				stdout && agent.log(build, Msg.build_output, '{2}', stdout);
 				err && agent.log(build, Msg.error, 'error:\n{2}', err);
 				stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
 				var e = stderr || err;
 				if (e) return agent.buildFailed(build, '');
-				agent.log(build, Msg.build_output, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
+				agent.log(build, Msg.status, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
 				exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
 					if (err || stderr)
 						return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
@@ -364,9 +364,13 @@ AgentWorker.define({
 			var apkGlobPath = 'platforms/android/ant-build/*.apk';
 			if (build.conf.androidsign) {
 				var androidsign = build.conf.androidsign;
-				multiGlob.glob(apkGlobPath, function(apks) {
+				var workFolder = path.resolve(agent.workFolder, build.Id());
+				multiGlob.glob(apkGlobPath, {
+					cwd: workFolder,
+				}, function (err, apks) {
 					androidsign = androidsign.format.apply(androidsign, apks);
-					agent.log(build, Msg.info, androidsign);
+					agent.log(build, Msg.debug, 'Files:\n{2}', apks.join('\n'));
+					agent.log(build, Msg.status, androidsign);
 					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
 						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
 						err && agent.log(build, Msg.error, 'error:\n{2}', err);
