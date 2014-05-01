@@ -368,9 +368,9 @@ AgentWorker.define({
 				multiGlob.glob(apkGlobPath, {
 					cwd: workFolder,
 				}, function (err, apks) {
-					androidsign = androidsign.format.apply(androidsign, apks);
 					agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
 					apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
+					androidsign = androidsign.format.apply(androidsign, apks);
 					agent.log(build, Msg.status, androidsign);
 					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
 						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
