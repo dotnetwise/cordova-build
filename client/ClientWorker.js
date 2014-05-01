@@ -89,6 +89,8 @@ ClientWorker.define({
             build.conf.name = this.conf.name;
         if (this.conf.buildmode)
         	build.conf.buildmode = this.conf.buildmode;
+        if (this.conf.androidsign)
+        	build.conf.androidsign = this.conf.androidsign;
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {

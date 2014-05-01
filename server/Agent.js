@@ -20,14 +20,8 @@ Agent.define({
 		var agent = this;
 		this.server = server;
 		this.socket.on({
-			'register': function (conf) {
-				this.conf = conf = conf || {};
-				conf.platforms = ((typeof conf.platforms == 'string' ? conf.platforms.split(/;|,/) : conf.platforms) || []).unique();
-				conf.platforms.forEach(function (platform) {
-					this.platforms.push(platform);
-				}, this);
-			},
 			'disconnect': this.onDisconnect,
+			'register': this.onRegister,
 			'uploading': this.onUploading,
 			'building': this.onBuilding,
 			'build-success': this.onBuildSuccess,
@@ -41,11 +35,18 @@ Agent.define({
 	'onDisconnect': function () {
 		this.server.notifyStatusAllWWWs('disconnected', 'agent', this.conf);
 	},
-	'onBuilding': function (buildId) {
-		this.server.updateBuildStatus(buildId, 'building');
+	'onRegister': function (conf) {
+		this.conf = conf = conf || {};
+		conf.platforms = ((typeof conf.platforms == 'string' ? conf.platforms.split(/;|,/) : conf.platforms) || []).unique();
+		conf.platforms.forEach(function (platform) {
+			this.platforms.push(platform);
+		}, this);
 	},
 	'onUploading': function (buildId) {
 		this.server.updateBuildStatus(buildId, 'uploading');
+	},
+	'onBuilding': function (buildId) {
+		this.server.updateBuildStatus(buildId, 'building');
 	},
 	'onBuildSuccess': function (responseBuild) {
 		var build = this.server.findBuildById(responseBuild);

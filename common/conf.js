@@ -44,13 +44,17 @@ if (conf.mode == 'client' || conf.mode == 'all' || conf.build) {
             
         commandLine.addArgument('iosprovisioningpath', { type: 'string', required: true});
         commandLine.addArgument('ioscodesignidentity', { type: 'string', required: true});
-        commandLine.addArgument('iosprojectpath', { type: 'string', required: true});
+        commandLine.addArgument('iosprojectpath', { type: 'string', required: true });
+    }
+    if (conf.build && conf.build.indexOf && conf.build.indexOf('android') >= 0) {
+    	commandLine.addArgument('androidsign', { type: 'string', required: false });
     }
     listen.client = true;
 }
 if (conf.mode == 'agent' || conf.mode == 'all' || conf.agent) {
     commandLine.addArgument('agent', { type: 'string', required: true });
     commandLine.addArgument('agentwork', { type: 'string', required: false });
+    commandLine.addArgument('agentname', { type: 'string', required: false });
     listen.agent = true;
 }
 if (conf.mode == 'ui' || conf.mode == 'server' || conf.mode == 'all') {

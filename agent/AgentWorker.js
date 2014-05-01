@@ -62,6 +62,7 @@ AgentWorker.define({
 		console.log('AGENT WORKER CONNECTED supporting platforms:', this.conf.agent);
 		this.socket.emit('register', {
 			id: this.id,
+			name: this.conf.name,
 			platforms: this.conf.agent || ['android', 'wp8'],
 		});
 	},
@@ -310,8 +311,7 @@ AgentWorker.define({
 				});
 			});
 		}, function (err) {
-			if (err)
-				return buildFailed(err);
+			if (err) return buildFailed(err);
 			function buildFailed() {
 				splice.call(arguments, 0, 0, build);
 				return agent.buildFailed.apply(agent, arguments);
@@ -349,10 +349,10 @@ AgentWorker.define({
 			});
 			xcrun.stdout.on('data', function (data) {
 				agent.log(build, Msg.build_output, data);
-			});;
+			});
 			xcrun.stderr.on('data', function (data) {
 				agent.log(build, Msg.error, data);
-			});;
+			});
 		}, function (build, buildCordova) {
 			buildCordova(null, true, "--device{0}{1}".format(build.conf.ioscodesignidentity && " CODE_SIGN_IDENTITY='{0}'".format(build.conf.ioscodesignidentity) || '', build.conf.iosprovisioningpath && " PROVISIONING_PROFILE='{0}'".format(build.conf.iosprovisioningpath) || ''));//pass the --device argument only on ios
 		});
@@ -360,7 +360,36 @@ AgentWorker.define({
 	buildAndroid: function (build) {
 		var agent = this;
 		this.genericBuild(build, null, function (err) {
-			!err && agent.buildSuccess(build, ['platforms/android/ant-build/*.apk', , 'build.android.log']);
+			if (err) return buildFailed(err);
+			var apkGlobPath = 'platforms/android/ant-build/*.apk';
+			if (build.conf.androidsign) {
+				var androidsign = build.conf.androidsign;
+				multiGlob.glob(apkGlobPath, function(apks) {
+					androidsign = androidsign.format.apply(androidsign, apks);
+					agent.log(build, Msg.info, androidsign);
+					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
+						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
+						err && agent.log(build, Msg.error, 'error:\n{2}', err);
+						stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+						var e = stderr || err;
+						if (e) return agent.buildFailed(build, '');
+						done();
+					}).on('close', function (code) {
+						if (code) return agent.buildFailed(build, 'android sign process exited with code {2}', code);
+						done();
+					});
+					androidsignProcess.stdout.on('data', function (data) {
+						agent.log(build, Msg.build_output, data);
+					});
+					androidsignProcess.stderr.on('data', function (data) {
+						agent.log(build, Msg.error, data);
+					});
+				});
+			}
+			else done();
+			function done(err) {
+				!err && agent.buildSuccess(build, [apkGlobPath, , 'build.android.log']);
+			}
 		});
 	},
 	buildSuccess: function (build, globFiles) {

@@ -485,7 +485,7 @@ Server.define({
 		ipaPath = ipaPath && ipaPath.file;
 		if (platform == 'ios' && !ipaPath)
 			throw "cannot find any .ipa output files {0}".format(askForFile);
-		if (askForFile && askForFile != path.basename(ipaPath)) {
+		if (platform == 'ios' && askForFile && askForFile != path.basename(ipaPath)) {
 			var Info_plist = build.outputFiles.findOne(function (file) { return /Info\.plist/i.test(path.basename(file.file)); });
 			var ipaFile = build.ipaFile || new IPAFile(ipaPath, Info_plist && Info_plist.file);
 			build.ipaFile = ipaFile;
