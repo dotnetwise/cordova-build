@@ -329,7 +329,7 @@ AgentWorker.define({
 
 			var xcodebuildLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.xcodebuild.log');
 			var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
-			var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|fail|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
+			var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
 			agent.log(build, Msg.status, 'executing: {2}', execPath);
 			var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
 				stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -362,15 +362,18 @@ AgentWorker.define({
 		this.genericBuild(build, null, function (err) {
 			if (err) return buildFailed(err);
 			var apkGlobPath = 'platforms/android/ant-build/*.apk';
+			var workFolder = path.resolve(agent.workFolder, build.Id());
+			var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
 			if (build.conf.androidsign) {
 				var androidsign = build.conf.androidsign;
-				var workFolder = path.resolve(agent.workFolder, build.Id());
 				multiGlob.glob(apkGlobPath, {
 					cwd: workFolder,
 				}, function (err, apks) {
 					agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
 					apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
-					androidsign = androidsign.format.apply(androidsign, apks);
+					var tee = path.resolve(__dirname, '../bin/tee.exe');
+					var egrep = path.resolve(__dirname, '../bin/egrep.exe');
+					androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2"} -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
 					agent.log(build, Msg.status, androidsign);
 					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
 						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -393,7 +396,7 @@ AgentWorker.define({
 			}
 			else done();
 			function done(err) {
-				!err && agent.buildSuccess(build, [apkGlobPath, , 'build.android.log']);
+				!err && agent.buildSuccess(build, [apkGlobPath, , 'build.android.log', signLogPath]);
 			}
 		});
 	},
