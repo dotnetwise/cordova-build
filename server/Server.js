@@ -147,6 +147,7 @@ Server.define({
 						protocol: conf.protocol || 'http://',
 						host: conf.server,
 						port: conf.port,
+						promote: conf.promote,
 					})));
 					res.send(html);
 				})
@@ -248,6 +249,28 @@ Server.define({
 									platforms.forEach(function (platformBuild) { server.buildsQueue.push(platformBuild); });
 								}
 							},
+							'cancel': function (build) {
+								var build = server.builds[build];
+								if (build) {
+									server.updateBuildStatus(build, 'canceled');
+									server.buildsQueue.remove(build);
+									if (build.client) {
+										if  (build.client.socket)
+											try {
+												build.client.socket.emit('build-failed', build.id);
+											}
+										catch(e) {}
+									}
+									if (build.agent) {
+										if (build.agent.socket)
+											try {
+												build.agent.socket.emit('build-failed', build.id);
+											}
+										catch (e) { }
+										build.agent.busy = null;
+									}
+								}
+							}
 						}, this);
 						//socket.emit('news', { news: 'item' });
 					},
@@ -412,7 +435,7 @@ Server.define({
 		var platform = parsedBuild.platform;
 		var build = parsedBuild.build; req.url;
 		//var m = CircularJSON.stringify((build && build.master || build).serialize({ files: 1, outputFiles: 1, platforms: 1 }, { files: 1, outputFiles: 1 }));
-		if (platform == 'ios' && (req.params.file == 'qr' || /iPhone|iPad|iPod/.test(req.headers['user-agent'])) {
+		if (platform == 'ios' && (req.params.file == 'qr' || /iPhone|iPad|iPod/.test(req.headers['user-agent']))) {
 			var port = this.conf.proxyport || this.conf.uiport || this.conf.port;
 			var url = [
                 this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',

@@ -46,6 +46,7 @@ AgentWorker.define({
 				'disconnect': this.onDisconnect,
 				'error': this.onError,
 				'build': this.onBuild,
+				'cancel': this.onCancelBuild,
 				'log': function (msg) {
 					var message = new Msg(msg);
 					console.log(message.toString());
@@ -60,7 +61,7 @@ AgentWorker.define({
 	},
 	'onConnect': function () {
 		console.log('AGENT WORKER CONNECTED supporting platforms:', this.conf.agent);
-		this.socket.emit('register', {
+		this.emit('register', {
 			id: this.id,
 			name: this.conf.name,
 			platforms: this.conf.agent || ['android', 'wp8'],
@@ -86,17 +87,20 @@ AgentWorker.define({
 		//}
 		//else 
 	},
+	'onCancelBuild': function () {
+		this.build.conf.status = 'cancelled';
+	},
 	'onBuild': function (build) {
 		if (!build) {
 			this.buildFailed(build, 'No build configuration was specified!')
 		}
-		else if (!build.conf.platform) {
+		else if (!build.conf || !build.conf.platform) {
 			this.buildFailed(build, 'No platform was specified for the requested build!');
 		}
 		else {
-			this.socket.emit('building', build.id);
+			this.emit('building', build.id);
 			var buildObj = new Build(build.conf, null, this, build.conf.platform, build.files, null, build.id, build.masterId);
-			build = buildObj;
+			this.build = build = buildObj;
 			switch (build.conf.platform) {
 				case 'wp8':
 					this.buildWP8(build);
@@ -113,6 +117,12 @@ AgentWorker.define({
 			}
 		}
 	},
+	emit: function () {
+		if (this.build && this.build.conf.status != 'cancelled') {
+			return this.socket.emit.apply(this, arguments);
+		}
+		return false;
+	},
 	log: function (build, priority, message, args) {
 		splice.call(arguments, 1, 0, this, 'AW');
 		var msg = new Msg();
@@ -120,7 +130,7 @@ AgentWorker.define({
 
 		if (this.conf.mode != 'all' || !this.socket.socket.connected)
 			console.log(msg.toString());
-		this.socket.emit('log', msg);
+		this.emit('log', msg);
 	},
 	ensureWorkFolder: function (done) {
 		var workFolder = this.workFolder = path.resolve(this.workFolder);
@@ -191,14 +201,17 @@ AgentWorker.define({
 
 		return s1Cleanup();
 		function s1Cleanup() {
+			if (build.conf.status === 'cancelled') return;
 			serverUtils.cleanLastFolders(agent.conf.keep, agent.workFolder + '/*', s1CleanupDone);
 		}
 		function s1CleanupDone(err) {
+			if (build.conf.status === 'cancelled') return;
 			err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in AGENT {3} working folder {4}:\n{5}', agent.conf.keep, agent.conf.platform, agent.workFolder, err);
 			agent.ensureWorkFolder(s2EmptyWorkFolder);
 		}
 
 		function s2EmptyWorkFolder(err) {
+			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed('error creating the working folder {2}\n{3}', agent.workFolder, err);
 			var glob = locationPath;
 			if (!/(\/|\\)$/.test(glob))
@@ -215,6 +228,7 @@ AgentWorker.define({
 		}
 
 		function s3WriteFiles(err) {
+			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed('error cleaning the working folder {2}\n{3}', agent.workFolder, err);
 			files.forEach(function (file) {
 				file.file = path.resolve(locationPath, path.basename(file.file));
@@ -223,6 +237,7 @@ AgentWorker.define({
 		}
 
 		function s4ProcessFiles(err) {
+			if (build.conf.status === 'cancelled') return;
 			serverUtils.freeMemFiles(files);
 			if (err) return buildFailed('error while saving files on agent worker:\n{2}', err);
 			agent.log(build, Msg.info, 'extracting archives for {2}...', build.conf.platform);
@@ -230,6 +245,7 @@ AgentWorker.define({
 			async.each(files, s5ExtractFile, s6AllFilesExtracted);
 		};
 		function s5ExtractFile(item, cb) {
+			if (build.conf.status === 'cancelled') return;
 			agent.log(build, Msg.debug, 'extracting {2} to {3}', item.file, locationPath);
 			agent.extractArchive(build, item.file, locationPath, {
 				cwd: locationPath,
@@ -238,12 +254,14 @@ AgentWorker.define({
 		};
 
 		function s6AllFilesExtracted(err) {// Final callback after each item has been iterated over.
+			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed('error extracting archive files\n{2}', err);
 			if (filesDone)
 				filesDone.call(agent, s6DecideExecuteCordovaBuild);
 			else s6DecideExecuteCordovaBuild();
 		}
 		function s6DecideExecuteCordovaBuild() {
+			if (build.conf.status === 'cancelled') return;
 			if (onExecutingCordovaBuild)
 				onExecutingCordovaBuild.call(agent, build, function (err, executeStandardCordovaBuild, args) {
 					executeStandardCordovaBuild !== false && s7BuildCordova(err, args);
@@ -251,6 +269,7 @@ AgentWorker.define({
 			else s7BuildCordova();
 		}
 		function s7BuildCordova(err, args) {
+			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed('error starting build\n{2}', err);
 			agent.log(build, Msg.info, 'building cordova on {2}...', build.conf.platform);
 
@@ -263,6 +282,7 @@ AgentWorker.define({
 				maxBuffer: maxBuffer,
 			}, s8BuildExecuted)
             .on('close', function (code) {
+            	if (build.conf.status === 'cancelled') return;
             	if (code) return buildFailed('child process exited with code ' + code);
             });
 			cordova_build.stdout.on('data', function (data) {
@@ -276,6 +296,7 @@ AgentWorker.define({
 
 		}
 		function s8BuildExecuted(err, stdout, stderr) {
+			if (build.conf.status === 'cancelled') return;
 			if (stdout)
 				agent.log(build, Msg.build_output, stdout);
 			if (err)
@@ -291,12 +312,14 @@ AgentWorker.define({
 	},
 	buildWP8: function (build) {
 		this.genericBuild(build, null, function (err) {
+			if (build.conf.status === 'cancelled') return;
 			!err && this.buildSuccess(build, ['platforms/wp8/**/*.xap', 'build.wp8.log']);
 		});
 	},
 	buildIOS: function (build) {
 		var agent = this;
 		this.genericBuild(build, function (startBuild) {
+			if (build.conf.status === 'cancelled') return;
 			var globs = path.resolve(agent.workFolder, build.Id(), 'platforms/ios/cordova/**/*');
 			//console.log('globs', globs)
 			multiGlob.glob(globs, function (err, files) {
@@ -311,6 +334,7 @@ AgentWorker.define({
 				});
 			});
 		}, function (err) {
+			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed(err);
 			function buildFailed() {
 				splice.call(arguments, 0, 0, build);
@@ -332,6 +356,7 @@ AgentWorker.define({
 			var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
 			agent.log(build, Msg.status, 'executing: {2}', execPath);
 			var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
+				if (build.conf.status === 'cancelled') return;
 				stdout && agent.log(build, Msg.build_output, '{2}', stdout);
 				err && agent.log(build, Msg.error, 'error:\n{2}', err);
 				stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
@@ -345,6 +370,7 @@ AgentWorker.define({
 					agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist, signLogPath, xcodebuildLogPath]);
 				});
 			}).on('close', function (code) {
+				if (build.conf.status === 'cancelled') return;
 				if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
 			});
 			xcrun.stdout.on('data', function (data) {
@@ -360,6 +386,7 @@ AgentWorker.define({
 	buildAndroid: function (build) {
 		var agent = this;
 		this.genericBuild(build, null, function (err) {
+			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed(err);
 			var apkGlobPath = 'platforms/android/ant-build/*.apk';
 			var workFolder = path.resolve(agent.workFolder, build.Id());
@@ -369,6 +396,7 @@ AgentWorker.define({
 				multiGlob.glob(apkGlobPath, {
 					cwd: workFolder,
 				}, function (err, apks) {
+					if (build.conf.status === 'cancelled') return;
 					agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
 					apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
 					var tee = path.resolve(__dirname, '../bin/tee.exe');
@@ -376,6 +404,7 @@ AgentWorker.define({
 					androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2}" -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
 					agent.log(build, Msg.status, androidsign);
 					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
+						if (build.conf.status === 'cancelled') return;
 						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
 						err && agent.log(build, Msg.error, 'error:\n{2}', err);
 						stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
@@ -383,6 +412,7 @@ AgentWorker.define({
 						if (e) return agent.buildFailed(build, '');
 						done();
 					}).on('close', function (code) {
+						if (build.conf.status === 'cancelled') return;
 						if (code) return agent.buildFailed(build, 'android sign process exited with code {2}', code);
 						done();
 					});
@@ -401,18 +431,20 @@ AgentWorker.define({
 		});
 	},
 	buildSuccess: function (build, globFiles) {
-
+		if (build.conf.status === 'cancelled') return;
 		var agent = this;
 		var workFolder = path.resolve(agent.workFolder, build.Id());
 		multiGlob.glob(globFiles, {
 			cwd: workFolder,
 		}, function (err, files) {
+			if (build.conf.status === 'cancelled') return;
 			if (err) return agent.buildFailed(build, 'error globbing {2}', globFiles);
 			files = files.map(function (file) {
 				return { file: path.resolve(workFolder, file) };
 			});
-			agent.socket.emit('uploading', build.id);//change build status to uploading..
+			agent.emit('uploading', build.id);//change build status to uploading..
 			serverUtils.readFiles(files, '[Agent WORKER] cordova build agent worker output files', function (err) {
+				if (build.conf.status === 'cancelled') return;
 				if (err) {
 					serverUtils.freeMemFiles(files);
 					agent.buildFailed(build, err);
@@ -441,7 +473,7 @@ AgentWorker.define({
 					file.file = path.basename(file.file);
 				});
 
-				agent.socket.emit('build-success', build.serialize({
+				agent.emit('build-success', build.serialize({
 					outputFiles: 1
 				}));
 				outputFiles.forEach(function (file, index) { file.file = paths[index]; });
@@ -457,6 +489,7 @@ AgentWorker.define({
 		}
 	},
 	buildFailed: function (build, err, args) {
+		if (build.conf.status === 'cancelled') return;
 		var agent = this;
 		if (err) {
 			splice.call(arguments, 1, 0, Msg.error);
@@ -469,6 +502,6 @@ AgentWorker.define({
 		build.save(buildPath, function (err, e, bp, json) {
 			err && agent.log(build, Msg.debug, err);
 		});
-		this.socket.emit('build-failed', build.serialize());
+		this.emit('build-failed', build.serialize());
 	},
 });

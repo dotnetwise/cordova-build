@@ -4,6 +4,7 @@ var fs = require('fs.extra');
 var path = require('path');
 var mkdirp = require('mkdirp');
 
+var extend = require('extend');
 var async = require('async');
 var fileSize = require('filesize');
 var shortid = require('shortid');
@@ -77,20 +78,7 @@ ClientWorker.define({
             started: new Date(),
         }, client, null, platforms, files);
         build.id = client.id;
-        if (this.conf.iossignonly)
-            build.conf.iossignonly = true;
-        if (this.conf.iosprojectpath)
-            build.conf.iosprojectpath = this.conf.iosprojectpath;
-        if (this.conf.ioscodesignidentity)
-            build.conf.ioscodesignidentity = this.conf.ioscodesignidentity;
-        if (this.conf.iosprovisioningpath)
-            build.conf.iosprovisioningpath = this.conf.iosprovisioningpath;
-        if (this.conf.name)
-            build.conf.name = this.conf.name;
-        if (this.conf.buildmode)
-        	build.conf.buildmode = this.conf.buildmode;
-        if (this.conf.androidsign)
-        	build.conf.androidsign = this.conf.androidsign;
+        extend(build.conf, this.conf);
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {

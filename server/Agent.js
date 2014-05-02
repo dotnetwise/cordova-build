@@ -90,7 +90,7 @@ Agent.define({
 							})) {
 								masterBuild.conf.completed = new Date();
 								started = masterBuild.conf.started;
-								masterBuild.conf.duration = (started && started.format && started || new Date(started)).elapsed(masterBuild.conf.completed);
+								masterBuild.conf.duration = (started && started.format && started || new Date(started).elapsed(masterBuild.conf.completed));
 								server.updateBuildStatus(masterBuild, 'success');
 							}
 						}

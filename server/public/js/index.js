@@ -4,6 +4,7 @@ var Msg = require('../../../common/Msg.js');
 require('./qtip.js');
 var ko = require('knockout');
 var Elapsed = require('elapsed');
+var stringformat = require('stringformat');
 
 module.exports = ServerBrowser;
 var inBrowser = typeof window !== 'undefined';
@@ -83,12 +84,19 @@ ServerBrowser.define({
     rebuild: function(build) {
         this.socket.emit('rebuild', build && build.id);
     },
+    cancel: function (build) {
+    	this.socket.emit('cancel', build && build.id);
+    },
+    promote: function (build) {
+    	return this.conf.promote && stringformat(this.conf.promote, build);
+    },
     statuses: {
         'building': 'img/platforms/building.gif',
         'uploading': 'img/platforms/working.gif',
         'queued': 'img/platforms/queue.gif',
         'working': 'img/platforms/working.gif',
         'failed': 'img/platforms/fail.png',
+        'cancelled': 'img/platforms/cancelled.png',
         'unknown': 'img/platforms/unknown.png',
     },
     platformNames: {

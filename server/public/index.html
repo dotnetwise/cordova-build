@@ -374,9 +374,28 @@ attr: {
                                                                 data-bind="text: $data && $data.duration"></span>
                                                         </dd>
                                                     </dl>
-                                                    <button data-bind="
+                                                    <ul class="build-actions">
+                                                        <li data-bind="
     visible: status() == 'failed' || status() == 'success',
-    click: $root.rebuild.bind($root)" class="btn btn-small btn-primary">Rebuild?</button></dd>
+    ">
+                                                    <button data-bind="
+    click: $root.rebuild.bind($root)" class="btn btn-small btn-primary">Rebuild?</button>
+                                                    </li>
+                                                        <li data-bind="
+    visible: status() != 'failed' && status() != 'success',
+    ">
+                                                    <button data-bind="
+    click: $root.cancel.bind($root)" class="btn btn-small btn-danger">Cancel?</button>
+                                                    </li>
+                                                        <li data-bind="
+    visible: status() == 'success' && $root.conf.promote,
+    ">
+                                                    <a data-bind="
+    attr: {
+        href: $root.promote($data),
+    }" class="btn btn-small btn-success" target="_blank">Promote?</a>
+                                                    </li>
+                                                    </ul>
                                                 </div>
                                                 <div class="span8 log log-big no-gutter build-log">
                                                     <div data-bind="template: { foreach: $data && $data.logs, name: 'tplLog' }"

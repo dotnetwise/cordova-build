@@ -388,3 +388,10 @@ img.dashboard-avatar {
 	font-size: 10px;
 	float: right;
 }
+.build-actions {
+	margin: 0;
+}
+.build-actions li {
+	padding: 2px 0;
+	list-style: none;
+}
