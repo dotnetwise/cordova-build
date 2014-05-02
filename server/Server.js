@@ -35,6 +35,7 @@ function Server(conf) {
 	this.location = conf.location || path.resolve('builds');
 	var server = this;
 	multiGlob.glob(server.location + '/*/build.json', function (err, builds) {
+		builds.sort();
 		var loadedBuilds = [];
 		async.each(builds, function (buildPath, cb) {
 			fs.readFile(buildPath, function (err, data) {

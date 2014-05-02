@@ -506,7 +506,7 @@ attr: {
                                             <dd class="since">
                                                 <label>Since:</label><span datetime-format="{0} ago"
                                                     data-bind="
-    text: '{0} ago{1}'.format(unwrap($data && $data.started) && unwrap($data && $data.started).elapsed() || 'moments', $data && $data.duration && (', ('+ $data.duration + ')')),
+    text: '{0} ago{1}'.format(unwrap($data && $data.started) && unwrap($data && $data.started).elapsed() || 'moments', unwrap($data && $data.duration) && (', ('+ unwrap($data.duration) + ')')),
     attr: {
         datetime: $data && $data.started,
         title: [(unwrap($data && $data.started) && unwrap($data && $data.started).format
