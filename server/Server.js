@@ -252,7 +252,7 @@ Server.define({
 							'cancel': function (build) {
 								var build = server.builds[build];
 								if (build) {
-									server.updateBuildStatus(build, 'canceled');
+									server.updateBuildStatus(build, 'cancelled');
 									server.buildsQueue.remove(build);
 									if (build.client) {
 										if  (build.client.socket)
