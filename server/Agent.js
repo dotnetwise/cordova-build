@@ -94,11 +94,11 @@ Agent.define({
 								server.updateBuildStatus(masterBuild, 'success');
 							}
 						}
-						if (client.conf.save)
+						if (build.conf.save)
 							agent.log(build, client, Msg.info, 'Also sending the output files to the client');
 
 						client.socket.emit('build-success', build.serialize({
-							outputFiles: client.conf.save
+							outputFiles: build.conf.save
 						}));
 						agent.log(build, client, Msg.info, 'Build done, ready for a new one.');
 						serverUtils.freeMemFiles(build.outputFiles);

@@ -85,7 +85,7 @@ Build.define({
     		outputFiles: true,
     	}), null, 4);
     	return fs.writeFile(buildPath, json, function (e) {
-    		if (e) return callback("Error while saving build.json for {0}:\n{1}".format(this.Id(), e), e, buildPath, json);
+    		if (e) return callback("Error while saving build.json for {0}:\n{1}".format(build.Id(), e), e, buildPath, json);
     		callback(null, null, buildPath, json);
     	});
     },

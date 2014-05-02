@@ -123,8 +123,8 @@ AgentWorker.define({
 		}
 	},
 	emit: function () {
-		if (this.build && this.build.conf.status != 'cancelled') {
-			return this.socket.emit.apply(this, arguments);
+		if (!this.build || this.build.conf && this.build.conf.status != 'cancelled') {
+			return this.socket.emit.apply(this.socket, arguments);
 		}
 		return false;
 	},
@@ -394,7 +394,7 @@ AgentWorker.define({
 		var agent = this;
 		this.genericBuild(build, null, function (err) {
 			if (build.conf.status === 'cancelled') return;
-			if (err) return buildFailed(err);
+			if (err) return agent.buildFailed(build, err);
 			var apkGlobPath = 'platforms/android/ant-build/*.apk';
 			var workFolder = path.resolve(agent.workFolder, build.Id());
 			var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');

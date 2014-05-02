@@ -79,6 +79,9 @@ ClientWorker.define({
         }, client, null, platforms, files);
         build.id = client.id;
         extend(build.conf, this.conf);
+        delete build.conf.agent;
+        delete build.conf.serverInstance;
+        console.log(build.conf);
         build.conf.logs.push(new Msg(build, this, "CW", Msg.info, "The build is requested on {2}", platforms));
 
         client.socket.emit('register', {

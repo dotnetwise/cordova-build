@@ -376,13 +376,13 @@ attr: {
                                                     </dl>
                                                     <ul class="build-actions">
                                                         <li data-bind="
-    visible: status() == 'failed' || status() == 'success',
+    visible: status() == 'cancelled' || status() == 'failed' || status() == 'success',
     ">
                                                     <button data-bind="
     click: $root.rebuild.bind($root)" class="btn btn-small btn-primary">Rebuild?</button>
                                                     </li>
                                                         <li data-bind="
-    visible: status() != 'failed' && status() != 'success',
+    visible: status() != 'cancelled' && status() != 'failed' && status() != 'success',
     ">
                                                     <button data-bind="
     click: $root.cancel.bind($root)" class="btn btn-small btn-danger">Cancel?</button>
