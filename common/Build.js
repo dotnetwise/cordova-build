@@ -4,7 +4,7 @@ var CircularJSON = require('circular-json');
 var extend = require('extend');
 var fs = require('fs.extra');
 var shortid = require('shortid');
-var statuses = ['unknown', 'success', 'planned', 'queued', 'building', 'failed', 'cancelled']
+var statuses = ['unknown', 'cancelled', 'success', 'planned', 'queued', 'building', 'failed']
 
 function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
     if (arguments.length == 1) {

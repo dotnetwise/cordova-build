@@ -89,6 +89,11 @@ AgentWorker.define({
 	},
 	'onCancelBuild': function () {
 		this.build.conf.status = 'cancelled';
+		try {
+			this.exec && this.exec.kill();
+		}
+		catch(e) {
+		}
 	},
 	'onBuild': function (build) {
 		if (!build) {
@@ -145,10 +150,10 @@ AgentWorker.define({
 		});
 	},
 	detectZipArchiver: function () {
-		exec('7z', { maxBuffer: maxBuffer }, function (err) {
+		this.exec = exec('7z', { maxBuffer: maxBuffer }, function (err) {
 			if (!err)
 				zipArchiver = '7z';
-			else exec('/Applications/Keka.app/Contents/Resources/keka7z', { maxBuffer: maxBuffer }, function (err) {
+			else this.exec = exec('/Applications/Keka.app/Contents/Resources/keka7z', { maxBuffer: maxBuffer }, function (err) {
 				if (!err)
 					zipArchiver = 'keka7z';
 				//else exec('unzip', { maxBuffer: maxBuffer }, function (err) {
@@ -162,14 +167,16 @@ AgentWorker.define({
 		var agent = this;
 		switch (zipArchiver) {
 			case '7z':
-				exec('7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
+				this.exec = exec('7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
+					if (build.conf.status === 'cancelled') return;
 					//stdout && agent.log(build, Msg.debug, '{2}', stdout);
 					if (err) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
 					done();
 				});
 				break;
 			case 'keka7z':
-				exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+				this.exec = exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+					if (build.conf.status === 'cancelled') return;
 					//stdout && agent.log(build, Msg.debug, '{2}', stdout);
 					if (err) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
 					done();
@@ -277,7 +284,7 @@ AgentWorker.define({
 			if (build.conf.platform == 'ios')
 				cmd += ' | tee "' + path.resolve(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running|return)"';
 			agent.log(build, Msg.status, 'Executing {2}', cmd);
-			var cordova_build = exec(cmd, {
+			var cordova_build = agent.exec = exec(cmd, {
 				cwd: locationPath,
 				maxBuffer: maxBuffer,
 			}, s8BuildExecuted)
@@ -355,7 +362,7 @@ AgentWorker.define({
 			var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
 			var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
 			agent.log(build, Msg.status, 'executing: {2}', execPath);
-			var xcrun = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
+			var xcrun = agent.exec = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
 				if (build.conf.status === 'cancelled') return;
 				stdout && agent.log(build, Msg.build_output, '{2}', stdout);
 				err && agent.log(build, Msg.error, 'error:\n{2}', err);
@@ -363,7 +370,7 @@ AgentWorker.define({
 				var e = stderr || err;
 				if (e) return agent.buildFailed(build, '');
 				agent.log(build, Msg.status, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
-				exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
+				agent.exec = exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
 					if (err || stderr)
 						return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
 					agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
@@ -403,7 +410,7 @@ AgentWorker.define({
 					var egrep = path.resolve(__dirname, '../bin/egrep.exe');
 					androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2}" -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
 					agent.log(build, Msg.status, androidsign);
-					var androidsignProcess = exec(androidsign, function (err, stdout, stderr) {
+					var androidsignProcess = agent.exec = exec(androidsign, function (err, stdout, stderr) {
 						if (build.conf.status === 'cancelled') return;
 						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
 						err && agent.log(build, Msg.error, 'error:\n{2}', err);

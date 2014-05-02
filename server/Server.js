@@ -264,7 +264,7 @@ Server.define({
 									if (build.agent) {
 										if (build.agent.socket)
 											try {
-												build.agent.socket.emit('build-failed', build.id);
+												build.agent.socket.emit('cancel', build.id);
 											}
 										catch (e) { }
 										build.agent.busy = null;
