@@ -412,7 +412,7 @@ Server.define({
 		var platform = parsedBuild.platform;
 		var build = parsedBuild.build; req.url;
 		//var m = CircularJSON.stringify((build && build.master || build).serialize({ files: 1, outputFiles: 1, platforms: 1 }, { files: 1, outputFiles: 1 }));
-		if (platform == 'ios' && req.params.file == 'qr') {
+		if (platform == 'ios' && (req.params.file == 'qr' || /iPhone|iPad|iPod/.test(req.headers['user-agent'])) {
 			var port = this.conf.proxyport || this.conf.uiport || this.conf.port;
 			var url = [
                 this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
