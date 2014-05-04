@@ -37,6 +37,7 @@ function Server(conf) {
 	multiGlob.glob(server.location + '/*/build.json', function (err, builds) {
 		builds.sort();
 		var loadedBuilds = [];
+		var orderedBuilds = {};
 		async.each(builds, function (buildPath, cb) {
 			fs.readFile(buildPath, function (err, data) {
 				var buildJSON;
@@ -47,15 +48,21 @@ function Server(conf) {
 					return cb(e);
 				}
 				var build = new Build(buildJSON);
-				server.builds.push(build);
-				server.builds[build.id] = build;
-				build.platforms && build.platforms.forEach(function (platformBuild) {
-					server.builds[platformBuild.id] = platformBuild;
-				});
 				loadedBuilds.push(build);
+				orderedBuilds[buildPath] = build;
 				cb();
 			});
 		}, function (err) {
+			builds.forEach(function (buildPath) {
+				var build = orderedBuilds[buildPath];
+				if (build) {
+					server.builds.push(build);
+					server.builds[build.id] = build;
+					build.platforms && build.platforms.forEach(function (platformBuild) {
+						server.builds[platformBuild.id] = platformBuild;
+					});
+				}
+			});
 			loadedBuilds.length && server.log(new Msg(null, null, 'S', Msg.debug, '{2} previous build(s) were successfully read from the disk', loadedBuilds.length));
 			err && server.log(new Msg(null, null, 'S', Msg.debug, 'an error occurred while trying to read previous build(s) from the disk\n{2}', err));
 		});
@@ -307,7 +314,7 @@ Server.define({
 			build = server.builds[build];
 		}
 		if (!build) {
-			server.log(new Msg(null, agent, 'S', Msg.debug, 'Build not found with id: {2}', buildParam));
+			server.log(new Msg(null, null, 'S', Msg.error, 'Build not found with id: {2}', buildParam));
 			return;
 		}
 		if (build.master && !doNotLogOnMaster && build.status != status) {
