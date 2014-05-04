@@ -54,7 +54,7 @@ module.exports = Function.define({
 			var platforms = buildConf.platform;
 			build.platforms = [];
 			platforms.forEach(function (platform) {
-				var conf = extend(true, {}, buildConf, { number: buildConf.number && (buildConf.number + "-" + platform) });
+				var conf = extend(true, {}, buildConf, { number: buildConf.number && (buildConf.number + "." + platform) });
 				var platformBuild = new Build(conf, this, null, platform, null, null, null, build);
 				build.platforms.push(platformBuild);
 				platformBuild.conf.logs = [];//separate logs from its master

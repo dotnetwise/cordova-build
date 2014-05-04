@@ -92,7 +92,7 @@ AgentWorker.define({
 		try {
 			this.exec && this.exec.kill();
 		}
-		catch(e) {
+		catch (e) {
 		}
 	},
 	'onBuild': function (build) {
@@ -393,7 +393,7 @@ AgentWorker.define({
 	buildAndroid: function (build) {
 		var agent = this;
 		var workFolder = path.resolve(agent.workFolder, build.Id());
-		mkdirp.sync(path.resolve(workFolder, 'platforms/android/assets/www'));
+
 		agent.genericBuild(build, null, function (err) {
 			if (build.conf.status === 'cancelled') return;
 			if (err) return agent.buildFailed(build, err);
@@ -436,6 +436,13 @@ AgentWorker.define({
 			function done(err) {
 				!err && agent.buildSuccess(build, [apkGlobPath, , 'build.android.log', signLogPath]);
 			}
+		}, function (build, buildCordova) {
+			var assetsWWWFolder = path.resolve(workFolder, 'platforms/android/assets/www');
+			agent.log(build, Msg.info, "Ensuring android work folder {2}", assetsWWWFolder);
+			mkdirp(assetsWWWFolder, function (err) {
+				if (err) return agent.buildFailed(build, err);
+				buildCordova(null, true);
+			});
 		});
 	},
 	buildSuccess: function (build, globFiles) {

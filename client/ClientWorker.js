@@ -128,7 +128,7 @@ ClientWorker.define({
         if (this.conf.save) {
         	//var id = build.masterId || build.id;
             var files = build.outputFiles;
-            var locationPath = path.resolve(client.location, this.build.Id());
+            var locationPath = client.location;//path.resolve(client.location, this.build.Id());
             var buildPath = path.resolve(locationPath, 'build.json');
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
