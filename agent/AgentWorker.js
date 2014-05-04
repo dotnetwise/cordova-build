@@ -392,11 +392,12 @@ AgentWorker.define({
 	},
 	buildAndroid: function (build) {
 		var agent = this;
-		this.genericBuild(build, null, function (err) {
+		var workFolder = path.resolve(agent.workFolder, build.Id());
+		mkdirp.sync(path.resolve(workFolder, 'platforms/android/assets/www'));
+		agent.genericBuild(build, null, function (err) {
 			if (build.conf.status === 'cancelled') return;
 			if (err) return agent.buildFailed(build, err);
 			var apkGlobPath = 'platforms/android/ant-build/*.apk';
-			var workFolder = path.resolve(agent.workFolder, build.Id());
 			var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
 			if (build.conf.androidsign) {
 				var androidsign = build.conf.androidsign;
