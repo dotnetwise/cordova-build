@@ -632,7 +632,7 @@ attr: {
                                         <!--</a>-->
                                         <dl class="specs report">
                                             <dd class="name">
-                                                <label>Name:</label><span data-bind="text: unwrap($data.conf && $data.conf.name) || id"></span>
+                                                <label>Name:</label><span data-bind="text: unwrap($data.conf && $data.conf.name || $data.name) || id"></span>
                                             </dd>
                                             <dd class="since">
                                                 <label>Since:</label><span datetime-format="{0} ago"

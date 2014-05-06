@@ -425,7 +425,9 @@ AgentWorker.define({
 						done();
 					});
 					androidsignProcess.stdout.on('data', function (data) {
-						agent.log(build, Msg.build_output, data);
+						if (/error/gi.test(data || ''))
+							agent.buildFailed(build, data);
+						else agent.log(build, Msg.build_output, data);
 					});
 					androidsignProcess.stderr.on('data', function (data) {
 						agent.log(build, Msg.error, data);

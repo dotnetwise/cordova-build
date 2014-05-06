@@ -403,6 +403,8 @@ Server.define({
 	},
 	detectPlatform: function (build, req) {
 		var platform = req.params.platform || 'autodetect';
+		if (req.params.file == 'qr')
+			platform = 'autodetect';
 		switch (platform) {
 			case 'android':
 			case 'ios':
