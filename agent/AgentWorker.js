@@ -264,7 +264,26 @@ AgentWorker.define({
 			if (build.conf.status === 'cancelled') return;
 			if (err) return buildFailed('error extracting archive files\n{2}', err);
 			if (filesDone)
-				filesDone.call(agent, s6DecideExecuteCordovaBuild);
+				filesDone.call(agent, s6ModifyConfigXML);
+			else s6ModifyConfigXML();
+		}
+		function s6ModifyConfigXML() {
+			if (build.conf.status === 'cancelled') return;
+			var bundleId = build.conf[build.conf.platform + 'bundleid'] || build.conf.bundleId;
+			if (bundleid) {
+				var configPath = path.resolve(agent.workFolder, build.Id(), 'config.xml');
+				fs.readFile(configPath, 'utf8', function (err, data) {
+					if (err) {
+						if (err) return buildFailed('error reading {2}\n{3}', configPath, err);
+					}
+					var result = data.replace(/\<widget id=(\"|\').*?(\"|\')/g, "<widget id='{0}'".format(bundleid));
+
+					fs.writeFile(configPath, result, 'utf8', function (err) {
+						if (err) return buildFailed('error writing bundleId {2} into {3}\n{4}', bundleid, configPath, err);
+						s6DecideExecuteCordovaBuild();
+					});
+				});
+			}
 			else s6DecideExecuteCordovaBuild();
 		}
 		function s6DecideExecuteCordovaBuild() {

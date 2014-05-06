@@ -398,8 +398,17 @@ Server.define({
 		this.notifyStatusAllWWWs('log', 'log', msg);
 	},
 	findBuildById: function (build) {
-		var buildFound = typeof build == 'string' || build && build.id ? this.builds[build && build.id || build] || build && build.id && build : build;
-		return buildFound;
+		if (typeof build == 'string' || build && build.id) {
+			var buildFound =  this.builds[build && build.id || build] || build && build.id && build;
+			return buildFound;
+		}
+		else {
+			if (build) {
+				console.error(build);
+				throw "could not parse build";
+			}
+		}
+		return build;
 	},
 	detectPlatform: function (build, req) {
 		var platform = req.params.platform || 'autodetect';
