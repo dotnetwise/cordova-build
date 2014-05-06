@@ -63,7 +63,7 @@ AgentWorker.define({
 		console.log('AGENT WORKER CONNECTED supporting platforms:', this.conf.agent);
 		this.emit('register', {
 			id: this.id,
-			name: this.conf.name,
+			name: this.conf.agentname,
 			platforms: this.conf.agent || ['android', 'wp8'],
 		});
 	},
