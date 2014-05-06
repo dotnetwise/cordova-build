@@ -104,10 +104,10 @@ Agent.define({
 						agent.log(build, client, Msg.info, 'Build done, ready for a new one.');
 						serverUtils.freeMemFiles(build.outputFiles);
 						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err, stats) {
-							err && agent.log(build, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
+							err && agent.log(build, client, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
 							var buildPath = path.resolve(locationPath, 'build.json');
 							build.save(buildPath, function (err, e, bp, json) {
-								err && agent.log(build, Msg.debug, err);
+								err && agent.log(build, client, Msg.debug, err);
 								agent.busy = null;//free agent to take in another work
 								agent.updateStatus('ready');
 								stats.forEach(function (stat) {
