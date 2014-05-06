@@ -1,5 +1,6 @@
 cordova-build
 =============
+[Documentation to be added]
 
 An easy way to handle your own cordova builds without using `Phonegap Build Server` and getting around <a target='_blank' href='http://www.slideshare.net/astoria0128/advantages-and-disadvantages-of-phone-gap-development-tools-23511998'>its disadvantages</a>)
 
