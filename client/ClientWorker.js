@@ -116,7 +116,8 @@ ClientWorker.define({
         }
     },
     'onDisconnect': function() {
-        console.log('CLIENT DISCONNECTED');
+    	console.log('CLIENT DISCONNECTED');
+    	process.exit();//the client worker should exit
     },
     'onBuildFailed': function (result) {
     	var client = this;

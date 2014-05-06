@@ -50,8 +50,9 @@ Agent.define({
 	},
 	'onBuildSuccess': function (responseBuild) {
 		var build = this.server.findBuildById(responseBuild);
-		if (!build)
-			this.log(null, null, Msg.error, 'Build with id {2} is not defined on the server', responseBuild && responseBuild.id || responseBuild);
+		if (!build) {
+			return this.log(null, null, Msg.error, 'Build with id {2} is not defined on the server', responseBuild && responseBuild.id || responseBuild);
+		}
 
 		var client = build.client;
 		var agent = this;
