@@ -184,7 +184,7 @@ Server.define({
 										this.log(new Msg(build, agent, 'S', Msg.warning, 'the agent {3} has been disconnected. The build on {2} will be added back to queue', build.platform, agent.id), build.client);
 										build.agent = null;
 										this.updateBuildStatus(build, 'queued');
-										var buildPath = path.resolve(this.location, build.master && build.master.Id() || build.Id(), build.conf.platform + '.build.json');
+										var buildPath = path.resolve(this.location, build.master && build.master.Id() || build.Id(), 'build.' + build.conf.platform + '.json');
 										build.save(buildPath, function (err, e, bp, json) {
 											err && this.log(new Msg(build, agent, 'S', Msg.debug, err), build.client);
 										});

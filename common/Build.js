@@ -5,7 +5,7 @@ var extend = require('extend');
 var fs = require('fs.extra');
 var path = require('path');
 var shortid = require('shortid');
-var statuses = ['unknown', 'cancelled', 'success', 'planned', 'queued', 'building', 'failed']
+var statuses = ['unknown', 'cancelled', 'success', 'planned', 'queued', 'uploading', 'building', 'failed']
 var working = [];
 function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
     if (arguments.length == 1) {
@@ -48,8 +48,20 @@ Build.define({
         if (this.masterId)
             result.masterId = this.masterId;
         if (includeOptions) {
-            if (includeOptions.files) result.files = this.files;
-            if (includeOptions.outputFiles) result.outputFiles = this.outputFiles;
+        	if (includeOptions.files) result.files = (this.files || []).map(function (file) {
+        		var result = { file: file.file };
+        		if (includeOptions.content) {
+        			result.content = file.content;
+        		}
+        		return result;
+        	});
+        	if (includeOptions.outputFiles) result.outputFiles = (this.outputFiles || []).map(function (file) {
+        		var result = { file: file.file };
+        		if (includeOptions.content) {
+        			result.content = file.content;
+        		}
+        		return result;
+        	});;
             if (includeOptions.platforms) {
                 //serialize individual build per platform
                 if (this.platforms) {
@@ -90,24 +102,18 @@ Build.define({
     		files: true,
     		outputFiles: true,
     		platforms: true,
+			content: false,
     	}, {
     		files: true,
     		outputFiles: true,
+    		content: false,
     	}), null, 4);
-    	if (working.length == 0) {
-    		save();
+		try {
+			fs.writeFileSync(buildPath, json); 
+		}
+    	catch(e) {
+    		if (e) return callback && callback("Error while saving build.json for {0}:\n{1}".format(build.Id(), e), e, buildPath, json);
     	}
-    	else working.unshift(save);
-
-    	function save() {
-    		working.push(save);
-    		fs.writeFile(buildPath, json, function (e) {
-    			if (e) return callback && callback("Error while saving build.json for {0}:\n{1}".format(build.Id(), e), e, buildPath, json);
-    			callback && callback(null, null, buildPath, json);
-    			working.pop();
-    			var next = working.pop();
-    			next && next();
-    		});
-    	}
+		callback && callback(null, null, buildPath, json);
     },
 });

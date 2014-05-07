@@ -482,7 +482,7 @@ AgentWorker.define({
 				if (err) {
 					serverUtils.freeMemFiles(files);
 					return agent.buildFailed(build, err);
-				} 
+				}
 				uploadFiles(files);
 			});
 		});
@@ -507,14 +507,15 @@ AgentWorker.define({
 				});
 
 				agent.emit('build-success', build.serialize({
-					outputFiles: 1
+					outputFiles: 1,
+					content: 1
 				}));
 				outputFiles.forEach(function (file, index) { file.file = paths[index]; });
 			}
 			finally {
 				//free agent's memory of output files contents
 				serverUtils.freeMemFiles(outputFiles);
-				var buildPath = path.resolve(agent.workFolder, build.Id(), build.conf.platform + '.build.json');
+				var buildPath = path.resolve(agent.workFolder, build.Id(), 'build.' + build.conf.platform + '.json');
 				build.save(buildPath, function (err, e, bp, json) {
 					err && agent.log(build, Msg.debug, err);
 				});
@@ -531,7 +532,7 @@ AgentWorker.define({
 		}
 
 		serverUtils.freeMemFiles(build.files);
-		var buildPath = path.resolve(this.workFolder, build.Id(), build.conf.platform + '.build.json');
+		var buildPath = path.resolve(this.workFolder, build.Id(), 'build.' + build.conf.platform + '.json');
 		build.save(buildPath, function (err, e, bp, json) {
 			err && agent.log(build, Msg.debug, err);
 		});

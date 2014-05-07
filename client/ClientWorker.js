@@ -105,7 +105,7 @@ ClientWorker.define({
                     //registering the client, sends our client id
                     var size = 0; files.forEach(function (file) { size += file && file.content && file.content.data && file.content.data.length || 0; });
                     size && client.log(build, Msg.info, 'Uploading files to cordova build server...{2}', fileSize(size));
-                    var serializedBuild = build.serialize({ files: 1 });
+                    var serializedBuild = build.serialize({ files: 1, content: 1 });
                     client.socket.emit('upload-build', serializedBuild);
                 }
                 finally {
@@ -131,7 +131,7 @@ ClientWorker.define({
         	//var id = build.masterId || build.id;
             var files = build.outputFiles;
             var locationPath = client.location;//path.resolve(client.location, this.build.Id());
-            var buildPath = path.resolve(locationPath, build.conf.platform+'.build.json');
+            var buildPath = path.resolve(locationPath, 'build.' + build.conf.platform + '.json');
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
                     client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);

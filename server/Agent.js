@@ -109,13 +109,14 @@ Agent.define({
 							agent.log(build, client, Msg.info, 'Also sending the output files to the client');
 
 						client && client.socket.emit('build-success', build.serialize({
-							outputFiles: build.conf.save
+							outputFiles: build.conf.save,
+                            content: build.conf.save,
 						}));
 						agent.log(build, client, Msg.info, 'Build done, ready for a new one.');
 						serverUtils.freeMemFiles(build.outputFiles);
 						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err, stats) {
 							err && agent.log(build, client, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
-							var buildPath = path.resolve(locationPath, build.conf.platform + '.build.json');
+							var buildPath = path.resolve(locationPath, 'build.' + build.conf.platform + '.json');
 							build.save(buildPath, function (err, e, bp, json) {
 								err && agent.log(build, client, Msg.debug, err);
 								agent.busy = null;//free agent to take in another work
@@ -148,7 +149,7 @@ Agent.define({
 				this.busy = null;
 				this.updateStatus('ready');
 			}
-			var buildPath = path.resolve(this.server.location, foundBuild.master && foundBuild.master.Id() || foundBuild.Id(), foundBuild.conf.platform + '.build.json');
+			var buildPath = path.resolve(this.server.location, foundBuild.master && foundBuild.master.Id() || foundBuild.Id(), 'build.' + foundBuild.conf.platform + '.json');
 			foundBuild.save(buildPath, function (err, e, bp, json) {
 				err && agent.log(foundBuild, foundBuild.client, Msg.debug, err);
 			});
@@ -199,6 +200,7 @@ Agent.define({
 						this.log(build, client, Msg.info, 'sending build to agent {2} on platform {3}...{4}', this.id, build.conf.platform, fileSize(size));
 						this.socket.emit('build', build.serialize({
 							files: 1,
+                            content: 1,
 						}));
 					}
 					catch (e) {
