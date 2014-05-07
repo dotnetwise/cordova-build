@@ -184,10 +184,16 @@ Server.define({
 										this.log(new Msg(build, agent, 'S', Msg.warning, 'the agent {3} has been disconnected. The build on {2} will be added back to queue', build.platform, agent.id), build.client);
 										build.agent = null;
 										this.updateBuildStatus(build, 'queued');
-										var buildPath = path.resolve(this.location, build.master && build.master.Id() || build.Id(), 'build.json');
+										var buildPath = path.resolve(this.location, build.master && build.master.Id() || build.Id(), build.conf.platform + '.build.json');
 										build.save(buildPath, function (err, e, bp, json) {
 											err && this.log(new Msg(build, agent, 'S', Msg.debug, err), build.client);
 										});
+										if (build.master) {
+											buildPath = path.resolve(this.location, build.master && build.master.Id(), 'build.json');
+											build.master.save(buildPath, function (err, e, bp, json) {
+												err && this.log(new Msg(build, agent, 'S', Msg.debug, err), build.client);
+											});
+										}
 										this.buildsQueue.push(build);
 									}
 								}
@@ -338,7 +344,7 @@ Server.define({
 				}
 			}
 			else {
-				build.updateStatus(status);
+				build.updateStatus(status, server.location);
 			}
 			server.notifyStatusAllWWWs(status, 'build', build.serialize({ platforms: 1 }));
 		}

@@ -92,7 +92,16 @@ Agent.define({
 								masterBuild.conf.completed = new Date();
 								started = masterBuild.conf.started;
 								masterBuild.conf.duration = (started && started.format && started || new Date(started).elapsed(masterBuild.conf.completed));
-								server.updateBuildStatus(masterBuild, 'success');
+								server.updateBuildStatus(masterBuild, masterBuild.platforms.every(function (platform) {
+                                return platform.conf.status == 'success';
+								}) ? 'success' : 'failed');
+								build.outputFiles.push({
+									file: 'build.json', content: masterBuild.serialize({
+										files: true,
+										outputFiles: true,
+										platforms: true,
+									}),
+								});
 							}
 						}
 						if (build.conf.save)
@@ -105,7 +114,7 @@ Agent.define({
 						serverUtils.freeMemFiles(build.outputFiles);
 						serverUtils.cleanLastFolders(server.conf.keep, server.location + "/*", function (err, stats) {
 							err && agent.log(build, client, Msg.debug, 'Error while cleaning up last {2} folders in SERVER builds output folder {3}:\n{4}', server.conf.keep, server.location, err);
-							var buildPath = path.resolve(locationPath, 'build.json');
+							var buildPath = path.resolve(locationPath, build.conf.platform+'.build.json');
 							build.save(buildPath, function (err, e, bp, json) {
 								err && agent.log(build, client, Msg.debug, err);
 								agent.busy = null;//free agent to take in another work
@@ -138,7 +147,7 @@ Agent.define({
 				this.busy = null;
 				this.updateStatus('ready');
 			}
-			var buildPath = path.resolve(this.server.location, foundBuild.master && foundBuild.master.Id() || foundBuild.Id(), 'build.json');
+			var buildPath = path.resolve(this.server.location, foundBuild.master && foundBuild.master.Id() || foundBuild.Id(), foundBuild.conf.platform+'.build.json');
 			foundBuild.save(buildPath, function (err, e, bp, json) {
 				err && agent.log(foundBuild, foundBuild.client, Msg.debug, err);
 			});

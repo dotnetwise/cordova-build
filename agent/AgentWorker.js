@@ -97,29 +97,27 @@ AgentWorker.define({
 	},
 	'onBuild': function (build) {
 		if (!build) {
-			this.buildFailed(build, 'No build configuration was specified!')
+			return this.buildFailed(build, 'No build configuration was specified!')
 		}
-		else if (!build.conf || !build.conf.platform) {
-			this.buildFailed(build, 'No platform was specified for the requested build!');
+		if (!build.conf || !build.conf.platform) {
+			return this.buildFailed(build, 'No platform was specified for the requested build!');
 		}
-		else {
-			this.emit('building', build.id);
-			var buildObj = new Build(build.conf, null, this, build.conf.platform, build.files, null, build.id, build.masterId);
-			this.build = build = buildObj;
-			switch (build.conf.platform) {
-				case 'wp8':
-					this.buildWP8(build);
-					break;
-				case 'android':
-					this.buildAndroid(build);
-					break;
-				case 'ios':
-					this.buildIOS(build);
-					break;
-				default:
-					this.buildFailed(build, "Platform '{2}' was requested for this build but this agent doesn't support it!", build.conf.platform);
-					break;
-			}
+		this.emit('building', build.id);
+		var buildObj = new Build(build.conf, null, this, build.conf.platform, build.files, null, build.id, build.masterId);
+		this.build = build = buildObj;
+		switch (build.conf.platform) {
+			case 'wp8':
+				this.buildWP8(build);
+				break;
+			case 'android':
+				this.buildAndroid(build);
+				break;
+			case 'ios':
+				this.buildIOS(build);
+				break;
+			default:
+				this.buildFailed(build, "Platform '{2}' was requested for this build but this agent doesn't support it!", build.conf.platform);
+				break;
 		}
 	},
 	emit: function () {
@@ -190,8 +188,7 @@ AgentWorker.define({
 				//    });
 				//    break;
 			default:
-				agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z');
-				break;
+				return agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z');
 		}
 	},
 	genericBuild: function (build, filesDone, done, onExecutingCordovaBuild) {
@@ -201,9 +198,9 @@ AgentWorker.define({
 
 		function buildFailed(args) {
 			splice.call(arguments, 0, 0, build);
-			agent.buildFailed.apply(agent, arguments);
-			splice.call(arguments, 0, 1);
-			done.apply(agent, arguments);
+			return agent.buildFailed.apply(agent, arguments);
+			//splice.call(arguments, 0, 1);
+			//done.apply(agent, arguments);
 		}
 
 		return s1Cleanup();
@@ -269,17 +266,18 @@ AgentWorker.define({
 		}
 		function s6ModifyConfigXML() {
 			if (build.conf.status === 'cancelled') return;
-			var bundleId = build.conf[build.conf.platform + 'bundleid'] || build.conf.bundleId;
+			var bundleid = build.conf[build.conf.platform + 'bundleid'] || build.conf.bundleid;
 			if (bundleid) {
 				var configPath = path.resolve(agent.workFolder, build.Id(), 'config.xml');
+				agent.log(build, Msg.info, 'Changing bundleid to {2} in config.xml', bundleid);
 				fs.readFile(configPath, 'utf8', function (err, data) {
 					if (err) {
 						if (err) return buildFailed('error reading {2}\n{3}', configPath, err);
 					}
-					var result = data.replace(/\<widget id=(\"|\').*?(\"|\')/g, "<widget id='{0}'".format(bundleid));
+					var result = data.replace(/\<widget id\=(\"|\').*?(\"|\')/g, "<widget id=\"{0}\"".format(bundleid));
 
 					fs.writeFile(configPath, result, 'utf8', function (err) {
-						if (err) return buildFailed('error writing bundleId {2} into {3}\n{4}', bundleid, configPath, err);
+						if (err) return buildFailed('error writing bundleid {2} into {3}\n{4}', bundleid, configPath, err);
 						s6DecideExecuteCordovaBuild();
 					});
 				});
@@ -445,8 +443,8 @@ AgentWorker.define({
 					});
 					androidsignProcess.stdout.on('data', function (data) {
 						if (/error/gi.test(data || ''))
-							agent.buildFailed(build, data);
-						else agent.log(build, Msg.build_output, data);
+							return agent.buildFailed(build, data);
+						agent.log(build, Msg.build_output, data);
 					});
 					androidsignProcess.stderr.on('data', function (data) {
 						agent.log(build, Msg.error, data);
@@ -483,10 +481,9 @@ AgentWorker.define({
 				if (build.conf.status === 'cancelled') return;
 				if (err) {
 					serverUtils.freeMemFiles(files);
-					agent.buildFailed(build, err);
-				} else {
-					uploadFiles(files);
-				}
+					return agent.buildFailed(build, err);
+				} 
+				uploadFiles(files);
 			});
 		});
 		function uploadFiles(outputFiles) {
@@ -517,7 +514,7 @@ AgentWorker.define({
 			finally {
 				//free agent's memory of output files contents
 				serverUtils.freeMemFiles(outputFiles);
-				var buildPath = path.resolve(agent.workFolder, build.Id(), 'build.json');
+				var buildPath = path.resolve(agent.workFolder, build.Id(), build.conf.platform + '.build.json');
 				build.save(buildPath, function (err, e, bp, json) {
 					err && agent.log(build, Msg.debug, err);
 				});
@@ -534,7 +531,7 @@ AgentWorker.define({
 		}
 
 		serverUtils.freeMemFiles(build.files);
-		var buildPath = path.resolve(this.workFolder, build.Id(), 'build.json');
+		var buildPath = path.resolve(this.workFolder, build.Id(), build.conf.platform + '.build.json');
 		build.save(buildPath, function (err, e, bp, json) {
 			err && agent.log(build, Msg.debug, err);
 		});

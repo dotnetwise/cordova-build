@@ -3,9 +3,10 @@ require('fast-class');
 var CircularJSON = require('circular-json');
 var extend = require('extend');
 var fs = require('fs.extra');
+var path = require('path');
 var shortid = require('shortid');
 var statuses = ['unknown', 'cancelled', 'success', 'planned', 'queued', 'building', 'failed']
-
+var working = [];
 function Build(conf, client, agent, platform, files, outputFiles, id, masterId) {
     if (arguments.length == 1) {
         var b = conf || {};
@@ -61,7 +62,7 @@ Build.define({
         }
         return result;
     },
-    updateStatus: function(newStatus) {
+    updateStatus: function(newStatus, location) {
         this.conf.status = newStatus;
         if (this.master) 
         {
@@ -71,11 +72,15 @@ Build.define({
                 if (i > masterStatus)
                     masterStatus = i;
             });
-            this.master.conf.status = statuses[masterStatus];
+            if (this.master.conf.status != statuses[masterStatus]) {
+            	this.master.conf.status = statuses[masterStatus];
+            	var buildPath = path.resolve(location, this.master.Id(), 'build.json');
+            	this.master.save(buildPath);
+            }
         }
     },
     save: function (buildPath, callback) {
-    	var build = this.master || this;
+    	var build = this;
     	var json = CircularJSON.stringify(build.serialize({
     		files: true,
     		outputFiles: true,
@@ -84,9 +89,20 @@ Build.define({
     		files: true,
     		outputFiles: true,
     	}), null, 4);
-    	return fs.writeFile(buildPath, json, function (e) {
-    		if (e) return callback("Error while saving build.json for {0}:\n{1}".format(build.Id(), e), e, buildPath, json);
-    		callback(null, null, buildPath, json);
-    	});
+    	if (working.length == 0) {
+    		save();
+    	}
+    	else working.unshift(save);
+
+    	function save() {
+    		working.push(save);
+    		fs.writeFile(buildPath, json, function (e) {
+    			if (e) return callback && callback("Error while saving build.json for {0}:\n{1}".format(build.Id(), e), e, buildPath, json);
+    			callback && callback(null, null, buildPath, json);
+    			working.pop();
+    			var next = working.pop();
+    			next && next();
+    		});
+    	}
     },
 });

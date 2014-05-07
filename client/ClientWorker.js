@@ -117,7 +117,8 @@ ClientWorker.define({
     },
     'onDisconnect': function() {
     	console.log('CLIENT DISCONNECTED');
-    	process.exit();//the client worker should exit
+    	if (!this.conf.listen.server && !this.conf.listen.agent)
+            process.exit();//the client worker should exit
     },
     'onBuildFailed': function (result) {
     	var client = this;
@@ -130,7 +131,7 @@ ClientWorker.define({
         	//var id = build.masterId || build.id;
             var files = build.outputFiles;
             var locationPath = client.location;//path.resolve(client.location, this.build.Id());
-            var buildPath = path.resolve(locationPath, 'build.json');
+            var buildPath = path.resolve(locationPath, build.conf.platform+'.build.json');
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
                     client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);
@@ -148,8 +149,9 @@ ClientWorker.define({
         	err && client.log(build, Msg.debug, 'Error while saving {2}:\n{3}', buildPath, err);
         	serverUtils.freeMemFiles(build.outputFiles);
             client.log(build, Msg.info, 'Build done! It took {2}.', new Date(build.conf.started).elapsed());
-            if (++client.built >= client.conf.build.length)
+            if (++client.built >= client.conf.build.length) {
                 client.disconnect();
+            }
         }
     },
     disconnect: function () {
