@@ -62,7 +62,8 @@ Build.define({
         }
         return result;
     },
-    updateStatus: function(newStatus, location) {
+    updateStatus: function (newStatus, location) {
+    	var save = this.conf.status != newStatus;
         this.conf.status = newStatus;
         if (this.master) 
         {
@@ -73,10 +74,14 @@ Build.define({
                     masterStatus = i;
             });
             if (this.master.conf.status != statuses[masterStatus]) {
-            	this.master.conf.status = statuses[masterStatus];
-            	var buildPath = path.resolve(location, this.master.Id(), 'build.json');
-            	this.master.save(buildPath);
+            	this.master.updateStatus(statuses[masterStatus], location);
             }
+        }
+        else {
+        	if (save) {
+        		var buildPath = path.resolve(location, this.Id(), 'build.json');
+        		this.save(buildPath);
+        	}
         }
     },
     save: function (buildPath, callback) {
