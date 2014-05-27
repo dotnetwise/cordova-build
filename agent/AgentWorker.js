@@ -330,6 +330,9 @@ AgentWorker.define({
 			var cmd = 'cordova build {0} {1} --{2}'.format(build.conf.platform, args || '', build.conf.buildmode || 'release');
 			if (build.conf.platform == 'ios')
 				cmd += ' | tee "' + path.resolve(locationPath, 'build.ios.xcodebuild.log') + '" | egrep -A 5 -i "(error|warning|succeeded|fail|codesign|running|return)"';
+            if (build.conf.platform == 'android')
+                cmd += ' | "platforms\\android\\cordova\\lib\\tee.exe" "build.android.log" | "platforms\\android\\cordova\\lib\\egrep.exe" -i -A 6 "(error|warning|success|sign)"';
+
 			agent.log(build, Msg.status, 'Executing {2}', cmd);
 			var cordova_build = agent.exec = exec(cmd, {
 				cwd: locationPath,
@@ -446,17 +449,18 @@ AgentWorker.define({
 			if (err) return agent.buildFailed(build, err);
 			var apkGlobPath = ['platforms/android/ant-build/*.apk'];
 			var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
+                            build.conf.androidsign = "jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore d:\\cordova-build\\certificates\\android\\safetybank.live.keystore -storepass Safetybank@14 -keypass Safetybank@14 {0} sftb";
 			if (build.conf.androidsign) {
 				var androidsign = build.conf.androidsign;
 				multiGlob.glob(apkGlobPath, {
 					cwd: workFolder,
 				}, function (err, apks) {
                     //we should sign unaligned apks
-                    apks = apks.filter(function(apk, i) { return !i; });
+                    apks = apks.filter(function(apk) { return !/-unaligned/.test(apk); });
                     apkGlobPath = apks;
                     agent.deleteMetaInfo(build, apks[0], {
 				        cwd: workFolder,
-				        maxBuffer: maxBuffer,
+				        maxBuffer: maxBuffer,   
 			        }, jarSigner);
                     function jarSigner() {
 					    if (build.conf.status === 'cancelled') return;
@@ -464,7 +468,7 @@ AgentWorker.define({
 					    apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
 					    var tee = path.resolve(__dirname, '../bin/tee.exe');
 					    var egrep = path.resolve(__dirname, '../bin/egrep.exe');
-					    androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2}" -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
+					    androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}"  2>&1 | "{2}" -i -E -v "(tsacert|signing|warning)""'.format(tee, signLogPath, egrep);
 					    agent.log(build, Msg.status, androidsign);
 					    var androidsignProcess = agent.exec = exec(androidsign, function (err, stdout, stderr) {
 						    if (build.conf.status === 'cancelled') return;
@@ -473,11 +477,10 @@ AgentWorker.define({
 						    stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
 						    var e = stderr || err;
 						    if (e) return agent.buildFailed(build, '');
-						    done();
+						    zipAlign(apks[0]);
 					    }).on('close', function (code) {
 						    if (build.conf.status === 'cancelled') return;
 						    if (code) return agent.buildFailed(build, 'android sign process exited with code {2}', code);
-						    done();
 					    });
 					    androidsignProcess.stdout.on('data', function (data) {
 						    if (/error/gi.test(data || ''))
@@ -491,6 +494,25 @@ AgentWorker.define({
 				});
 			}
 			else done();
+            function zipAlign(apk){
+                var output = apk.replace('-unsigned', '').replace('-unaligned', '');
+                var key = build.conf.androidsign.match(/(.*)(\\|\/| )(.*)(\.keystore)/i);
+                key = key && key[3];
+                key = key && ("-" + key);
+                output = path.resolve(path.dirname(apk), path.basename(output, path.extname(output)) + key + "-signed-aligned.apk");
+                exec('zipalign -f -v 4  "{0}" "{1}"'.format(apk, output), {
+                    cwd: workFolder,
+                }, function (err, stdout, stderr) {
+                    if (build.conf.status === 'cancelled') return;
+                    stdout && agent.log(build, Msg.build_output, '{2}', stdout);
+                    err && agent.log(build, Msg.error, 'error:\n{2}', err);
+                    stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+                    var e = stderr || err;
+                    if (e) return agent.buildFailed(build, '');
+                    apkGlobPath = [output];
+                    done();
+                });
+            }
 			function done(err) {
 				!err && agent.buildSuccess(build, apkGlobPath.concat(['build.android.log', signLogPath]));
 			}
