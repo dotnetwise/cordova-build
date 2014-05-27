@@ -161,6 +161,36 @@ AgentWorker.define({
 			});
 		});
 	},
+    deleteMetaInfo: function (build, file, opts, done) {
+		var agent = this;
+		switch (zipArchiver) {
+			case '7z':
+				this.exec = exec('7z d -tzip {0} META-INF'.format(file), opts, function (err, stdout, stderr) {
+					if (build.conf.status === 'cancelled') return;
+					//stdout && agent.log(build, Msg.debug, '{2}', stdout);
+					if (err) return agent.buildFailed(build, 'Error removing META-INF from archive via 7z\n{2}\n{3}', err, stderr);
+					done();
+				});
+				break;
+			case 'keka7z':
+				this.exec = exec('/Applications/Keka.app/Contents/Resources/keka7z d -tzip {0} META-INF'.format(file), opts, function (err, stdout, stderr) {
+					if (build.conf.status === 'cancelled') return;
+					//stdout && agent.log(build, Msg.debug, '{2}', stdout);
+					if (err) return agent.buildFailed(build, 'Error removing META-INF from archive via keka7z\n{2}\n{3}', err, stderr);
+					done();
+				});
+				break;
+				//case 'unzip':
+				//    exec('unzip -uo {0} -d {1} '.format(file, target), opts, function (err, stdout, stderr) {
+				//        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+				//        if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
+				//        done();
+				//    });
+				//    break;
+			default:
+				return agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z');
+		}
+	},
 	extractArchive: function (build, file, target, opts, done) {
 		var agent = this;
 		switch (zipArchiver) {
@@ -414,7 +444,7 @@ AgentWorker.define({
 		agent.genericBuild(build, null, function (err) {
 			if (build.conf.status === 'cancelled') return;
 			if (err) return agent.buildFailed(build, err);
-			var apkGlobPath = 'platforms/android/ant-build/*.apk';
+			var apkGlobPath = ['platforms/android/ant-build/*.apk'];
 			var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
 			if (build.conf.androidsign) {
 				var androidsign = build.conf.androidsign;
@@ -422,40 +452,47 @@ AgentWorker.define({
 					cwd: workFolder,
 				}, function (err, apks) {
                     //we should sign unaligned apks
-                    apks = apks.filter(function(apk) { return /\-unaligned/.test(apk); });
-					if (build.conf.status === 'cancelled') return;
-					agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
-					apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
-					var tee = path.resolve(__dirname, '../bin/tee.exe');
-					var egrep = path.resolve(__dirname, '../bin/egrep.exe');
-					androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2}" -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
-					agent.log(build, Msg.status, androidsign);
-					var androidsignProcess = agent.exec = exec(androidsign, function (err, stdout, stderr) {
-						if (build.conf.status === 'cancelled') return;
-						stdout && agent.log(build, Msg.build_output, '{2}', stdout);
-						err && agent.log(build, Msg.error, 'error:\n{2}', err);
-						stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
-						var e = stderr || err;
-						if (e) return agent.buildFailed(build, '');
-						done();
-					}).on('close', function (code) {
-						if (build.conf.status === 'cancelled') return;
-						if (code) return agent.buildFailed(build, 'android sign process exited with code {2}', code);
-						done();
-					});
-					androidsignProcess.stdout.on('data', function (data) {
-						if (/error/gi.test(data || ''))
-							return agent.buildFailed(build, data);
-						agent.log(build, Msg.build_output, data);
-					});
-					androidsignProcess.stderr.on('data', function (data) {
-						agent.log(build, Msg.error, data);
-					});
+                    apks = apks.filter(function(apk, i) { return !i; });
+                    apkGlobPath = apks;
+                    agent.deleteMetaInfo(build, apks[0], {
+				        cwd: workFolder,
+				        maxBuffer: maxBuffer,
+			        }, jarSigner);
+                    function jarSigner() {
+					    if (build.conf.status === 'cancelled') return;
+					    agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
+					    apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
+					    var tee = path.resolve(__dirname, '../bin/tee.exe');
+					    var egrep = path.resolve(__dirname, '../bin/egrep.exe');
+					    androidsign = androidsign.format.apply(androidsign, apks) + ' | "{0}" "{1}" | "{2}" -A 5 -i "(return|fail|invalid|error|warning|succeeded|running)"'.format(tee, signLogPath, egrep);
+					    agent.log(build, Msg.status, androidsign);
+					    var androidsignProcess = agent.exec = exec(androidsign, function (err, stdout, stderr) {
+						    if (build.conf.status === 'cancelled') return;
+						    stdout && agent.log(build, Msg.build_output, '{2}', stdout);
+						    err && agent.log(build, Msg.error, 'error:\n{2}', err);
+						    stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+						    var e = stderr || err;
+						    if (e) return agent.buildFailed(build, '');
+						    done();
+					    }).on('close', function (code) {
+						    if (build.conf.status === 'cancelled') return;
+						    if (code) return agent.buildFailed(build, 'android sign process exited with code {2}', code);
+						    done();
+					    });
+					    androidsignProcess.stdout.on('data', function (data) {
+						    if (/error/gi.test(data || ''))
+							    return agent.buildFailed(build, data);
+						    agent.log(build, Msg.build_output, data);
+					    });
+					    androidsignProcess.stderr.on('data', function (data) {
+						    agent.log(build, Msg.error, data);
+					    });
+                    }
 				});
 			}
 			else done();
 			function done(err) {
-				!err && agent.buildSuccess(build, [apkGlobPath, , 'build.android.log', signLogPath]);
+				!err && agent.buildSuccess(build, apkGlobPath.concat(['build.android.log', signLogPath]));
 			}
 		}, function (build, buildCordova) {
 			var assetsWWWFolder = path.resolve(workFolder, 'platforms/android/assets/www');
@@ -473,7 +510,6 @@ AgentWorker.define({
 		multiGlob.glob(globFiles, {
 			cwd: workFolder,
 		}, function (err, files) {
-            files = files.filter(function(file) { return !/\-unaligned/.test(file); });
 
 			if (build.conf.status === 'cancelled') return;
 			if (err) return agent.buildFailed(build, 'error globbing {2}', globFiles);
