@@ -421,6 +421,8 @@ AgentWorker.define({
 				multiGlob.glob(apkGlobPath, {
 					cwd: workFolder,
 				}, function (err, apks) {
+                    //we should sign unaligned apks
+                    apks = apks.filter(function(apk) { return /\-unaligned/.test(apk); });
 					if (build.conf.status === 'cancelled') return;
 					agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
 					apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
@@ -471,6 +473,8 @@ AgentWorker.define({
 		multiGlob.glob(globFiles, {
 			cwd: workFolder,
 		}, function (err, files) {
+            files = files.filter(function(file) { return !/\-unaligned/.test(file); });
+
 			if (build.conf.status === 'cancelled') return;
 			if (err) return agent.buildFailed(build, 'error globbing {2}', globFiles);
 			files = files.map(function (file) {
