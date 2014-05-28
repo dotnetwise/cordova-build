@@ -148,10 +148,10 @@ AgentWorker.define({
         });
     },
     detectZipArchiver: function () {
-        this.exec = exec('7z', { maxBuffer: maxBuffer }, function (err) {
+        var zipper = exec('7z', { maxBuffer: maxBuffer }, function (err) {
             if (!err)
                 zipArchiver = '7z';
-            else this.exec = exec('/Applications/Keka.app/Contents/Resources/keka7z', { maxBuffer: maxBuffer }, function (err) {
+            else zipper = exec('/Applications/Keka.app/Contents/Resources/keka7z', { maxBuffer: maxBuffer }, function (err) {
                 if (!err)
                     zipArchiver = 'keka7z';
                 //else exec('unzip', { maxBuffer: maxBuffer }, function (err) {
@@ -168,7 +168,7 @@ AgentWorker.define({
         var errMsg = 'Error {2} {3} {4} archive via {5}\n{6}\n{7}';
         switch (zipArchiver) {
             case '7z':
-                this.exec = exec('7z {0} -tzip {1} {2}'.format(modifier, file, spaceSeparatedNames), opts, function (err, stdout, stderr) {
+                var zipper = exec('7z {0} -tzip {1} {2}'.format(modifier, file, spaceSeparatedNames), opts, function (err, stdout, stderr) {
                     if (build.conf.status === 'cancelled') return;
                     //stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err) return agent.buildFailed(build, errMsg, verb, spaceSeparatedNames, into, '7z', err, stderr);
@@ -176,7 +176,7 @@ AgentWorker.define({
                 });
                 break;
             case 'keka7z':
-                this.exec = exec('/Applications/Keka.app/Contents/Resources/keka7z d -tzip {0} {1}'.format(file, spaceSeparatedNames), opts, function (err, stdout, stderr) {
+                var zipper = exec('/Applications/Keka.app/Contents/Resources/keka7z d -tzip {0} {1}'.format(file, spaceSeparatedNames), opts, function (err, stdout, stderr) {
                     if (build.conf.status === 'cancelled') return;
                     //stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err) return agent.buildFailed(build, errMsg, verb, spaceSeparatedNames, into, 'keka7z', err, stderr);
@@ -198,7 +198,7 @@ AgentWorker.define({
         var agent = this;
         switch (zipArchiver) {
             case '7z':
-                this.exec = exec('7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
+                var zipper = exec('7z x {0} -o{1} -y >nul'.format(file, target), opts, function (err, stdout, stderr) {
                     if (build.conf.status === 'cancelled') return;
                     //stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err) return agent.buildFailed(build, 'Error executing 7z\n{2}\n{3}', err, stderr);
@@ -206,7 +206,7 @@ AgentWorker.define({
                 });
                 break;
             case 'keka7z':
-                this.exec = exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
+                var zipper = exec('/Applications/Keka.app/Contents/Resources/keka7z x {0} -o{1} -y'.format(file, target), opts, function (err, stdout, stderr) {
                     if (build.conf.status === 'cancelled') return;
                     //stdout && agent.log(build, Msg.debug, '{2}', stdout);
                     if (err) return agent.buildFailed(build, 'error executing keka7z\n{2}\n{3}', err, stderr);
