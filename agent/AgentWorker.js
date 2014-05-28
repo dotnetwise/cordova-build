@@ -435,7 +435,7 @@ AgentWorker.define({
             var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
             var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.status, 'executing: {2}', execPath);
-            var xcrunExec = agent.exec(execPath, { maxBuffer: maxBuffer }, xcrunFinish, 'sign process exited with code {2}');
+            var xcrunExec = agent.exec(build, execPath, { maxBuffer: maxBuffer }, xcrunFinish, 'sign process exited with code {2}');
             
             function xcrunFinish(err, stdout, stderr) {
                 if (build.conf.status === 'cancelled') return;
@@ -445,7 +445,7 @@ AgentWorker.define({
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build, '');
                 agent.log(build, Msg.status, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
-                var plutilExec = agent.exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
+                var plutilExec = agent.exec(build, 'plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
                     if (err || stderr)
                         return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
                     agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
@@ -457,7 +457,7 @@ AgentWorker.define({
             buildCordova(null, true, "--device{0}{1}".format(build.conf.ioscodesignidentity && " CODE_SIGN_IDENTITY='{0}'".format(build.conf.ioscodesignidentity) || '', build.conf.iosprovisioningpath && " PROVISIONING_PROFILE='{0}'".format(build.conf.iosprovisioningpath) || ''));//pass the --device argument only on ios
         });
     },
-    exec: function (cmd, callback, exitCodeError) {
+    exec: function (build, cmd, callback, exitCodeError) {
         var agent = this;
         var process = exec(cmd, function (err, stdout, stderr) {
             if (build.conf.status === 'cancelled') return;
@@ -551,7 +551,7 @@ AgentWorker.define({
                         var egrep = path.resolve(__dirname, '../bin/egrep.exe');
                         androidsign = androidsign.format.apply(androidsign, apks) + ' 2>&1 | "{0}" "{1}" | "{2}" -i -E -v "(tsacert|signing|warning)""'.format(tee, signLogPath, egrep);
                         agent.log(build, Msg.status, androidsign);
-                        agent.exec(androidsign, function (err, stdout, stderr) {
+                        agent.exec(build, androidsign, function (err, stdout, stderr) {
                             if (err || stderr) return;
                             zipAlign(apks[0]);
                         }, 'android sign process exited with code {2}');
@@ -565,7 +565,7 @@ AgentWorker.define({
                 key = key && key[3];
                 key = key && ("-" + key);
                 output = path.resolve(path.dirname(apk), path.basename(output, path.extname(output)) + key + "-signed-aligned.apk");
-                agent.exec('zipalign -f -v 4  "{0}" "{1}"'.format(apk, output), {
+                agent.exec(build, 'zipalign -f -v 4  "{0}" "{1}"'.format(apk, output), {
                     cwd: workFolder,
                 }, function (err, stdout, stderr) {
                     if (err || stdout || build.conf.status === 'cancelled') return;
