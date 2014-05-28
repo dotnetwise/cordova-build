@@ -188,6 +188,7 @@ img.no-build {
 .log.box-content {
 	overflow: auto;
 	max-height: 360px;
+	height: 360px;
 	padding: 0px;
 }
 

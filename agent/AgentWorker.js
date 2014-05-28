@@ -471,7 +471,7 @@ AgentWorker.define({
             if (stderr || err) return agent.buildFailed(build, '');
         }).on('close', function (code) {
             if (build.conf.status === 'cancelled') return;
-            if (code) return agent.buildFailed(build, exitCodeError || 'process exited with error code {2}', code);
+            if (code && code != 1) return agent.buildFailed(build, exitCodeError || 'process exited with error code {2}', code);
         });
         process.stdout.on('data', function (data) {
             if (/error/gi.test(data || ''))
