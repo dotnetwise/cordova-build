@@ -339,7 +339,7 @@ AgentWorker.define({
                 cmd += ' | "platforms\\android\\cordova\\lib\\tee.exe" "build.android.log" | "platforms\\android\\cordova\\lib\\egrep.exe" -i -A 6 "(error|warning|success|sign)"';
 
             agent.log(build, Msg.status, 'Executing {2}', cmd);
-            var cordova_build = agent.exec = exec(cmd, {
+            var cordova_build = exec(cmd, {
                 cwd: locationPath,
                 maxBuffer: maxBuffer,
             }, s8BuildExecuted)
@@ -435,7 +435,9 @@ AgentWorker.define({
             var signLogPath = path.resolve(agent.workFolder, buildId, 'build.ios.sign.xcrun.log');
             var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.status, 'executing: {2}', execPath);
-            var xcrun = agent.exec = exec(execPath, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
+            var xcrunExec = agent.exec(execPath, { maxBuffer: maxBuffer }, xcrunFinish, 'sign process exited with code {2}');
+            
+            function xcrunFinish(err, stdout, stderr) {
                 if (build.conf.status === 'cancelled') return;
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
                 err && agent.log(build, Msg.error, 'error:\n{2}', err);
@@ -443,29 +445,21 @@ AgentWorker.define({
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build, '');
                 agent.log(build, Msg.status, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
-                agent.exec = exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
+                var plutilExec = agent.exec('plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
                     if (err || stderr)
                         return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
                     agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
                     agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist, signLogPath, xcodebuildLogPath]);
-                });
-            }).on('close', function (code) {
-                if (build.conf.status === 'cancelled') return;
-                if (code) return agent.buildFailed(build, 'sign process exited with code {2}', code);
-            });
-            xcrun.stdout.on('data', function (data) {
-                agent.log(build, Msg.build_output, data);
-            });
-            xcrun.stderr.on('data', function (data) {
-                agent.log(build, Msg.error, data);
-            });
+                }, 'plutil process exited with code');
+             }
+            
         }, function (build, buildCordova) {
             buildCordova(null, true, "--device{0}{1}".format(build.conf.ioscodesignidentity && " CODE_SIGN_IDENTITY='{0}'".format(build.conf.ioscodesignidentity) || '', build.conf.iosprovisioningpath && " PROVISIONING_PROFILE='{0}'".format(build.conf.iosprovisioningpath) || ''));//pass the --device argument only on ios
         });
     },
     exec: function (cmd, callback, exitCodeError) {
         var agent = this;
-        var process = agent.exec = exec(cmd, function (err, stdout, stderr) {
+        var process = exec(cmd, function (err, stdout, stderr) {
             if (build.conf.status === 'cancelled') return;
             stdout && agent.log(build, Msg.build_output, '{2}', stdout);
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
