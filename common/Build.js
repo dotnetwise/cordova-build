@@ -49,7 +49,7 @@ Build.define({
             result.masterId = this.masterId;
         if (includeOptions) {
         	if (includeOptions.files) result.files = (this.files || []).map(function (file) {
-        		var result = { file: file.file };
+        		var result = { file: file.file, group: file.group };
         		if (includeOptions.content) {
         			result.content = file.content;
         		}
