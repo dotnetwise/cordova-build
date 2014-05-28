@@ -365,12 +365,14 @@ AgentWorker.define({
             if (stdout)
                 agent.log(build, Msg.build_output, stdout);
             var e;
-            if (err && err.code && err.code != 1) {
+            if (err && (!err.code || err.code != 1)) {
                 e = 1;
                 agent.log(build, Msg.error, 'error:\n{2}', err);
             }
-            if (stderr)
+            if (stderr) {
+                e = 1;
                 ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+            }
 
             var e;
             if (e) return agent.buildFailed(build);
@@ -468,13 +470,13 @@ AgentWorker.define({
             err && agent.log(build, Msg.error, 'error:\n{2}', err);
             stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
             callback.apply(agent, arguments);
-            if (stderr || err) return agent.buildFailed(build, '');
+            if (stderr || err && (!err.code || err.code != 1)) return agent.buildFailed(build, '');
         }).on('close', function (code) {
             if (build.conf.status === 'cancelled') return;
             if (code && code != 1) return agent.buildFailed(build, exitCodeError || 'process exited with error code {2}', code);
         });
         process.stdout.on('data', function (data) {
-            if (/error/gi.test(data || ''))
+            if (/error\:/gi.test(data || ''))
                 return agent.buildFailed(build, data);
             agent.log(build, Msg.build_output, data);
         });
@@ -567,7 +569,7 @@ AgentWorker.define({
                 key = key && key[3];
                 key = key && ("-" + key);
                 var zipalign = 'zipalign -f -v 4  "{0}" "{1}"'.format(apk, output);
-                zipalign = zipalign + ' 2>&1 | "{0}" "{1}" | "{2}" -i -A 5 "(error|warning|success)""'.format(tee, alignLogPath, egrep);
+                zipalign = zipalign + ' 2>&1 | "{0}" "{1}" | "{2}" -i -A 5 "(success)""'.format(tee, alignLogPath, egrep);
                 agent.exec(build, zipalign, {
                     cwd: workFolder,
                     maxBuffer: maxBuffer,
