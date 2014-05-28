@@ -388,20 +388,31 @@ AgentWorker.define({
             var workFolder = path.resolve(agent.workFolder, build.Id());
             var globs = path.resolve(workFolder, 'platforms/ios/cordova/**/*');
             var hooks = 'hooks/**/*.bat';
-            hooks = multiGlob.sync(hooks, { cwd: workFolder });
-            hooks.forEach(function (file) { file = path.resolve(workFolder, file); console.log('remove hook: '+file); try { fs.removeSync(file); } catch (e) { agent.buildFailed(build, e); } });
-            //console.log('globs', globs)
-            multiGlob.glob(globs, function (err, files) {
-                if (err) return startBuild(err);
-                async.each(files, function (file, cb) {
-                    //console.log('chmodding', file)
-                    fs.chmod(file, 511 /*777 on nix machines in base 8*/, function (err) {
-                        cb.defer(0, null, err);
-                    });
-                }, function (err) {
-                    startBuild.defer(0, agent, err);
+            multiGlob.glob(hooks, { cwd: workFolder }, function (err, hooks) {
+                hooks.forEach(function (file) {
+                    file = path.resolve(workFolder, file);
+                    console.log('remove hook: ' + file);
+                    try { fs.removeSync(file); }
+                    catch (e) {
+                        agent.buildFailed(build, e);
+                    }
                 });
+                start();
             });
+            function start() {
+                //console.log('globs', globs)
+                multiGlob.glob(globs, function (err, files) {
+                    if (err) return startBuild(err);
+                    async.each(files, function (file, cb) {
+                        //console.log('chmodding', file)
+                        fs.chmod(file, 511 /*777 on nix machines in base 8*/, function (err) {
+                            cb.defer(0, null, err);
+                        });
+                    }, function (err) {
+                        startBuild.defer(0, agent, err);
+                    });
+                });
+            }
         }, function (err) {
             if (build.conf.status === 'cancelled') return;
             if (err) return buildFailed(err);
