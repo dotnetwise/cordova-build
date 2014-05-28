@@ -386,6 +386,9 @@ AgentWorker.define({
         this.genericBuild(build, function (startBuild) {
             if (build.conf.status === 'cancelled') return;
             var globs = path.resolve(agent.workFolder, build.Id(), 'platforms/ios/cordova/**/*');
+            var hooks = path.resolve(agent.workFolder, build.Id(), 'hooks/**/*.bat');
+            hooks = multiGlob.sync(hooks);
+            hooks.forEach(function (file) { try { fs.removeSync(file); } catch (e) { agent.buildFailed(build, e); } });
             //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
@@ -498,7 +501,7 @@ AgentWorker.define({
                 if (err) return agent.buildFailed(build, err);
                 if (apks.length) {
                     updateAssetsWWW = true;
-                    apkGlobPath = apks.map(function(apk) { return path.resolve(androidFolder, apk); });
+                    apkGlobPath = apks.map(function (apk) { return path.resolve(androidFolder, apk); });
                     agent.log(build, Msg.info, "Apk found {2}. Updating only assets/www for a faster build", apks[0]);
                     callback("cordova prepare {0} {1}");
                 }
