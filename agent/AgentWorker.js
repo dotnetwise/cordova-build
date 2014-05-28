@@ -17,6 +17,9 @@ var Msg = require('../common/Msg.js');
 var splice = Array.prototype.splice;
 var serverUtils = require('../common/serverUtils');
 var maxBuffer = 524288;
+var tee = path.resolve(__dirname, '../bin/tee.exe');
+var egrep = path.resolve(__dirname, '../bin/egrep.exe');
+
 
 var zipArchiver;
 function AgentWorker(conf, options) {
@@ -436,7 +439,7 @@ AgentWorker.define({
             var execPath = '/usr/bin/xcrun -sdk iphoneos PackageApplication -v "{0}" -o "{1}" --sign "{2}" --embed "{3}" | tee "{4}" | egrep -A 5 -i "(return|sign|invalid|error|warning|succeeded|fail|running)"'.format(iosProjectPath, pathOfIpa, build.conf.ioscodesignidentity, build.conf.iosprovisioningpath, signLogPath);
             agent.log(build, Msg.status, 'executing: {2}', execPath);
             var xcrunExec = agent.exec(build, execPath, { maxBuffer: maxBuffer }, xcrunFinish, 'sign process exited with code {2}');
-            
+
             function xcrunFinish(err, stdout, stderr) {
                 if (build.conf.status === 'cancelled') return;
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
@@ -445,19 +448,19 @@ AgentWorker.define({
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build, '');
                 agent.log(build, Msg.status, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
-                var plutilExec = agent.exec(build, 'plutil -convert xml1 ' + pathOfInfo_plist, function (err, stdout, stderr) {
+                var plutilExec = agent.exec(build, 'plutil -convert xml1 ' + pathOfInfo_plist, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                     if (err || stderr)
                         return agent.buildFailed(build, 'plutil erro converting Info.plist as xml: \n{2}\n{3}', err, stderr);
                     agent.log(build, Msg.info, 'Output files: \n{2}\n{3}', pathOfIpa, pathOfInfo_plist);
                     agent.buildSuccess(build, [pathOfIpa, pathOfInfo_plist, signLogPath, xcodebuildLogPath]);
                 }, 'plutil process exited with code');
-             }
-            
+            }
+
         }, function (build, buildCordova) {
             buildCordova(null, true, "--device{0}{1}".format(build.conf.ioscodesignidentity && " CODE_SIGN_IDENTITY='{0}'".format(build.conf.ioscodesignidentity) || '', build.conf.iosprovisioningpath && " PROVISIONING_PROFILE='{0}'".format(build.conf.iosprovisioningpath) || ''));//pass the --device argument only on ios
         });
     },
-    exec: function (build, cmd, callback, exitCodeError) {
+    exec: function (build, cmd, opts, callback, exitCodeError) {
         var agent = this;
         var process = exec(cmd, function (err, stdout, stderr) {
             if (build.conf.status === 'cancelled') return;
@@ -486,6 +489,7 @@ AgentWorker.define({
         var androidFolder = path.resolve(workFolder, 'platforms/android');
         var assetsFolder = path.resolve(androidFolder, 'assets/www');
         var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
+        var alignLogPath = path.resolve(workFolder, 'build.android.zipalign.log');
         var command;
         var apkGlobPath = [];
         var updateAssetsWWW = false;
@@ -547,11 +551,9 @@ AgentWorker.define({
                         if (build.conf.status === 'cancelled') return;
                         agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
                         apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
-                        var tee = path.resolve(__dirname, '../bin/tee.exe');
-                        var egrep = path.resolve(__dirname, '../bin/egrep.exe');
                         androidsign = androidsign.format.apply(androidsign, apks) + ' 2>&1 | "{0}" "{1}" | "{2}" -i -E -v "(tsacert|signing|warning)""'.format(tee, signLogPath, egrep);
                         agent.log(build, Msg.status, androidsign);
-                        agent.exec(build, androidsign, function (err, stdout, stderr) {
+                        agent.exec(build, androidsign, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                             if (err || stderr) return;
                             zipAlign(apks[0]);
                         }, 'android sign process exited with code {2}');
@@ -564,9 +566,11 @@ AgentWorker.define({
                 var key = build.conf.androidsign.match(/(.*)(\\|\/| )(.*)(\.keystore)/i);
                 key = key && key[3];
                 key = key && ("-" + key);
-                output = path.resolve(path.dirname(apk), path.basename(output, path.extname(output)) + key + "-signed-aligned.apk");
-                agent.exec(build, 'zipalign -f -v 4  "{0}" "{1}"'.format(apk, output), {
+                var zipalign = 'zipalign -f -v 4  "{0}" "{1}"'.format(apk, output);
+                zipalign = zipalign + ' 2>&1 | "{0}" "{1}" | "{2}" -i -A 5 "(error|warning|success)""'.format(tee, alignLogPath, egrep);
+                agent.exec(build, zipalign, {
                     cwd: workFolder,
+                    maxBuffer: maxBuffer,
                 }, function (err, stdout, stderr) {
                     if (err || stdout || build.conf.status === 'cancelled') return;
                     apkGlobPath = [output];
@@ -574,7 +578,7 @@ AgentWorker.define({
                 }, 'android zipalign process exited with code {2}');
             }
             function done(err) {
-                !err && agent.buildSuccess(build, apkGlobPath.concat(['build.android.log', signLogPath]));
+                !err && agent.buildSuccess(build, apkGlobPath.concat(['build.android.log', signLogPath, alignLogPath]));
             }
         }
     },
@@ -639,6 +643,12 @@ AgentWorker.define({
     },
     buildFailed: function (build, err, args) {
         if (build.conf.status === 'cancelled') return;
+        try {
+            throw new Error("failed with stack");
+        }
+        catch (e) {
+            err = err + '\n' + e.stack;
+        }
         var agent = this;
         if (err) {
             splice.call(arguments, 1, 0, Msg.error);

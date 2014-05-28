@@ -187,8 +187,8 @@ img.no-build {
 
 .log.box-content {
 	overflow: auto;
-	max-height: 280px;
-	padding-top: 0;
+	max-height: 360px;
+	padding: 0px;
 }
 
 .log span {
