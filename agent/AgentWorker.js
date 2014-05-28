@@ -385,10 +385,11 @@ AgentWorker.define({
         var agent = this;
         this.genericBuild(build, function (startBuild) {
             if (build.conf.status === 'cancelled') return;
-            var globs = path.resolve(agent.workFolder, build.Id(), 'platforms/ios/cordova/**/*');
-            var hooks = path.resolve(agent.workFolder, build.Id(), 'hooks/**/*.bat');
-            hooks = multiGlob.sync(hooks);
-            hooks.forEach(function (file) { try { fs.removeSync(file); } catch (e) { agent.buildFailed(build, e); } });
+            var workFolder = path.resolve(agent.workFolder, build.Id());
+            var globs = path.resolve(workFolder, 'platforms/ios/cordova/**/*');
+            var hooks = 'hooks/**/*.bat';
+            hooks = multiGlob.sync(hooks, { cwd: workFolder });
+            hooks.forEach(function (file) { file = path.resolve(workFolder, file); console.log('remove hook: '+file); try { fs.removeSync(file); } catch (e) { agent.buildFailed(build, e); } });
             //console.log('globs', globs)
             multiGlob.glob(globs, function (err, files) {
                 if (err) return startBuild(err);
