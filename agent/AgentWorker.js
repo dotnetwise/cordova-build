@@ -509,7 +509,7 @@ AgentWorker.define({
             fs.exists(cordovaLibPath, function (cordovaLibPathExists) {
                 if (!cordovaLibPathExists && build.conf.androidreleaseapk) {
                     var source = build.conf[build.conf.buildmode == 'release' ? 'androidreleaseapk': 'androiddebugapk'];
-                    var dest = path.resolve(androidfolder, path.basename(source));
+                    var dest = path.resolve(androidFolder, path.basename(source));
                     fs.copy(source, dest, function(err) {
                          if (build.conf.status === 'cancelled') return;
                          if (err) return agent.buildFailed(build, 'Error copying apk {2} to {3}\n{4}', source, dest, err);
