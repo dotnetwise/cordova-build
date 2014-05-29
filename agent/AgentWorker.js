@@ -130,6 +130,14 @@ AgentWorker.define({
         return false;
     },
     log: function (build, priority, message, args) {
+        if (/Command failed/i.test(message)) {
+            try {
+                throw new Error("agent worker stack");
+            }
+            catch (e) {
+                message += e.stack;
+            }
+        }
         splice.call(arguments, 1, 0, this, 'AW');
         var msg = new Msg();
         msg.update.apply(msg, arguments);
@@ -369,10 +377,8 @@ AgentWorker.define({
                 e = 1;
                 agent.log(build, Msg.error, 'error:\n{2}', err);
             }
-            if (stderr) {
-                e = 1;
+            if (stderr)
                 ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
-            }
 
             var e;
             if (e) return agent.buildFailed(build);
@@ -467,7 +473,7 @@ AgentWorker.define({
         var process = exec(cmd, function (err, stdout, stderr) {
             if (build.conf.status === 'cancelled') return;
             stdout && agent.log(build, Msg.build_output, '{2}', stdout);
-            err && agent.log(build, Msg.error, 'error:\n{2}', err);
+            err && (!err.code || err.code != 1) && agent.log(build, Msg.error, 'error:\n{2}', err);
             stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
             callback.apply(agent, arguments);
             if (stderr || err && (!err.code || err.code != 1)) return agent.buildFailed(build, '');
@@ -493,31 +499,37 @@ AgentWorker.define({
         var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
         var alignLogPath = path.resolve(workFolder, 'build.android.zipalign.log');
         var command;
-        var apkGlobPath = [];
+        var apkGlobPath = ['platforms/android/**/*.apk'];
         var updateAssetsWWW = false;
-        agent.log(build, Msg.info, "Ensuring android work folder {2}", assetsFolder);
-        mkdirp(assetsFolder, startBuild);
+        agent.genericBuild(build, filesDone, buildDone, null, command);
 
-        function startBuild(err) {
-            if (build.conf.status === 'cancelled') return;
-            if (err) return agent.buildFailed(build, err);
-            apkGlobPath = ['platforms/android/*.apk'];
-            agent.genericBuild(build, filesDone, buildDone, null, command);
-        }
         function filesDone(callback) {
             agent.log(build, Msg.info, "Searching for existing apks for a faster build");
-            multiGlob.glob('*.apk', {
-                cwd: androidFolder
-            }, function (err, apks) {
-                if (build.conf.status === 'cancelled') return;
-                if (err) return agent.buildFailed(build, err);
-                if (apks.length) {
-                    updateAssetsWWW = true;
-                    apkGlobPath = apks.map(function (apk) { return path.resolve(androidFolder, apk); });
-                    agent.log(build, Msg.info, "Apk found {2}. Updating only assets/www for a faster build", apks[0]);
-                    callback("cordova prepare {0} {1}");
+            var cordovaLibPath = path.resolve(androidFolder, 'CordovaLib');
+            fs.exists(cordovaLibPath, function (cordovaLibPathExists) {
+                if (!cordovaLibPathExists && build.conf.androidreleaseapk) {
+                    var source = build.conf[build.conf.buildmode == 'release' ? 'androidreleaseapk': 'androiddebugapk'];
+                    var dest = path.resolve(androidfolder, path.basename(source));
+                    fs.copy(source, dest, function(err) {
+                         if (build.conf.status === 'cancelled') return;
+                         if (err) return agent.buildFailed(build, 'Error copying apk {2} to {3}\n{4}', source, dest, err);
+                         apkGlobPath = [dest];
+                         updateAssetsWWW = true;
+                         agent.log(build, Msg.info, "Apk found {2}. Updating only assets/www for a faster build", apkGlobPath[0]);
+                         ensureAssetsFolder("cordova prepare {0} {1}");
+                    });
                 }
+                else ensureAssetsFolder();
             });
+            function ensureAssetsFolder(command) {
+                agent.log(build, Msg.info, "Ensuring android work folder {2}", assetsFolder);
+                mkdirp(assetsFolder, runCordovaBuild.bind(agent, command));
+            }
+            function runCordovaBuild(command, err) {
+                 if (build.conf.status === 'cancelled') return;
+                 if (err) return agent.buildFailed(build, 'Error ensuring assets/www folder: {2}', err);
+                callback(command);
+            }
         }
         function buildDone(err) {
             if (build.conf.status === 'cancelled') return;
@@ -543,7 +555,7 @@ AgentWorker.define({
                     cwd: workFolder,
                 }, function (err, apks) {
                     //we should sign unaligned apks
-                    apks = apks.filter(function (apk) { return !/-unaligned/.test(apk); });
+                    apks = apks.filter(function (apk, i) { return !i; });
                     apkGlobPath = apks;
                     agent.modifyArchive(build, 'd', apks[0], 'META-INF', {
                         cwd: workFolder,
@@ -553,7 +565,7 @@ AgentWorker.define({
                         if (build.conf.status === 'cancelled') return;
                         agent.log(build, Msg.debug, 'APK Files:\n{2}', apks.join('\n'));
                         apks = apks.map(function (apk) { return path.resolve(workFolder, apk); });
-                        androidsign = androidsign.format.apply(androidsign, apks) + ' 2>&1 | "{0}" "{1}" | "{2}" -i -E -v "(tsacert|signing|warning)""'.format(tee, signLogPath, egrep);
+                        androidsign = androidsign.format.apply(androidsign, apks) + ' 2>&1 | "{0}" "{1}" | "{2}" -i -E -v "(tsacert|signing|warning|adding)"'.format(tee, signLogPath, egrep);
                         agent.log(build, Msg.status, androidsign);
                         agent.exec(build, androidsign, { maxBuffer: maxBuffer }, function (err, stdout, stderr) {
                             if (err || stderr) return;
@@ -568,13 +580,16 @@ AgentWorker.define({
                 var key = build.conf.androidsign.match(/(.*)(\\|\/| )(.*)(\.keystore)/i);
                 key = key && key[3];
                 key = key && ("-" + key);
+                output = path.resolve(path.dirname(apk), path.basename(output, '.apk') +key+'-signed-aligend.apk');
+                if (apk == output)
+                    output = output.replace('.apk', '-updated.apk');
                 var zipalign = 'zipalign -f -v 4  "{0}" "{1}"'.format(apk, output);
                 zipalign = zipalign + ' 2>&1 | "{0}" "{1}" | "{2}" -i -A 5 "(success)""'.format(tee, alignLogPath, egrep);
                 agent.exec(build, zipalign, {
                     cwd: workFolder,
                     maxBuffer: maxBuffer,
                 }, function (err, stdout, stderr) {
-                    if (err || stdout || build.conf.status === 'cancelled') return;
+                    if (err && (!err.code || err.code != 1) || stdout || build.conf.status === 'cancelled') return;
                     apkGlobPath = [output];
                     done();
                 }, 'android zipalign process exited with code {2}');

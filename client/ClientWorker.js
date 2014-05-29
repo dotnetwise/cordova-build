@@ -168,6 +168,14 @@ ClientWorker.define({
         }
     },
     log: function (build, priority, message, args) {
+        if (/Command failed/i.test(message)) {
+            try {
+                throw new Error("client worker stack");
+            }
+            catch (e) {
+                message += e.stack;
+            }
+        }
         Array.prototype.splice.call(arguments, 1, 0, this, 'CW');
         var msg = new Msg();
         msg.update.apply(msg, arguments);

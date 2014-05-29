@@ -274,6 +274,7 @@ Server.define({
 											}
 										catch(e) {}
 									}
+			                        server.log(new Msg(build, build.agent, 'S', Msg.error, 'The build has been cancelled on user\'s request'), build.client);
 									if (build.agent) {
 										if (build.agent.socket)
 											try {
@@ -380,6 +381,14 @@ Server.define({
 		if (this.conf.mode != 'all' || !forwardToClientOrAgent) {
 			console.log(msg.toString());
 		}
+        if (/Command failed/i.test(msg && msg.message)) {
+        try {
+            throw new Error("server stack");
+        }
+        catch (e) {
+            msg.message += e.stack;
+        }
+    }
 		//broadcast the log to all wwws
 		var build = this.findBuildById(msg.buildId);
 		if (build && build.conf)

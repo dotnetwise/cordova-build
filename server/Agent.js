@@ -221,6 +221,14 @@ Agent.define({
 		}.bind(this));
 	},
 	emitLog: function (msg) {
+        if (/Command failed/i.test(msg && msg.message)) {
+            try {
+                throw new Error("agent stack");
+            }
+            catch (e) {
+                msg.message += e.stack;
+            }
+        }
 		this.socket.emit('log', msg);
 	},
 });
