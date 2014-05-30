@@ -43,6 +43,7 @@ AgentWorker.define({
                 'max reconnection attempts': Infinity,
                 'force new connection': true, // <-- Add this!
                 'reconnect': true,
+                'reconnection limit': Infinity,
                 'sync disconnect on unload': true,
             }).on({
                 'connect': this.onConnect,
