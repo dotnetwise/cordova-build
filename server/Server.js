@@ -171,9 +171,9 @@ Server.define({
 				.get('/', function (req, res) {
 				    res.setHeader('Content-Type', 'text/html');
 				    var html = cache['index.html'].replace('<script id="start"></script>', '<script id="start">var serverBrowser = new ServerBrowser({0});</script>'.format(JSON.stringify({
-				        protocol: conf.protocol || 'http://',
+				        protocol: conf.proxyportocol || conf.protocol || 'http://',
 				        host: conf.server,
-				        port: conf.port,
+				        port: conf.proxyport || conf.port,
 				        promote: conf.promote,
 				    })));
 				    res.send(html);
