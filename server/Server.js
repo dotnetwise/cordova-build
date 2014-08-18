@@ -127,7 +127,7 @@ Server.define({
                 this.buildServerApp = express();
                 this.buildHttpServer = http.createServer(this.buildServerApp);
                 this.socket = io.listen(this.buildHttpServer, {
-                    'destroy buffer size': 10E8,
+                    'destroy buffer size': Infinity,
                 });
                 this.buildServerApp
 					.use(this.buildServerApp.router)
@@ -143,7 +143,7 @@ Server.define({
 					});
             }
             else this.socket = io.listen(this.uiHttpServer, {
-                'destroy buffer size': 10E8,
+                'destroy buffer size': Infinity,
             });
             this.socket.set('log level', 2);//show warnings
         }

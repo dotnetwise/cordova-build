@@ -23,7 +23,8 @@ module.exports = {
                     //        path.basename(file.file));
                     var fileName = path.resolve(folder, path.basename(file.file));
                     file.file = fileName;
-                    file.content ? fs.writeFile(fileName, new Buffer(file.content.data, 'binary').toString(), {
+                    var data = new Buffer(file.content.data, 'base64');
+                    file.content ? fs.writeFile(fileName, data, {
                         encoding: 'binary',
                     }, function (err) {
                         !doNotFreeMem && delete file.content; //free server's memory with file's content
@@ -46,13 +47,14 @@ module.exports = {
     readFiles: function (files, locationMsg, done) {
         files.length ? async.each(files, function (file, cb) {
             fs.readFile(file.file, {
-                encoding: 'binary',
+                //encoding: 'binary',
             }, function (err, data) {
                 if (!err) {
                     var buf = new Buffer(data);
                     file.content = {
-                        data: buf.toString('binary'),
+                        data: buf.toString('base64'),
                     };
+                    var length = file.content.data.length;
                     global.bu = buf;
                 }
                 cb(err);
