@@ -491,8 +491,7 @@ Server.define({
         if (platform == 'ios' && (req.params.file == 'qr' || /iPhone|iPad|iPod/.test(req.headers['user-agent']))) {
             var port = this.conf.proxyport || this.conf.uiport || this.conf.port;
             var url = [
-                this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
-                '://',
+                this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol && (req.protocol + '://') || 'http://',
                 this.conf.proxy || this.conf.server,
                 port != 80 ? ':' : '',
                 port != 80 ? port : '',
@@ -500,7 +499,8 @@ Server.define({
                 build.id,
                 '/Info.plist',
             ].join('');
-            var manifestUrl = "https://www.safetybank.co.uk/forwardDownload/download.aspx?name=Info.plist&url={0}".format(encodeURIComponent(url));
+            var manifestUrl = build.conf.iosmanifesturl || this.conf.iosmanifesturl ? (build.conf.iosmanifesturl || this.conf.iosmanifesturl).format("Info.plist", encodeURIComponent(url)) : url;
+            
             url = 'itms-services://?action=download-manifest&url={0}'.format(encodeURIComponent(manifestUrl));
             return res.redirect(url);
         }
@@ -515,8 +515,7 @@ Server.define({
         if (platform == 'ios') {
             var port = this.conf.proxyport || this.conf.uiport || this.conf.port;
             var baseURL = [
-					this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol || 'http',
-					'://',
+                    this.conf.proxyprotocol || this.conf.serverprotocol || req.protocol && (req.protocol + '://') || 'http://',
 					this.conf.proxy || this.conf.server,
 					port != 80 ? ':' : '',
 					port != 80 ? port : '',

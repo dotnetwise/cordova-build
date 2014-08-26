@@ -89,15 +89,15 @@ AgentWorker.define({
                 self.socket.removeListener('connect', arguments.callee);
             });
         }
-        //}
-        //else 
+//}
+//else 
     },
     'onCancelBuild': function () {
         this.build.conf.status = 'cancelled';
         try {
             this.exec && this.exec.kill();
         }
-        catch (e) {
+catch (e) {
         }
     },
     'onBuild': function (build) {
@@ -165,7 +165,7 @@ AgentWorker.define({
         var zipper = exec(agent.sevenZipPath || '7z', { maxBuffer: maxBuffer }, function (err) {
             if (!err) {
                 zipArchiver = '7z';
-                //console.log("7z found");
+//console.log("7z found");
             }
             else {
                 exec('"c:\\Program Files\\7-Zip\\7z.exe"', { maxBuffer: maxBuffer }, function (err) {
@@ -178,10 +178,10 @@ AgentWorker.define({
                     else zipper = exec('/Applications/Keka.app/Contents/Resources/keka7z', { maxBuffer: maxBuffer }, function (err) {
                         if (!err)
                             zipArchiver = 'keka7z';
-                                //else exec('unzip', { maxBuffer: maxBuffer }, function (err) {
-                                //    if (!err)
-                                //        zipArchiver = 'unzip';
-                                //});
+//else exec('unzip', { maxBuffer: maxBuffer }, function (err) {
+//    if (!err)
+//        zipArchiver = 'unzip';
+//});
                     });
                 });
             }
@@ -210,13 +210,13 @@ AgentWorker.define({
                     done();
                 });
                 break;
-                //case 'unzip':
-                //    exec('unzip -uo {0} -d {1} '.format(file, target), opts, function (err, stdout, stderr) {
-                //        stdout && agent.log(build, Msg.debug, '{2}', stdout);
-                //        if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
-                //        done();
-                //    });
-                //    break;
+//case 'unzip':
+//    exec('unzip -uo {0} -d {1} '.format(file, target), opts, function (err, stdout, stderr) {
+//        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+//        if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
+//        done();
+//    });
+//    break;
             default:
                 return agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched {0}, /Applications/Keka.app/Contents/Resources/keka7z'.format(this.sevenZipPath));
         }
@@ -242,13 +242,13 @@ AgentWorker.define({
                     done();
                 });
                 break;
-                //case 'unzip':
-                //    exec('unzip -uo {0} -d {1} '.format(file, target), opts, function (err, stdout, stderr) {
-                //        stdout && agent.log(build, Msg.debug, '{2}', stdout);
-                //        if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
-                //        done();
-                //    });
-                //    break;
+//case 'unzip':
+//    exec('unzip -uo {0} -d {1} '.format(file, target), opts, function (err, stdout, stderr) {
+//        stdout && agent.log(build, Msg.debug, '{2}', stdout);
+//        if (err || stderr) return agent.buildFailed(build, 'error executing unzip\n{2}\n{3}', err, stderr);
+//        done();
+//    });
+//    break;
             default:
                 return agent.buildFailed(build, 'cannot find 7z: {2}', zipArchiver || 'searched 7z, /Applications/Keka.app/Contents/Resources/keka7z');
         }
@@ -256,17 +256,17 @@ AgentWorker.define({
     genericBuild: function (build, filesDone, done, onExecutingCordovaBuild, command) {
         command = command || "cordova build {0} {1} --{2}";
         var agent = this;
-        var locationPath = path.resolve(agent.workFolder, build.Id());
+        var locationPath = build.locationPath;
         var files = build.files;
         
         function buildFailed(args) {
             splice.call(arguments, 0, 0, build);
             return agent.buildFailed.apply(agent, arguments);
-            //splice.call(arguments, 0, 1);
-            //done.apply(agent, arguments);
+//splice.call(arguments, 0, 1);
+//done.apply(agent, arguments);
         }
         
-        return s1Cleanup();
+        return agent.conf.reuseworkfolder ? agent.ensureWorkFolder(s3WriteFiles) : s1Cleanup();
         function s1Cleanup() {
             if (build.conf.status === 'cancelled') return;
             serverUtils.cleanLastFolders(agent.conf.keep, agent.workFolder + '/*', s1CleanupDone);
@@ -279,7 +279,7 @@ AgentWorker.define({
         
         function s2EmptyWorkFolder(err) {
             if (build.conf.status === 'cancelled') return;
-            if (err) return buildFailed('error creating the working folder {2}\n{3}', agent.workFolder, err);
+            if (err) return buildFailed(build, 'error creating the working folder {2}\n{3}', agent.workFolder, err);
             var glob = locationPath;
             if (!/(\/|\\)$/.test(glob))
                 glob += '/';
@@ -333,7 +333,7 @@ AgentWorker.define({
             if (build.conf.status === 'cancelled') return;
             var bundleid = build.conf[build.conf.platform + 'bundleid'] || build.conf.bundleid;
             if (bundleid) {
-                var configPath = path.resolve(agent.workFolder, build.Id(), 'config.xml');
+                var configPath = path.resolve(build.locationPath, 'config.xml');
                 agent.log(build, Msg.info, 'Changing bundleid to {2} in config.xml', bundleid);
                 fs.readFile(configPath, 'utf8', function (err, data) {
                     if (err) {
@@ -405,17 +405,23 @@ AgentWorker.define({
             done.call(agent, e);
         }
     },
+    computeLocationFolder: function (build) {
+        var agent = this;
+        build.locationPath = agent.conf.reuseworkfolder ? agent.workFolder : path.resolve(agent.workFolder, build.Id());
+    },
     buildWP8: function (build) {
+        this.computeLocationFolder(build);
         this.genericBuild(build, null, function (err) {
             if (build.conf.status === 'cancelled') return;
             !err && this.buildSuccess(build, ['platforms/wp8/**/*.xap', 'build.wp8.log']);
         });
     },
     buildIOS: function (build) {
+        this.computeLocationFolder(build);
         var agent = this;
         this.genericBuild(build, function (startBuild) {
             if (build.conf.status === 'cancelled') return;
-            var workFolder = path.resolve(agent.workFolder, build.Id());
+            var workFolder = build.locationPath;
             var globs = path.resolve(workFolder, 'platforms/ios/cordova/**/*');
             var hooks = 'hooks/**/*.bat';
             multiGlob.glob(hooks, { cwd: workFolder }, function (err, hooks) {
@@ -511,8 +517,9 @@ AgentWorker.define({
         return process;
     },
     buildAndroid: function (build) {
+        this.computeLocationFolder(build);
         var agent = this;
-        var workFolder = path.resolve(agent.workFolder, build.Id());
+        var workFolder = build.locationPath;
         var androidFolder = path.resolve(workFolder, 'platforms/android');
         var assetsFolder = path.resolve(androidFolder, 'assets/www');
         var signLogPath = path.resolve(workFolder, 'build.android.sign.jarsign.log');
@@ -520,7 +527,20 @@ AgentWorker.define({
         var command;
         var apkGlobPath = ['platforms/android/**/*.apk'];
         var updateAssetsWWW = false;
-        agent.genericBuild(build, filesDone, buildDone, null, command);
+        multiGlob.glob(apkGlobPath, {
+            cwd: workFolder,
+        }, function (err, files) {
+            files.length && agent.log(build, Msg.info, "Deleting existing apks:\n{2}", files.join('\n'));
+            async.each(files, function (file, callback) {
+                file = path.resolve(workFolder, file);
+                fs.unlink(file, callback);
+            }, startBuild);
+        });
+        function startBuild(err) {
+            if (build.conf.status === 'cancelled') return;
+            err && agent.log(build, Msg.info, "Error while deleting existing apks, {2}", err);
+            agent.genericBuild(build, filesDone, buildDone, null, command);
+        }
         
         function filesDone(callback) {
             agent.log(build, Msg.info, "Searching for existing apks for a faster build");
@@ -621,7 +641,7 @@ AgentWorker.define({
     buildSuccess: function (build, globFiles) {
         if (build.conf.status === 'cancelled') return;
         var agent = this;
-        var workFolder = path.resolve(agent.workFolder, build.Id());
+        var workFolder = build.locationPath;
         multiGlob.glob(globFiles, {
             cwd: workFolder,
         }, function (err, files) {
@@ -670,7 +690,7 @@ AgentWorker.define({
             finally {
                 //free agent's memory of output files contents
                 serverUtils.freeMemFiles(outputFiles);
-                var buildPath = path.resolve(agent.workFolder, build.Id(), 'build.' + build.conf.platform + '.json');
+                var buildPath = path.resolve(build.locationPath, 'build.' + build.conf.platform + '.json');
                 build.save(buildPath, function (err, e, bp, json) {
                     err && agent.log(build, Msg.debug, err);
                 });
@@ -693,7 +713,7 @@ AgentWorker.define({
         }
         
         serverUtils.freeMemFiles(build.files);
-        var buildPath = path.resolve(this.workFolder, build.Id(), 'build.' + build.conf.platform + '.json');
+        var buildPath = path.resolve(build.locationPath, 'build.' + build.conf.platform + '.json');
         build.save(buildPath, function (err, e, bp, json) {
             err && agent.log(build, Msg.debug, err);
         });

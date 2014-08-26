@@ -1,4 +1,4 @@
-﻿var log = console.log;
+var log = console.log;
 require("date-format-lite");
 require('fast-class');
 require('array-sugar');
@@ -17,7 +17,7 @@ Date.prototype.elapsed = function (until) {
 }
 
 console.log = function () {
-    Array.prototype.unshift.call(arguments, new Date().format("mm:ss.SS"));
+    Array.prototype.unshift.call(arguments, new Date().format("hh:mm:ss.SS"));
     log.apply(this, arguments);
 }.bind(console);
 var class2type = [];
