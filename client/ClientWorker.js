@@ -123,7 +123,9 @@ ClientWorker.define({
     },
     'onBuildFailed': function (result) {
     	var client = this;
-    	if (++client.built >= client.conf.build.length)
+	client.built+=2;
+	console.log("Build failed. Builds completed so far: "+ client.built);
+    	if (client.built >= client.conf.build.length * 2)
     		client.disconnect();
     },
     'onBuildSuccess': function (build) {
@@ -136,7 +138,7 @@ ClientWorker.define({
             serverUtils.writeFiles(locationPath, files, 'the cordova build client {0}'.format(build.conf.platform), function (err) {
                 if (err) {
                     client.log(build, Msg.error, 'error saving build output files on the cordova build server\n{3}', err);
-                    return client.onBuildFailed(result);
+                    return;// client.onBuildFailed(result);
                 }
                 serverUtils.cleanLastFolders(client.conf.keep, client.location + "/*", saveBuildLog);
             });
@@ -150,7 +152,9 @@ ClientWorker.define({
         	err && client.log(build, Msg.debug, 'Error while saving {2}:\n{3}', buildPath, err);
         	serverUtils.freeMemFiles(build.outputFiles);
             client.log(build, Msg.info, 'Build done! It took {2}.', new Date(build.conf.started).elapsed());
-            if (++client.built >= client.conf.build.length) {
+	    client.built++;
+	   console.log("Build successfully. Builds completed so far: "+ client.built, build.conf.platform);
+            if (client.built >= client.conf.build.length * 2) {
                 client.disconnect();
             }
         }
@@ -160,8 +164,10 @@ ClientWorker.define({
             this.buildCompleted = true;
             console.log('Client is disconnecting from the server since the build tasks completed.');
             this.socket.socket.disconnect();
+throw new Error("callstack");
         }
         catch (e) {
+         console.log(e.stack);
         }
         finally {
             if (!this.conf.listen.server && !this.conf.listen.agent)
