@@ -2977,7 +2977,7 @@ input[type="submit"].btn.btn-mini {
   *position: relative;
   *z-index: 2;
   overflow: visible;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
 }
 .navbar-inner {
   min-height: 40px;
@@ -4199,7 +4199,7 @@ a.badge:hover {
   visibility: hidden;
 }
 .navbar {
-  border-bottom: 1px solid #CACACA;
+  /*border-bottom: 1px solid #CACACA;*/
 }
 .navbar .navbar-inner {
   -webkit-box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) ,  0 0 10px rgba(0, 0, 0, 0.1);

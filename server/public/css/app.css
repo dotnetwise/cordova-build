@@ -1,6 +1,5 @@
 body {
-	padding-bottom: 40px;
-	overflow-y: scroll;
+	overflow-y: auto;
 }
 
 body ul.dashboard-list li {
@@ -121,7 +120,8 @@ body .brand {
 }
 
 .fixed-box > .box-content {
-	max-height: 300px;
+	max-height: 378px;
+	height: 378px;
 	overflow: auto;
 }
 
@@ -138,6 +138,9 @@ body .brand {
 	margin-left: 0;
 }
 
+footer p {
+	margin-bottom: 3px;
+}
 .report label {
 	font-weight: bold;
 	display: inline;
@@ -185,11 +188,20 @@ img.no-build {
 	background-color: beige;
 }
 
+.box-content.build {
+	padding-bottom: 0;
+	padding-left: 0;
+	padding-right: 0;
+}
+.box-content.build .nav-tabs {
+	margin-right: 0;
+	margin-left: 0;
+}
 .log.box-content {
 	overflow: auto;
-	max-height: 360px;
-	height: 360px;
-	padding: 0px;
+	max-height: 400px;
+	height: 400px;
+	padding: 0;
 }
 
 .log span {

@@ -95,6 +95,8 @@ function Server(conf) {
 };
 Server.define({
     registerBuild: function (build) {
+	    if (this.conf.keep && this.builds.length >= this.conf.keep)
+		    this.builds.shift();
         this.builds.push(build);
         this.builds[build.id] = build;
         build.platforms.forEach(function (platformBuild) {
@@ -174,7 +176,8 @@ Server.define({
 				        protocol: conf.proxyportocol || conf.protocol || 'http://',
 				        host: conf.server,
 				        port: conf.proxyport || conf.port,
-				        promote: conf.promote,
+                        promote: conf.promote,
+				        link: conf.link,
 				    })));
 				    res.send(html);
 				})

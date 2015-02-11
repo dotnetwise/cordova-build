@@ -31,7 +31,10 @@ ko.bindingHandlers.hidden = {
     }
 };
 function ServerBrowser(conf) {
-    this.conf = conf;
+    if (inBrowser) {
+	    serverBrowser = this;
+    }
+	this.conf = conf || {};
     this.logs = observableArray([]);
     this.agents = observableArray([]);
     this.builds = observableArray([]);
@@ -89,6 +92,9 @@ ServerBrowser.define({
     },
     promote: function (build) {
     	return this.conf.promote && stringformat(this.conf.promote, build);
+    },
+    link: function (build) {
+        return build && build.conf && build.conf.link && stringformat(build.conf.link, build);
     },
     statuses: {
         'building': 'img/platforms/building.gif',

@@ -37,6 +37,7 @@ if (conf.mode == 'client' || conf.mode == 'all' || conf.build) {
     commandLine.addArgument('android', { type: 'string', required: false });
     commandLine.addArgument('build', { type: 'string', required: true  });
     commandLine.addArgument('number', { type: 'string', required: false });
+    commandLine.addArgument('link', { type: 'string', required: false });
     //commandLine.addArgument('iossignonly', { type: 'boolean', required: false});
     if (conf.build && conf.build.indexOf && conf.build.indexOf('ios') >= 0) {
         if (!conf.iosprojectpath) throw new Error('-iosprojectpath:"platforms/ios/build/device/your-project-name.app" was not being specified!');

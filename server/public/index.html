@@ -239,7 +239,7 @@
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
                         </div>
-                        <div class="box-content">
+                        <div class="box-content build">
                             <div style="padding: 0 0 2px 8px;">
                                 <div>
 
@@ -317,13 +317,13 @@
         href: unwrap($data && $data.status) == 'success' ? ['/download/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : '', typeof unwrap($data.platform) == 'string' ? unwrap($data.platform) : ''].join('') : null,
     },
     "
-                                                        style="display: block;">
+                                                       style="display: block;">
                                                         <div data-bind="
     style: {
         'backgroundImage':
                 'url(' + unwrap(qr) + ')'
     }"
-                                                            class="qr center" />
+                                                             class="qr center" />
                                                     </a>
                                                     <a data-bind="
     visible: typeof unwrap($data.platform) == 'string',
@@ -331,8 +331,15 @@
         href: unwrap($data && $data.status) == 'success' ? encodeURIComponent(['/download/', unwrap(id), typeof unwrap($data.platform) == 'string' ? '/' : '', typeof unwrap($data.platform) == 'string' ? unwrap(platform) : '', '/qr'].join('')) : null,
     },
     "
-                                                        style="display: block;">
+                                                       style="display: block;">
                                                         <div class="center">QR</div>
+                                                    </a>
+                                                    <a data-bind="
+    visible: $data.conf.link,
+    attr: {
+        href: $root.link($data),
+    }" class="" target="_blank" style="display: block;">
+                                                        <div data-bind="text: $root.link($data)" class="center"></div>
                                                     </a>
                                                 </div>
                                                 <div class="span2 build-report no-gutter build-info">
@@ -347,18 +354,18 @@ attr: {
 },
     text: '#' + ($data.conf && $data.conf.number || $data.id || $parent && $parent.id || $parents[1]
                                                 && $parents[1].id || $parents[2] && $parents[2].id)"
-                                                                href="#"></h3></b>
+                                                                   href="#"></h3></b>
                                                         </dd>
                                                         <dd class="status">
                                                             <label>Status:</label><span data-bind="css: 'label-'
         + unwrap($data.status), text: unwrap($data.statusText) || unwrap($data.status)"
-                                                                class="label"></span>
+                                                                                        class="label"></span>
                                                         </dd>
 
                                                         <dd class="started">
 
                                                             <label>Started:</label><span datetime-format="{0} ago"
-                                                                data-bind="
+                                                                                         data-bind="
     text: '{0} ago'.format(unwrap($data && $data.started) && unwrap($data && $data.started).elapsed()),
     attr: {
         datetime: $data && $data.started,
@@ -371,30 +378,38 @@ attr: {
                                                         <dd data-bind="visible: $data && $data.duration" class="duration">
 
                                                             <label>Duration:</label><span
-                                                                data-bind="text: $data && $data.duration"></span>
+                                                                                        data-bind="text: $data && $data.duration"></span>
                                                         </dd>
                                                     </dl>
                                                     <ul class="build-actions">
                                                         <li data-bind="
     visible: status() == 'cancelled' || status() == 'failed' || status() == 'success',
     ">
-                                                    <button data-bind="
+                                                            <button data-bind="
     click: $root.rebuild.bind($root)" class="btn btn-small btn-primary">Rebuild?</button>
-                                                    </li>
+                                                        </li>
                                                         <li data-bind="
     visible: status() != 'cancelled' && status() != 'failed' && status() != 'success',
     ">
-                                                    <button data-bind="
+                                                            <button data-bind="
     click: $root.cancel.bind($root)" class="btn btn-small btn-danger">Cancel?</button>
-                                                    </li>
+                                                        </li>
                                                         <li data-bind="
     visible: status() == 'success' && $root.conf.promote,
     ">
-                                                    <a data-bind="
+                                                            <a data-bind="
     attr: {
         href: $root.promote($data),
     }" class="btn btn-small btn-success" target="_blank">Promote?</a>
-                                                    </li>
+                                                        </li>
+                                                        <li data-bind="
+    visible: status() == 'success' && $data.conf.link,
+    ">
+                                                            <a data-bind="
+    attr: {
+        href: $root.link($data),
+    }" class="btn btn-small btn-info" target="_blank">View?</a>
+                                                        </li>
                                                     </ul>
                                                 </div>
                                                 <div class="span8 log log-big no-gutter build-log">
@@ -564,16 +579,16 @@ attr: {
                                 <a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
                             </div>
                         </div>
-                        <div class="box-content">
+                        <div class="box-content log">
                             <div data-bind="
     visible: !$data || !unwrap($data.logs).length
     "
-                                class="box-content">
+                                 class="box-content">
                                 Nothing to show yet
                             </div>
                             <div data-bind="hidden: !$data || !unwrap($data.logs).length, template:
         { foreach: $data && $data.logs, name: 'tplLog' }"
-                                class="box-content log" style="display: none;">
+                                 class="" style="display: none;">
                             </div>
 
                         </div>
@@ -663,7 +678,6 @@ attr: {
             </div>
             <!--/fluid-row-->
 
-            <hr>
 
             <!--<div class="modal hide fade" id="myModal">
                 <div class="modal-header">

@@ -108,7 +108,7 @@ Agent.define({
 						if (build.conf.save)
 							agent.log(build, client, Msg.info, 'Also sending the output files to the client');
 
-						client && client.socket.emit('build-success', build.serialize({
+						client && client.socket.emit('build-client-success', build.serialize({
 							outputFiles: build.conf.save,
                             content: build.conf.save,
 						}));

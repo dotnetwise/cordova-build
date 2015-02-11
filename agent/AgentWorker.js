@@ -397,9 +397,8 @@ catch (e) {
                 agent.log(build, Msg.error, 'error:\n{2}', err);
             }
             if (stderr)
-                ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+                ((err && err.message || err && err.indexOf && err || '').indexOf(stderr) < 0) && agent.log(build, Msg.error, 'stderror-{3}:\n{2}', stderr, "cordova build");
             
-            var e;
             if (e) return agent.buildFailed(build);
             
             done.call(agent, e);
@@ -477,7 +476,7 @@ catch (e) {
                 if (build.conf.status === 'cancelled') return;
                 stdout && agent.log(build, Msg.build_output, '{2}', stdout);
                 err && agent.log(build, Msg.error, 'error:\n{2}', err);
-                stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+                stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror-xcrun:\n{2}', stderr);
                 var e = stderr || err;
                 if (e) return agent.buildFailed(build, '');
                 agent.log(build, Msg.status, 'Converting Info.plist as xml: \nplutil -convert xml1 {2}', pathOfInfo_plist);
@@ -499,7 +498,7 @@ catch (e) {
             if (build.conf.status === 'cancelled') return;
             stdout && agent.log(build, Msg.build_output, '{2}', stdout);
             err && (!err.code || err.code != 1) && agent.log(build, Msg.error, 'error:\n{2}', err);
-            stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror:\n{2}', stderr);
+            stderr && (err && err.message || '').indexOf(stderr) < 0 && agent.log(build, Msg.error, 'stderror-{3}:\n{2}', stderr, cmd);
             callback.apply(agent, arguments);
             if (stderr || err && (!err.code || err.code != 1)) return agent.buildFailed(build, '');
         }).on('close', function (code) {

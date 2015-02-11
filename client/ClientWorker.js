@@ -46,7 +46,7 @@ ClientWorker.define({
                     var message = new Msg(msg);
                     console.log(message.toString());
                 },
-                'build-success': this.onBuildSuccess,
+                'build-client-success': this.onBuildSuccess,
                 'build-failed': this.onBuildFailed,
             }, this);
         }
@@ -75,6 +75,7 @@ ClientWorker.define({
             status: 'uploading',
             name: this.conf.name,
             number: this.conf.number,
+            link: this.conf.link,
             started: new Date(),
         }, client, null, platforms, files);
         build.id = client.id;
