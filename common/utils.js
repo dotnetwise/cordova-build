@@ -2,7 +2,7 @@ var log = console.log;
 require("date-format-lite");
 require('fast-class');
 require('array-sugar');
-var Elapsed = require('Elapsed');
+var Elapsed = require('elapsed');
 var ioc = require('socket.io/node_modules/socket.io-client');
 var patch = require('./patch.js');
 patch(ioc.Socket.prototype, ["on", "addListener"]);
